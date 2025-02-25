@@ -17,7 +17,7 @@ public class CodeRunnerUtil {
         this.clientSecret = clientSecret;
     }
 
-    public String executeCode(String script, String language, String versionIndex) throws IOException {
+    public String executeCode(String script, String language, String versionIndex, String stdin) throws IOException {
         // Create connection
         URL url = new URL(API_URL);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -32,9 +32,9 @@ public class CodeRunnerUtil {
                         "\"script\":\"%s\"," +
                         "\"language\":\"%s\"," +
                         "\"versionIndex\":\"%s\"," +
-                        "\"stdin\":\"\"," +
+                        "\"stdin\":\"%s\"," +
                         "\"compileOnly\":false}",
-                clientId, clientSecret, script, language, versionIndex
+                clientId, clientSecret, script, language, versionIndex, stdin
         );
 
         // Send request
@@ -64,7 +64,7 @@ public class CodeRunnerUtil {
         try {
             // Example: Execute a Python program
             String pythonScript = "print('Hello, World!')";
-            String result = client.executeCode(pythonScript, "python3", "0");
+            String result = client.executeCode(pythonScript, "python3", "0","");
             System.out.println("API Response: " + result);
 
         } catch (IOException e) {

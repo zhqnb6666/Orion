@@ -1,9 +1,9 @@
 package org.sustech.orion.controller;
 
-import org.sustech.orion.dto.authDTO.AuthResponse;
-import org.sustech.orion.dto.authDTO.LoginRequest;
-import org.sustech.orion.dto.authDTO.PasswordResetRequest;
-import org.sustech.orion.dto.authDTO.RegisterRequest;
+import org.sustech.orion.dto.auth.AuthResponse;
+import org.sustech.orion.dto.auth.LoginRequest;
+import org.sustech.orion.dto.auth.PasswordResetRequest;
+import org.sustech.orion.dto.auth.RegisterRequest;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.impl.UserServiceImpl;
