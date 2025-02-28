@@ -22,10 +22,8 @@ public class CodeRunnerController {
     private final ObjectMapper objectMapper;
 
     public CodeRunnerController(
-            @Value("${jdoodle.clientId}") String clientId,
-            @Value("${jdoodle.clientSecret}") String clientSecret,
             ObjectMapper objectMapper) {
-        this.codeRunnerUtil = new CodeRunnerUtil(clientId, clientSecret);
+        this.codeRunnerUtil = new CodeRunnerUtil();
         this.objectMapper = objectMapper;
     }
 

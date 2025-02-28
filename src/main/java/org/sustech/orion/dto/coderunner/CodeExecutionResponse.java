@@ -15,31 +15,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CodeExecutionResponse {
-    /**
-     * Indicates if execution was successful
-     */
     private boolean success;
-
-    /**
-     * Output produced by the executed code
-     */
     private String output;
-
-    /**
-     * Error message if execution failed
-     */
     private String error;
-
-    /**
-     * HTTP status code returned by JDoodle API
-     */
     private Integer statusCode;
-
-    /**
-     * Execution metrics such as memory usage and CPU time
-     */
     private ExecutionMetrics metrics;
-
     /**
      * Nested class to hold execution performance metrics
      */
@@ -52,17 +32,11 @@ public class CodeExecutionResponse {
          * Memory used during execution (in KB)
          */
         private String memory;
-
         /**
          * CPU time consumed (in seconds)
          */
         private String cpuTime;
-
-        /**
-         * Whether the code was successfully compiled (for compiled languages)
-         */
         private boolean compiled;
-
         /**
          * Compilation status message (for compiled languages)
          */
