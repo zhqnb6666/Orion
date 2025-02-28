@@ -36,4 +36,5 @@ public class Submission {
 
     @Column(nullable = false)
     private Integer attempts;
+
 }
