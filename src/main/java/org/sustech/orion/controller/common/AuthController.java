@@ -1,13 +1,5 @@
-package org.sustech.orion.controller;
+package org.sustech.orion.controller.common;
 
-import org.sustech.orion.dto.authDTO.AuthResponse;
-import org.sustech.orion.dto.authDTO.LoginRequest;
-import org.sustech.orion.dto.authDTO.PasswordResetRequest;
-import org.sustech.orion.dto.authDTO.RegisterRequest;
-import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.User;
-import org.sustech.orion.service.impl.UserServiceImpl;
-import org.sustech.orion.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -18,6 +10,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.authDTO.AuthResponse;
+import org.sustech.orion.dto.authDTO.LoginRequest;
+import org.sustech.orion.dto.authDTO.PasswordResetRequest;
+import org.sustech.orion.dto.authDTO.RegisterRequest;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.impl.UserServiceImpl;
+import org.sustech.orion.util.JwtUtil;
 
 
 @RestController

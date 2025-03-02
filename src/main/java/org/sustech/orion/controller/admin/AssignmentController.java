@@ -1,18 +1,19 @@
-package org.sustech.orion.controller;
+package org.sustech.orion.controller.admin;
 
-import org.sustech.orion.dto.AssignmentDTO;
-import org.sustech.orion.model.Assignment;
-import org.sustech.orion.service.AssignmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.model.Assignment;
+import org.sustech.orion.service.AssignmentService;
+
 import java.sql.Timestamp;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/assignments")
+@RestController("adminAssignmentController")
+@RequestMapping("/api/admin/assignments")
 @Tag(name = "Assignment API", description = "APIs for assignment management")
 public class AssignmentController {
 
@@ -21,7 +22,7 @@ public class AssignmentController {
     public AssignmentController(AssignmentService assignmentService) {
         this.assignmentService = assignmentService;
     }
-
+    /* useful */
     @PostMapping("/{courseId}")
     @Operation(summary = "Create assignment")
     public ResponseEntity<Assignment> createAssignment(
@@ -49,4 +50,5 @@ public class AssignmentController {
         assignmentService.extendDueDate(assignmentId, newDueDate);
         return ResponseEntity.noContent().build();
     }
+    /* useless */
 }

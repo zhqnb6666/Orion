@@ -9,4 +9,7 @@ public class AssignmentDTO {
     private String description;
     private String type;
     private Timestamp dueDate;
+    private Boolean isVisible=true;
+    private Integer maxScore=100;
+
 }

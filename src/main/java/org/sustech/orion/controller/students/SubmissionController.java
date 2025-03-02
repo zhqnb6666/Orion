@@ -1,16 +1,17 @@
-package org.sustech.orion.controller;
+package org.sustech.orion.controller.students;
 
-import org.sustech.orion.dto.SubmissionDTO;
-import org.sustech.orion.model.Submission;
-import org.sustech.orion.service.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.SubmissionDTO;
+import org.sustech.orion.model.Submission;
+import org.sustech.orion.service.SubmissionService;
+
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/submissions")
+@RestController("studentsSubmissionController")
+@RequestMapping("/api/students/submissions")
 @Tag(name = "Submission API", description = "APIs for assignment submissions")
 public class SubmissionController {
 
@@ -19,7 +20,7 @@ public class SubmissionController {
     public SubmissionController(SubmissionService submissionService) {
         this.submissionService = submissionService;
     }
-
+    /* useful */
     @GetMapping("/{submissionId}")
     @Operation(summary = "Get submission details")
     public ResponseEntity<Submission> getSubmission(@PathVariable Long submissionId) {
@@ -40,4 +41,5 @@ public class SubmissionController {
         submissionService.updateSubmissionStatus(submissionId, request.getNewStatus());
         return ResponseEntity.noContent().build();
     }
+    /* useless */
 }

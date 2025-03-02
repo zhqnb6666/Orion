@@ -3,11 +3,17 @@ package org.sustech.orion.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Data
 @Table(name = "users")
-public class User {
+public class User implements UserDetails { // 实现 UserDetails 接口
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +43,17 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String bio = "";
+
+    // 实现 UserDetails 接口方法
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // 将角色转换为权限（例如：STUDENT -> ROLE_STUDENT）
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+    @Override
+    public String getPassword() {
+        return this.passwordHash; // 返回密码哈希字段
+    }
 
     public enum Role {
         ADMIN, TEACHER, STUDENT
