@@ -3,10 +3,13 @@
 #### 1. 用户认证与个人信息
 
 ```
-GET /api/auth/user           # 获取当前登录用户信息	*zhq
-POST /api/auth/send-verification/{email}	#发送邮件	*z
-PUT /api/students/profile    # 更新个人资料
-GET /api/students/dashboard  # 获取学生仪表盘数据(包括待完成作业、最近截止等)
+GET /api/auth/user           				#获取当前登录用户信息		*zhq
+POST /api/auth/send-verification/{email}	#发送邮件				*zhq
+POST /api/auth/reset-password				#重置密码				*zhq
+POST /api/auth/register						#注册用户				*zhq
+POST /api/auth/login						#登录			*zhq
+PUT /api/students/profile    				# 更新个人资料
+GET /api/students/dashboard  				# 获取学生仪表盘数据(包括待完成作业、最近截止等)
 ```
 
 #### 2. 课程相关
@@ -42,6 +45,7 @@ GET /api/students/assignments/{assignmentId}/submissions/remaining   # 获取剩
 #### 5. 成绩和反馈
 
 ```
+
 GET /api/students/submissions/{submissionId}/grade               # 获取提交的评分和评语
 GET /api/students/courses/{courseId}/grades                      # 获取课程所有成绩
 GET /api/students/assignments/{assignmentId}/feedback            # 获取作业反馈
