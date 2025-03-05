@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/courseworkgradingsystem?currentSchema=public
-    username: postgres
-    password: 123456
+    url: jdbc:postgresql://localhost:5432/orion?currentSchema=public
+    username: user_1
+    password: abc@1234
   jpa:
     hibernate:
       ddl-auto: update
