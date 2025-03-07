@@ -1,6 +1,8 @@
 package org.sustech.orion.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.sustech.orion.model.Assignment;
 
@@ -22,4 +24,20 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     long countByCourse_Id(Long courseId);
 
     List<Assignment> findByCourse_IdAndDueDateAfter(Long courseId, Timestamp timestamp);
+
+    // 待完成作业（未提交且未截止）
+    @Query("SELECT a FROM Assignment a " +
+            "WHERE a.course IN (SELECT c FROM Course c JOIN c.students s WHERE s.userId = :studentId) " +
+            "AND a.dueDate > CURRENT_TIMESTAMP " +
+            "AND NOT EXISTS (SELECT s FROM Submission s WHERE s.assignment = a AND s.student.userId = :studentId)")
+    List<Assignment> findPendingAssignments(@Param("studentId") Long studentId);
+
+    // 即将截止的作业（未来X天内）
+    @Query("SELECT a FROM Assignment a " +
+            "WHERE a.course IN (SELECT c FROM Course c JOIN c.students s WHERE s.userId = :studentId) " +
+            "AND a.dueDate BETWEEN :start AND :end " +
+            "ORDER BY a.dueDate ASC")
+    List<Assignment> findUpcomingAssignments(@Param("studentId") Long studentId,
+                                             @Param("start") Timestamp start,
+                                             @Param("end") Timestamp end);
 }

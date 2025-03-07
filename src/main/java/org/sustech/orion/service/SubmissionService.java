@@ -14,4 +14,14 @@ public interface SubmissionService {
     Integer getSubmissionAttempts(Long studentId, Long assignmentId);
 
     Submission getSubmissionOrThrow(Long submissionId);
+
+    Submission createSubmission(Long assignmentId, Submission submission);
+
+    List<Submission> getSubmissionsByAssignmentAndStudent(Long assignmentId, Long studentId);
+
+    void deleteStudentSubmission(Long submissionId, Long studentId);
+
+    String getSubmissionStatus(Long submissionId, Long studentId);
+
+    void saveSubmission(Submission submission);
 }

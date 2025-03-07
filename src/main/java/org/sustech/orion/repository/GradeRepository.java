@@ -20,4 +20,10 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
 
     // 分数区间查询（例如查找90分以上的优秀作业）
     List<Grade> findByScoreGreaterThanEqual(Double score);
+
+    List<Grade> findBySubmission_Student_UserIdAndSubmission_Assignment_Course_Id(Long studentId, Long courseId);
+
+    List<Grade> findBySubmission_Assignment_IdAndSubmission_Student_UserId(Long assignmentId, Long studentId);
+
+    List<Grade> findBySubmission_Student_UserId(Long studentId);
 }

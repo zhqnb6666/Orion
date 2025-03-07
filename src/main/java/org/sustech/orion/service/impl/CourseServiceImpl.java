@@ -8,6 +8,8 @@ import org.sustech.orion.service.CourseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.sustech.orion.util.SemesterUtil;
+
 import java.util.List;
 
 @Service
@@ -51,5 +53,30 @@ public class CourseServiceImpl implements CourseService {
         Course course = getCourseById(courseId);
         course.setIsActive(false);
         courseRepository.save(course);
+    }
+
+    @Override
+    public List<Course> getCoursesByStudentId(Long studentId) {
+        return courseRepository.findByStudents_UserId(studentId);
+    }
+    @Override
+    public List<Course> getCurrentSemesterCourses(Long studentId) {
+        String currentSemester = SemesterUtil.getCurrentSemester(); // 需要实现学期工具类
+        return courseRepository.findBySemesterAndStudents_UserId(currentSemester, studentId);
+    }
+
+    @Override
+    public void addStudentToCourse(Long courseId, User student) {
+        Course course = getCourseById(courseId);
+        if (course.getStudents().contains(student)) {
+            throw new ApiException("您已加入该课程", HttpStatus.BAD_REQUEST);
+        }
+        course.getStudents().add(student);
+        courseRepository.save(course);
+    }
+
+    @Override
+    public boolean isStudentInCourse(Long courseId, Long userId) {
+        return courseRepository.existsByStudents_UserIdAndId(userId, courseId);
     }
 }

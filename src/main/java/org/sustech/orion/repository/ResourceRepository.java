@@ -22,4 +22,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     // 模糊搜索资源名称
     List<Resource> findByNameContainingIgnoreCase(String keyword);
+
+    List<Resource> findByAssignmentId(Long assignmentId);
+
 }

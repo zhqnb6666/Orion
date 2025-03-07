@@ -18,4 +18,13 @@ public interface CourseService {
 
     @Transactional
     void deactivateCourse(Long courseId);
+
+    List<Course> getCoursesByStudentId(Long studentId);
+
+    List<Course> getCurrentSemesterCourses(Long studentId);
+
+    @Transactional
+    void addStudentToCourse(Long courseId, User student);
+
+    boolean isStudentInCourse(Long courseId, Long userId);
 }

@@ -20,4 +20,8 @@ public class SubmissionConfig {
 
     @Column(nullable = false)
     private Integer maxSubmissionAttempts; // 最大提交次数
+
+    @OneToOne
+    @JoinColumn(name = "assignment_id", nullable = false)
+    private Assignment assignment;
 }

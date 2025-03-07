@@ -30,4 +30,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // 组合查询
     List<Course> findByCourseNameAndSemester(String courseName, String semester);
+
+    List<Course> findBySemesterAndStudents_UserId(String currentSemester, Long studentId);
+
+    boolean existsByStudents_UserIdAndId(Long userId, Long courseId);
 }

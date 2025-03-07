@@ -113,5 +113,10 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return userRepository.findUsersByUsernameIsContainingIgnoreCase(keyword);
     }
 
+    @Override
+    public User updateUser(User user) {
+        return userRepository.save(user);
+    }
+
 
 }

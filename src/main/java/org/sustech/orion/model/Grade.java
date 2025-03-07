@@ -32,4 +32,10 @@ public class Grade {
 
     @Column(nullable = false)
     private Boolean isFinalized; // 是否最终评分
+
+    @Column(columnDefinition = "TEXT")
+    private String appealReason;//新增 申诉理由
+
+    @Column
+    private Timestamp appealTime;//新增 申诉时间
 }

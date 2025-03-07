@@ -39,4 +39,5 @@ public class Resource {
 
     @Column(nullable = false)
     private Timestamp uploadTime;
+
 }

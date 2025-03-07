@@ -1,5 +1,6 @@
 package org.sustech.orion.repository;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,4 +25,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("SELECT s FROM Submission s WHERE s.assignment.id = :assignmentId " +
             "ORDER BY s.submitTime DESC LIMIT 3")
     List<Submission> findTop3ByAssignment(@Param("assignmentId") Long assignmentId);
+
+    List<Submission> findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(Long assignmentId, Long studentId);
+
+    List<Submission> findAllByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(
+            Long assignmentId,
+            Long studentId
+    );
 }
