@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -25,6 +26,7 @@ public class SubmissionContent {
     private Long fileSize; // 文件大小
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
 }

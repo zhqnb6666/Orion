@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Notification {
     private boolean isRead;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "user_id")
     private User recipient;
 
