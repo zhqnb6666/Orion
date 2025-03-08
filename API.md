@@ -1,4 +1,6 @@
-### 学生端  *pjh is working on this part
+
+### 学生端
+
 
 #### 1. 用户认证与个人信息
 
@@ -8,66 +10,78 @@ POST /api/auth/send-verification/{email}	#发送邮件				*zhq
 POST /api/auth/reset-password				#重置密码				*zhq
 POST /api/auth/register						#注册用户				*zhq
 POST /api/auth/login						#登录			*zhq
-PUT /api/students/profile    				# 更新个人资料
-GET /api/students/dashboard  				# 获取学生仪表盘数据(包括待完成作业、最近截止等)
+PUT /api/students/profile    				# 更新个人资料                            *pjh
+GET /api/students/dashboard  				# 获取学生仪表盘数据(包括待完成作业、最近截止等) *pjh
+
 ```
 
 #### 2. 课程相关
 
 ```
-GET /api/students/courses                  # 获取学生所有课程列表
-GET /api/students/courses/{courseId}       # 获取特定课程详情
-GET /api/students/courses/current          # 获取当前学期课程
-POST /api/students/courses/{courseId}/join # 加入课程
+
+GET /api/students/courses                  # 获取学生所有课程列表                     *pjh
+GET /api/students/courses/{courseId}       # 获取特定课程详情                        *pjh
+GET /api/students/courses/current          # 获取当前学期课程                         *pjh
+POST /api/students/courses/{courseId}/join # 加入课程                               *pjh
+
 ```
 
 #### 3. 作业相关
 
 ```
-GET /api/students/courses/{courseId}/assignments           # 获取课程下所有作业
-GET /api/students/assignments/{assignmentId}               # 获取特定作业详情
-GET /api/students/assignments/upcoming                     # 获取即将截止的作业
+
+GET /api/students/courses/{courseId}/assignments           # 获取课程下所有作业       *pjh 
+GET /api/students/assignments/{assignmentId}               # 获取特定作业详情         *pjh
+GET /api/students/assignments/upcoming                     # 获取即将截止的作业        *pjh  
+
 ```
 
 #### 4. 提交相关
 
 ```
-POST /api/students/assignments/{assignmentId}/submissions            # 创建新提交
-GET /api/students/assignments/{assignmentId}/submissions             # 获取自己的提交历史
-GET /api/students/submissions/{submissionId}                         # 获取提交详情
-PUT /api/students/submissions/{submissionId}                         # 更新提交
-DELETE /api/students/submissions/{submissionId}                      # 删除提交
-GET /api/students/submissions/{submissionId}/status                  # 检查提交状态
-POST /api/students/submissions/{submissionId}/files                  # 上传提交文件
-GET /api/students/assignments/{assignmentId}/submissions/remaining   # 获取剩余提交次数
+
+POST /api/students/assignments/{assignmentId}/submissions            # 创建新提交        *pjh 
+GET /api/students/assignments/{assignmentId}/submissions             # 获取自己的提交历史  *pjh 
+GET /api/students/submissions/{submissionId}                         # 获取提交详情       *pjh
+PUT /api/students/submissions/{submissionId}                         # 更新提交          *pjh
+DELETE /api/students/submissions/{submissionId}                      # 删除提交          *pjh
+GET /api/students/submissions/{submissionId}/status                  # 检查提交状态       *pjh
+POST /api/students/submissions/{submissionId}/files                  # 上传提交文件       *pjh
+GET /api/students/assignments/{assignmentId}/submissions/remaining   # 获取剩余提交次数    *pjh
+
 ```
 
 #### 5. 成绩和反馈
 
 ```
 
-GET /api/students/submissions/{submissionId}/grade               # 获取提交的评分和评语
-GET /api/students/courses/{courseId}/grades                      # 获取课程所有成绩
-GET /api/students/assignments/{assignmentId}/feedback            # 获取作业反馈
-GET /api/students/grades/summary                                 # 获取成绩汇总
-POST /api/students/submissions/{submissionId}/appeal             # 提交成绩申诉
+GET /api/students/submissions/{submissionId}/grade               # 获取提交的评分和评语     *pjh
+GET /api/students/courses/{courseId}/grades                      # 获取课程所有成绩        *pjh
+GET /api/students/assignments/{assignmentId}/feedback            # 获取作业反馈           *pjh
+GET /api/students/grades/summary                                 # 获取成绩汇总           *pjh
+POST /api/students/submissions/{submissionId}/appeal             # 提交成绩申诉           *pjh
+
 ```
 
 #### 6. 通知和消息
 
 ```
-GET /api/students/notifications              # 获取所有通知
-GET /api/students/notifications/unread       # 获取未读通知
-PUT /api/students/notifications/{id}/read    # 标记通知为已读
-DELETE /api/students/notifications/{id}      # 删除通知
+
+GET /api/students/notifications              # 获取所有通知           *pjh
+GET /api/students/notifications/unread       # 获取未读通知           *pjh
+PUT /api/students/notifications/{id}/read    # 标记通知为已读          *pjh
+DELETE /api/students/notifications/{id}      # 删除通知               *pjh
+
 ```
 
 #### 7. 资源获取
 
 ```
-GET /api/students/courses/{courseId}/resources                  # 获取课程资源
-GET /api/students/assignments/{assignmentId}/resources          # 获取作业相关资源
-GET /api/students/resources/{resourceId}/download               # 下载特定资源
+
+GET /api/students/courses/{courseId}/resources                  # 获取课程资源        *pjh
+GET /api/students/assignments/{assignmentId}/resources          # 获取作业相关资源     *pjh
+GET /api/students/resources/{resourceId}/download               # 下载特定资源        *pjh
+
 ```
 
 ### 教师端
@@ -75,34 +89,41 @@ GET /api/students/resources/{resourceId}/download               # 下载特定�
 #### 1. 用户认证与个人信息
 
 ```
-PUT /api/teachers/profile          # 更新个人资料
-GET /api/teachers/dashboard        # 获取教师仪表盘数据(待批改作业、课程概览等)
+
+PUT /api/teachers/profile          # 更新个人资料 *pjh
+GET /api/teachers/dashboard        # 获取教师仪表盘数据(待批改作业、课程概览等) *pjh
+
 ```
 
 #### 2. 课程管理
 
 ```
-GET /api/teachers/courses                     # 获取教师所有课程
-POST /api/teachers/courses                    # 创建新课程
-PUT /api/teachers/courses/{courseId}          # 更新课程信息
-DELETE /api/teachers/courses/{courseId}       # 删除课程
-GET /api/teachers/courses/{courseId}          # 获取课程详情
+
+GET /api/teachers/courses                     # 获取教师所有课程 *pjh
+POST /api/teachers/courses                    # 创建新课程 *pjh
+PUT /api/teachers/courses/{courseId}          # 更新课程信息 *pjh
+DELETE /api/teachers/courses/{courseId}       # 删除课程    *pjh
+GET /api/teachers/courses/{courseId}          # 获取课程详情 *pjh
 GET /api/teachers/courses/{courseId}/invitationCode  # 生成邀请码
-GET /api/teachers/courses/{courseId}/students # 获取课程学生列表
-POST /api/teachers/courses/{courseId}/students # 添加学生到课程
-DELETE /api/teachers/courses/{courseId}/students/{studentId} # 从课程移除学生
+GET /api/teachers/courses/{courseId}/students # 获取课程学生列表 *pjh
+POST /api/teachers/courses/{courseId}/students # 添加学生到课程  *pjh
+DELETE /api/teachers/courses/{courseId}/students/{studentId} # 从课程移除学生 *pjh
+
 ```
 
 #### 3. 作业管理
 
 ```
-GET /api/teachers/courses/{courseId}/assignments        # 获取课程下所有作业
-POST /api/teachers/courses/{courseId}/assignments       # 创建新作业
-GET /api/teachers/assignments/{assignmentId}            # 获取作业详情
-PUT /api/teachers/assignments/{assignmentId}            # 更新作业
-DELETE /api/teachers/assignments/{assignmentId}         # 删除作业
-PUT /api/teachers/assignments/{assignmentId}/publish    # 设置作业可见
-PUT /api/teachers/assignments/{assignmentId}/unpublish  # 设置作业不可见
+
+GET /api/teachers/courses/{courseId}/assignments        # 获取课程下所有作业 *pjh
+POST /api/teachers/courses/{courseId}/assignments       # 创建新作业       *pjh
+GET /api/teachers/assignments/{assignmentId}            # 获取作业详情      *pjh
+PUT /api/teachers/assignments/{assignmentId}            # 更新作业         *pjh
+DELETE /api/teachers/assignments/{assignmentId}         # 删除作业         *pjh
+PUT /api/teachers/assignments/{assignmentId}/publish    # 设置作业可见      *pjh
+PUT /api/teachers/assignments/{assignmentId}/unpublish  # 设置作业不可见     *pjh
+
+
 ```
 
 #### 4. 测试用例管理
@@ -118,16 +139,15 @@ DELETE /api/teachers/testcases/{testcaseId}                    # 删除测试用
 
 ```
 GET /api/teachers/assignments/{assignmentId}/submissions        # 获取作业的所有提交
-GET /api/teachers/submissions/{submissionId}                    # 获取提交详情
+
+GET /api/teachers/submissions/{submissionId}                    # 获取提交详情 *pjh
 GET /api/teachers/courses/{courseId}/submissions/pending        # 获取待批改的提交
 POST /api/teachers/submissions/{submissionId}/grade             # 提交评分
 PUT /api/teachers/submissions/{submissionId}/grade              # 更新评分
-PUT /api/teachers/grades/{gradeId}/finalize                     # 确认最终成绩
+PUT /api/teachers/grades/{gradeId}/finalize                     # 确认最终成绩 *pjh
 GET /api/teachers/assignments/{assignmentId}/statistics         # 获取作业统计信息
-GET /api/teachers//submissions/{submissionId}/AIGrade			# 获取AI评分
-POST /api/teachers/assignments/{assignmentId}/batchGrade        # 批量AI评分
-GET /api/teachers/submissions/appeals                           # 获取成绩申诉列表
-PUT /api/teachers/submissions/appeals/{appealId}                # 处理成绩申诉
+GET /api/teachers/submissions/{submissionId}/AIGrade			# 获取AI评分
+
 ```
 
 #### 6. 资源管理
@@ -177,7 +197,9 @@ GET /api/admin/users/export                             # 导出用户数据
 
 ```
 GET /api/admin/courses                                 # 获取所有课程
-GET /api/admin/courses/{courseId}                      # 获取课程详情
+
+GET /api/admin/courses/{courseId}                      # 获取课程详情 *pjh
+
 PUT /api/admin/courses/{courseId}                      # 管理员更新课程信息
 DELETE /api/admin/courses/{courseId}                   # 管理员删除课程
 PUT /api/admin/courses/{courseId}/status               # 更改课程状态
@@ -228,3 +250,4 @@ GET /api/admin/ai/models                           # 获取可用AI模型
 PUT /api/admin/ai/models/{modelId}                 # 配置特定AI模型
 GET /api/admin/ai/statistics                       # 获取AI评分统计
 ```
+

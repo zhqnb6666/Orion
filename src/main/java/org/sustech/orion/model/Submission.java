@@ -25,8 +25,9 @@ public class Submission {
     @Column(nullable = false)
     private Timestamp submitTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private SubmissionStatus status;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubmissionContent> contents;
@@ -36,4 +37,12 @@ public class Submission {
 
     @Column(nullable = false)
     private Integer attempts;
+
+    public enum SubmissionStatus {
+        PENDING, ACCEPTED, REJECTED
+    }
+
+
+
+
 }

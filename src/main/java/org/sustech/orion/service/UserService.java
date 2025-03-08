@@ -12,5 +12,6 @@ public interface UserService {
     User getUserById(Long userId);
     User getUserByName(String username);
     List<User> search(String keyword);
+    User updateUser(User user);
 
 }
