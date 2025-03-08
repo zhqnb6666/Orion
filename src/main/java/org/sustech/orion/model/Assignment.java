@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
@@ -21,6 +22,7 @@ public class Assignment {
     private String description;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
@@ -33,6 +35,7 @@ public class Assignment {
     @Column(nullable = false)
     private Integer maxScore;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
