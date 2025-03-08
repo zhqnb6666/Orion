@@ -39,10 +39,4 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getCoursesBySemester(semester));
     }
 
-    @PatchMapping("/{courseId}/deactivate")//ok
-    @Operation(summary = "Deactivate course")
-    public ResponseEntity<Void> deactivateCourse(@PathVariable Long courseId) {
-        courseService.deactivateCourse(courseId);
-        return ResponseEntity.noContent().build();
-    }
 }

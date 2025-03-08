@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.UserService;
 import org.sustech.orion.service.AssignmentService;
-import org.sustech.orion.dto.DashboardDTO;
+import org.sustech.orion.dto.StudentDashboardDTO;
 
 import java.util.Map;
 
@@ -55,10 +55,10 @@ public class OtherController {
     // 获取仪表盘数据
     @GetMapping("/dashboard")
     @Operation(summary = "获取学生仪表盘数据")
-    public ResponseEntity<DashboardDTO> getDashboard(
+    public ResponseEntity<StudentDashboardDTO> getDashboard(
             @AuthenticationPrincipal User currentUser) {
 
-        DashboardDTO dashboard = new DashboardDTO();
+        StudentDashboardDTO dashboard = new StudentDashboardDTO();
 
         // 待完成作业
         dashboard.setPendingAssignments(

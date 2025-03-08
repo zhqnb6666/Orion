@@ -4,6 +4,7 @@ import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.User;
 import org.sustech.orion.repository.CourseRepository;
+import org.sustech.orion.repository.UserRepository;
 import org.sustech.orion.service.CourseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,9 +17,11 @@ import java.util.List;
 public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
-    public CourseServiceImpl(CourseRepository courseRepository) {
+    public CourseServiceImpl(CourseRepository courseRepository, UserRepository userRepository) {
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -47,13 +50,7 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.findByInstructor_UserId(instructorId);
     }
 
-    @Transactional
-    @Override
-    public void deactivateCourse(Long courseId) {
-        Course course = getCourseById(courseId);
-        course.setIsActive(false);
-        courseRepository.save(course);
-    }
+
 
     @Override
     public List<Course> getCoursesByStudentId(Long studentId) {
@@ -79,4 +76,30 @@ public class CourseServiceImpl implements CourseService {
     public boolean isStudentInCourse(Long courseId, Long userId) {
         return courseRepository.existsByStudents_UserIdAndId(userId, courseId);
     }
+
+    @Override
+    public Course updateCourse(Course course) {
+
+        return courseRepository.save(course);
+    }
+    @Override
+    public void deleteCourseWithDependencies(Long courseId) {
+
+        courseRepository.deleteById(courseId);
+    }
+    @Override
+    public void removeStudentFromCourse(Long courseId, Long studentId) {
+        Course course = getCourseById(courseId);
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new ApiException("学生不存在", HttpStatus.NOT_FOUND));
+
+        if (!course.getStudents().contains(student)) {
+            throw new ApiException("学生未加入该课程", HttpStatus.BAD_REQUEST);
+        }
+
+        course.getStudents().remove(student);
+        courseRepository.save(course);
+    }
+
+
 }

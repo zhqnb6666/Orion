@@ -28,4 +28,12 @@ public interface AssignmentService {
     SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId);
 
     Assignment getAssignmentById(Long assignmentId);
+
+    List<Assignment> getUpcomingAssignmentsForTeacher(Long userId, int i);
+
+    List<Assignment> getAssignmentsByCourseId(Long courseId);
+
+    Assignment updateAssignment(Assignment assignment);
+
+    void deleteAssignmentWithDependencies(Long assignmentId);
 }

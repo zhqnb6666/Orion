@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.AssignmentDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
+import org.sustech.orion.model.Course;
 import org.sustech.orion.model.Grade;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
@@ -70,6 +71,105 @@ public class AssignmentController {
         }
 
         return ResponseEntity.ok(gradeService.getFeedbackForAssignment(assignmentId, student.getUserId()));
+    }
+    @PutMapping("/{assignmentId}")
+    @Operation(summary = "更新作业信息",
+            description = "更新作业标题、描述、截止日期等基本信息",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "更新成功"),
+                    @ApiResponse(responseCode = "403", description = "无修改权限"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<Assignment> updateAssignment(
+            @PathVariable Long assignmentId,
+            @RequestBody AssignmentDTO request,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment existing = assignmentService.getAssignmentById(assignmentId);
+
+        // 通过课程验证教师权限
+        Course course = existing.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限修改该作业", HttpStatus.FORBIDDEN);
+        }
+
+        // 更新可修改字段
+        existing.setTitle(request.getTitle());
+        existing.setDescription(request.getDescription());
+        existing.setType(request.getType());
+        existing.setDueDate(request.getDueDate());
+        existing.setMaxScore(request.getMaxScore());
+        existing.setIsVisible(request.getIsVisible());
+
+        return ResponseEntity.ok(assignmentService.updateAssignment(existing));
+    }
+    @DeleteMapping("/{assignmentId}")
+    @Operation(summary = "删除作业",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "删除成功"),
+                    @ApiResponse(responseCode = "403", description = "无删除权限"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<Void> deleteAssignment(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 通过课程验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限删除该作业", HttpStatus.FORBIDDEN);
+        }
+
+        assignmentService.deleteAssignmentWithDependencies(assignmentId);
+        return ResponseEntity.noContent().build();
+    }
+    @PutMapping("/{assignmentId}/publish")
+    @Operation(summary = "发布作业",
+            description = "设置作业可见状态为公开",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "发布成功"),
+                    @ApiResponse(responseCode = "403", description = "无操作权限"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<Assignment> publishAssignment(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 通过课程验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+        }
+
+        assignment.setIsVisible(true);
+        return ResponseEntity.ok(assignmentService.updateAssignment(assignment));
+    }
+    @PutMapping("/{assignmentId}/unpublish")
+    @Operation(summary = "取消发布作业",
+            description = "设置作业可见状态为不可见",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "取消发布成功"),
+                    @ApiResponse(responseCode = "403", description = "无操作权限"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<Assignment> unpublishAssignment(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 通过课程验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+        }
+
+        assignment.setIsVisible(false);
+        return ResponseEntity.ok(assignmentService.updateAssignment(assignment));
     }
 
 

@@ -34,4 +34,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findBySemesterAndStudents_UserId(String currentSemester, Long studentId);
 
     boolean existsByStudents_UserIdAndId(Long userId, Long courseId);
+
+
 }

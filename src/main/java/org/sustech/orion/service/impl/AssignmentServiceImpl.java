@@ -13,6 +13,7 @@ import org.sustech.orion.service.AssignmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -99,6 +100,31 @@ public class AssignmentServiceImpl implements AssignmentService {
     public Assignment getAssignmentById(Long assignmentId) {
         return assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new ApiException("Assignment not found", HttpStatus.NOT_FOUND));
+    }
+    public List<Assignment> getUpcomingAssignmentsForTeacher(Long teacherId, int days) {
+        LocalDateTime now = LocalDateTime.now();
+        return assignmentRepository.findByTeacherAndDueDateBetween(
+                teacherId,
+                now,
+                now.plusDays(days)
+        );
+    }
+
+    @Override
+    public List<Assignment> getAssignmentsByCourseId(Long courseId) {
+        return assignmentRepository.findByCourse_Id(courseId);
+    }
+    @Override
+    public Assignment updateAssignment(Assignment assignment) {
+        return assignmentRepository.save(assignment);
+    }
+
+    @Override
+    public void deleteAssignmentWithDependencies(Long assignmentId) {
+        // 删除关联的提交记录、成绩等
+        //submissionService.deleteByAssignmentId(assignmentId);
+        //gradeService.deleteByAssignmentId(assignmentId);
+        assignmentRepository.deleteById(assignmentId);
     }
 
 

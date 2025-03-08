@@ -24,4 +24,6 @@ public interface SubmissionService {
     String getSubmissionStatus(Long submissionId, Long studentId);
 
     void saveSubmission(Submission submission);
+
+    List<Submission> getPendingSubmissions(Long teacherId);
 }

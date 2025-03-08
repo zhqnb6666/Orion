@@ -87,7 +87,7 @@ public class SubmissionController {
                 .peek(content -> content.setSubmission(submission))
                 .collect(Collectors.toList()));
 
-        submission.setStatus("DRAFT");
+        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
         submission.setStudent(student);
         return ResponseEntity.ok(submissionService.createSubmission(assignmentId, submission));
     }

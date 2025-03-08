@@ -32,4 +32,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             Long assignmentId,
             Long studentId
     );
+
+
+    @Query("SELECT s FROM Submission s " +
+            "WHERE s.status = 'ACCEPTED' " +
+            "AND s.assignment.course.instructor.userId = :teacherId")
+    List<Submission> findByStatusAndAssignment_Course_Teacher_UserId(
+            @Param("teacherId") Long teacherId);
 }

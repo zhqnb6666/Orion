@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.sustech.orion.model.Assignment;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -40,4 +41,13 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     List<Assignment> findUpcomingAssignments(@Param("studentId") Long studentId,
                                              @Param("start") Timestamp start,
                                              @Param("end") Timestamp end);
+
+
+    @Query("SELECT a FROM Assignment a " +
+            "WHERE a.course.instructor.userId = :teacherId " +
+            "AND a.dueDate BETWEEN :start AND :end")
+    List<Assignment> findByTeacherAndDueDateBetween(
+            @Param("teacherId") Long teacherId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 }

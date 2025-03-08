@@ -16,15 +16,19 @@ public interface CourseService {
 
     List<Course> getCoursesByInstructor(Long instructorId);
 
-    @Transactional
-    void deactivateCourse(Long courseId);
 
     List<Course> getCoursesByStudentId(Long studentId);
 
     List<Course> getCurrentSemesterCourses(Long studentId);
 
+    void removeStudentFromCourse(Long courseId, Long studentId);
+
     @Transactional
     void addStudentToCourse(Long courseId, User student);
 
     boolean isStudentInCourse(Long courseId, Long userId);
+
+    Course updateCourse(Course course);
+
+    void deleteCourseWithDependencies(Long courseId);
 }

@@ -56,7 +56,7 @@ public class AssignmentController {
 
         Submission submission = new Submission();
         submission.setStudent(student);
-        submission.setStatus("SUBMITTED");
+        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
         submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));
         submission.setAttempts(submissionService.getSubmissionAttempts(student.getUserId(), assignmentId) + 1);
 

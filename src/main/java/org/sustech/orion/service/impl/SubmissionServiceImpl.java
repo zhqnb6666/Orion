@@ -3,7 +3,6 @@ package org.sustech.orion.service.impl;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Submission;
-import org.sustech.orion.model.SubmissionConfig;
 import org.sustech.orion.repository.AssignmentRepository;
 import org.sustech.orion.repository.SubmissionConfigRepository;
 import org.sustech.orion.repository.SubmissionRepository;
@@ -41,7 +40,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     public void updateSubmissionStatus(Long submissionId, String newStatus) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
-        submission.setStatus(newStatus);
+        submission.setStatus(Submission.SubmissionStatus.valueOf(newStatus));
         submissionRepository.save(submission);
     }
 
@@ -102,10 +101,16 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new ApiException("Unauthorized to view this submission", HttpStatus.FORBIDDEN);
         }
 
-        return submission.getStatus();
+        return submission.getStatus().toString();
     }
     @Override
     public void saveSubmission(Submission submission) {
         submissionRepository.save(submission);
+    }
+
+    @Override
+    public List<Submission> getPendingSubmissions(Long teacherId) {
+        return submissionRepository.findByStatusAndAssignment_Course_Teacher_UserId(
+                teacherId);
     }
 }
