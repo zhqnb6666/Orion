@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Data
@@ -31,10 +32,10 @@ public class Resource {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    @ManyToOne
+    @OneToMany
     @JsonIgnore
-    @JoinColumn(name = "assignment_id")
-    private Assignment assignment;
+    @JoinColumn(name = "resource_id", nullable = false)
+    private List<Attachment> attachments;
 
     @ManyToOne
     @JsonIgnore

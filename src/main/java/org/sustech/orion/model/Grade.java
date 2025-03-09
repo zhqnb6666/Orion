@@ -41,4 +41,12 @@ public class Grade {
 
     @Column
     private Timestamp appealTime;//新增 申诉时间
+
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.UPCOMING;
+
+    public enum Status
+    {
+        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED
+    }
 }

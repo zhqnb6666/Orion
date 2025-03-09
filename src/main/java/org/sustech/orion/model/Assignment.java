@@ -35,10 +35,21 @@ public class Assignment {
     @Column(nullable = false)
     private Integer maxScore;
 
+    @OneToMany
+    @JsonIgnore
+    @JoinColumn(name = "assignment_id", nullable = false)
+    private List<Attachment> attachments;
+
     @JsonIgnore
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Boolean isVisible;
+    private Status status;
+
+    public enum Status{
+        OPEN,CLOSED,UPCOMING
+    }
+
 }
