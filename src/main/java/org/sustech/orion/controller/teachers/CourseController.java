@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.CourseDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
@@ -15,6 +17,7 @@ import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.UserService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.List;
 
@@ -36,7 +39,7 @@ public class CourseController {
     /* useful */
     @PostMapping//ok
     @Operation(summary = "Create course", description = "Create a new course")//tested
-    public ResponseEntity<Course> createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<CourseItemResponseDTO> createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
         //system.out.println(currentUser.getUsername());
         Course course = new Course();
         course.setCourseName(request.getCourseName());
@@ -45,30 +48,30 @@ public class CourseController {
         course.setDescription(request.getDescription());
         course.setIsActive(request.getIsActive());
         course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));
-        return ResponseEntity.ok(courseService.createCourse(course, currentUser));
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.createCourse(course, currentUser)));
     }
 
     @GetMapping("/{courseId}")//ok
     @Operation(summary = "Get course details", description = "Get course by ID")
-    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getCourseById(courseId));
+    public ResponseEntity<CourseItemResponseDTO> getCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.getCourseById(courseId)));
     }
 
     /* useless */
 
     @GetMapping("/semester/{semester}")//ok
     @Operation(summary = "List courses by semester")
-    public ResponseEntity<List<Course>> getCoursesBySemester(@PathVariable String semester) {
-        return ResponseEntity.ok(courseService.getCoursesBySemester(semester));
+    public ResponseEntity<List<CourseItemResponseDTO>> getCoursesBySemester(@PathVariable String semester) {
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCoursesBySemester(semester)));
     }
 
     @GetMapping
     @Operation(summary = "获取教师所有课程", description = "获取当前教师负责的所有课程")
-    public ResponseEntity<List<Course>> getTeacherCourses(
+    public ResponseEntity<List<CourseItemResponseDTO>> getTeacherCourses(
             @AuthenticationPrincipal User currentUser) {
 
         List<Course> courses = courseService.getCoursesByInstructor(currentUser.getUserId());
-        return ResponseEntity.ok(courses);
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courses));
     }
 
     @PutMapping("/{courseId}")
@@ -78,7 +81,7 @@ public class CourseController {
                     @ApiResponse(responseCode = "403", description = "无修改权限"),
                     @ApiResponse(responseCode = "404", description = "课程不存在")
             })
-    public ResponseEntity<Course> updateCourse(
+    public ResponseEntity<CourseItemResponseDTO> updateCourse(
             @PathVariable Long courseId,
             @RequestBody CourseDTO request,
             @AuthenticationPrincipal User currentUser) {
@@ -96,8 +99,9 @@ public class CourseController {
         existingCourse.setSemester(request.getSemester());
         existingCourse.setIsActive(request.getIsActive());
 
-        return ResponseEntity.ok(courseService.updateCourse(existingCourse));
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.updateCourse(existingCourse)));
     }
+
     @DeleteMapping("/{courseId}")
     @Operation(summary = "删除课程",
             responses = {
@@ -119,6 +123,7 @@ public class CourseController {
         courseService.deleteCourseWithDependencies(courseId);
         return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/{courseId}/students")
     @Operation(summary = "获取课程学生列表",
             responses = {
@@ -138,6 +143,7 @@ public class CourseController {
 
         return ResponseEntity.ok(course.getStudents());
     }
+
     @PostMapping("/{courseId}/students")
     @Operation(summary = "添加学生到课程",
             responses = {
@@ -164,6 +170,7 @@ public class CourseController {
         courseService.addStudentToCourse(courseId, student);
         return ResponseEntity.noContent().build();
     }
+
     @DeleteMapping("/{courseId}/students/{studentId}")
     @Operation(summary = "从课程移除学生",
             responses = {
@@ -187,6 +194,7 @@ public class CourseController {
         courseService.removeStudentFromCourse(courseId, studentId);
         return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/{courseId}/assignments")
     @Operation(summary = "获取课程作业列表",
             description = "获取指定课程下的所有作业",
@@ -195,7 +203,7 @@ public class CourseController {
                     @ApiResponse(responseCode = "403", description = "无查看权限"),
                     @ApiResponse(responseCode = "404", description = "课程不存在")
             })
-    public ResponseEntity<List<Assignment>> getCourseAssignments(
+    public ResponseEntity<List<AssignmentResponseDTO>> getCourseAssignments(
             @PathVariable Long courseId,
             @AuthenticationPrincipal User currentUser) {
 
@@ -206,6 +214,6 @@ public class CourseController {
             throw new ApiException("无权限查看该课程作业", HttpStatus.FORBIDDEN);
         }
 
-        return ResponseEntity.ok(assignmentService.getAssignmentsByCourseId(courseId));
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));
     }
 }

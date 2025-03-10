@@ -17,6 +17,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
     List<TestCase> findByWeightGreaterThan(Double minWeight);
 
     // 根据输入/输出模糊匹配（复杂查询需用@Query）
-    @Query("SELECT t FROM TestCase t WHERE t.input LIKE %:keyword% OR t.expectedOutput LIKE %:keyword%")
-    List<TestCase> findByInputOrOutputContaining(@Param("keyword") String keyword);
+    //@Query("SELECT t FROM TestCase t WHERE t.input LIKE %:keyword% OR t.expectedOutput LIKE %:keyword%")
+    //List<TestCase> findByInputOrOutputContaining(@Param("keyword") String keyword);
+    List<TestCase> findByInputContainingOrExpectedOutputContaining(String keyword, String keyword2);
 }

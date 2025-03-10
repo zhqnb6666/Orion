@@ -17,6 +17,7 @@ public interface AIGradingRepository extends JpaRepository<AIGrading, Long> {
     List<AIGrading> findByConfidenceGreaterThan(Double minConfidence);
 
     // 根据分数区间查询（例如查找AI评分在80-100之间的记录）
-    @Query("SELECT a FROM AIGrading a WHERE a.aiScore BETWEEN :min AND :max")
-    List<AIGrading> findByAiScoreRange(@Param("min") Double min, @Param("max") Double max);
+    //@Query("SELECT a FROM AIGrading a WHERE a.aiScore BETWEEN :min AND :max")
+    //List<AIGrading> findByAiScoreRange(@Param("min") Double min, @Param("max") Double max);
+    List<AIGrading> findByAiScoreBetween(Double min, Double max);
 }

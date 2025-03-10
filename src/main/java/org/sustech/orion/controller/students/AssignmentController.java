@@ -10,12 +10,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.AssignmentDTO;
 import org.sustech.orion.dto.SubmissionDTO;
+import org.sustech.orion.dto.responseDTO.CourseMaterialResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.ResourceService;
 import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -107,7 +109,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "未参加该作业"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<List<Resource>> getAssignmentResources(
+    public ResponseEntity<CourseMaterialResponseDTO> getAssignmentResources(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student) {
 
@@ -120,7 +122,7 @@ public class AssignmentController {
             throw new ApiException("未参加该课程作业", HttpStatus.FORBIDDEN);
         }
 
-        return ResponseEntity.ok(resourceService.getAssignmentResources(assignmentId));
+        return ResponseEntity.ok(ConvertDTO.AssignmentToCourseMaterialResponseDTO(assignment));
     }
 
 

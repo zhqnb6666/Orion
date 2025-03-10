@@ -8,9 +8,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.GradeDTO;
 import org.sustech.orion.dto.GradeSummaryDTO;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.model.Grade;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.GradeService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.List;
 
@@ -38,18 +40,18 @@ public class GradeController {
     /* useless */
     @PostMapping("/{submissionId}")
     @Operation(summary = "Grade submission")
-    public ResponseEntity<Grade> gradeSubmission(
+    public ResponseEntity<GradeResponseDTO> gradeSubmission(
             @PathVariable Long submissionId,
             @RequestBody GradeDTO request,
             @AuthenticationPrincipal User grader) {
-        return ResponseEntity.ok(
+        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO(
                 gradeService.gradeSubmission(
                         submissionId,
                         request.getScore(),
                         request.getFeedback(),
                         grader
                 )
-        );
+        ));
     }
     @GetMapping("/summary")
     @Operation(summary = "获取成绩汇总",

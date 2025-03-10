@@ -12,7 +12,5 @@ public interface ResourceService {
 
     String uploadFile(MultipartFile file);
 
-    List<Resource> getAssignmentResources(Long assignmentId);
-
     Resource getResourceById(Long resourceId);
 }

@@ -26,6 +26,8 @@ public class ResourcesController {
         this.resourceService = resourceService;
         this.courseService = courseService;
     }
+
+    //TODO:具体下载资源文件的逻辑
     @GetMapping("/{resourceId}/download")
     @Operation(summary = "下载资源文件",
             description = "下载指定资源文件",
@@ -46,12 +48,6 @@ public class ResourcesController {
                     resource.getCourse().getId(),
                     student.getUserId())) {
                 throw new ApiException("无权访问该课程资源", HttpStatus.FORBIDDEN);
-            }
-        } else if (resource.getAssignment() != null) {
-            if (!courseService.isStudentInCourse(
-                    resource.getAssignment().getCourse().getId(),
-                    student.getUserId())) {
-                throw new ApiException("无权访问该作业资源", HttpStatus.FORBIDDEN);
             }
         }
 

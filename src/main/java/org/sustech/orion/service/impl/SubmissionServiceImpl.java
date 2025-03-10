@@ -9,6 +9,7 @@ import org.sustech.orion.repository.SubmissionRepository;
 import org.sustech.orion.service.SubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -56,6 +57,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         return submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
     }
+
     @Override
     public Submission createSubmission(Long assignmentId, Submission submission) {
 
@@ -64,7 +66,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         // 检查剩余提交次数
         int attempts = getSubmissionAttempts(submission.getStudent().getUserId(), assignmentId);
-        if(attempts >= submissionConfigRepository.findByAssignmentId(assignmentId).getMaxSubmissionAttempts()) {
+        if (attempts >= submissionConfigRepository.findByAssignmentId(assignmentId).getMaxSubmissionAttempts()) {
             throw new ApiException("Exceeded maximum submission attempts", HttpStatus.FORBIDDEN);
         }
 
@@ -77,6 +79,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     public List<Submission> getSubmissionsByAssignmentAndStudent(Long assignmentId, Long studentId) {
         return submissionRepository.findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(assignmentId, studentId);
     }
+
     @Override
     public void deleteStudentSubmission(Long submissionId, Long studentId) {
         Submission submission = submissionRepository.findById(submissionId)
@@ -92,6 +95,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         submissionRepository.delete(submission);
     }
+
     @Override
     public String getSubmissionStatus(Long submissionId, Long studentId) {
         Submission submission = submissionRepository.findById(submissionId)
@@ -103,6 +107,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         return submission.getStatus().toString();
     }
+
     @Override
     public void saveSubmission(Submission submission) {
         submissionRepository.save(submission);
@@ -110,7 +115,8 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     public List<Submission> getPendingSubmissions(Long teacherId) {
-        return submissionRepository.findByStatusAndAssignment_Course_Teacher_UserId(
+        return submissionRepository.findByStatusAndAssignment_Course_Instructor_UserId(
+                Submission.SubmissionStatus.ACCEPTED.toString(),
                 teacherId);
     }
 }

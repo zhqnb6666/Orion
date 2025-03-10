@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.sustech.orion.model.Submission;
 
+import java.awt.print.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +22,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     // 查询某学生的所有提交
     List<Submission> findByStudent_UserId(Long studentId);
 
-    // 使用JPQL实现复杂查询（例如最新3次提交）
-    @Query("SELECT s FROM Submission s WHERE s.assignment.id = :assignmentId " +
-            "ORDER BY s.submitTime DESC LIMIT 3")
-    List<Submission> findTop3ByAssignment(@Param("assignmentId") Long assignmentId);
+
+
+    //sample: repository.findTopNByAssignment(assignmentId, PageRequest.of(0, n));
+    @Query("SELECT s FROM Submission s WHERE s.assignment.id = :assignmentId ORDER BY s.submitTime DESC")
+    List<Submission> findTopNByAssignment(@Param("assignmentId") Long assignmentId, Pageable pageable);
 
     List<Submission> findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(Long assignmentId, Long studentId);
 
@@ -34,9 +36,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     );
 
 
-    @Query("SELECT s FROM Submission s " +
-            "WHERE s.status = 'ACCEPTED' " +
-            "AND s.assignment.course.instructor.userId = :teacherId")
-    List<Submission> findByStatusAndAssignment_Course_Teacher_UserId(
-            @Param("teacherId") Long teacherId);
+    //    @Query("SELECT s FROM Submission s " +
+//            "WHERE s.status = 'ACCEPTED' " +
+//            "AND s.assignment.course.instructor.userId = :teacherId")
+//    List<Submission> findByStatusAndAssignment_Course_Teacher_UserId(
+//            @Param("teacherId") Long teacherId);
+    List<Submission> findByStatusAndAssignment_Course_Instructor_UserId(String status, Long teacherId);
 }
