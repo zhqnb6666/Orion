@@ -35,6 +35,12 @@ public class Assignment {
     @Column(nullable = false)
     private Integer maxScore;
 
+    @Column(columnDefinition = "TEXT")
+    private String instructions;//new
+
+    @Column(nullable = false)
+    private String submissionUrl;//new
+
     @OneToMany
     @JsonIgnore
     @JoinColumn(name = "assignment_id", nullable = false)
