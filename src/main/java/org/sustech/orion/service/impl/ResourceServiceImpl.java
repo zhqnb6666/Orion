@@ -57,10 +57,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
 
-    @Override
-    public List<Resource> getAssignmentResources(Long assignmentId) {
-        return resourceRepository.findByAssignmentId(assignmentId);
-    }
+
 
     @Override
     public Resource getResourceById(Long resourceId) {

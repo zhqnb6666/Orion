@@ -43,6 +43,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
                                              @Param("end") Timestamp end);
 
 
+    //  TODO:实体中dueDate字段为Timestamp类型，参数使用LocalDateTime可能导致类型转换错误
     @Query("SELECT a FROM Assignment a " +
             "WHERE a.course.instructor.userId = :teacherId " +
             "AND a.dueDate BETWEEN :start AND :end")

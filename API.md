@@ -20,7 +20,8 @@ GET /api/students/dashboard  				# 获取学生仪表盘数据(包括待完成�
 ```
 
 GET /api/students/courses                  # 获取学生所有课程列表                     *pjh
-GET /api/students/courses/{courseId}       # 获取特定课程详情                        *pjh
+GET /api/students/courses/{courseId}       # 获取特定课程基础信息                      *pjh
+GET /api/students/courses/courseItem/{courseId}       # 获取特定课程详情              *pjh
 GET /api/students/courses/current          # 获取当前学期课程                         *pjh
 POST /api/students/courses/{courseId}/join # 加入课程                               *pjh
 

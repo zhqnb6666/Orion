@@ -99,7 +99,7 @@ public class ConvertDTO {
     }
 
     // 集合转换方法
-    public static List<CourseBasicInfoResponseDTO> toCourseBasicInfoDTOList(List<Course> courses) {
+    public static List<CourseBasicInfoResponseDTO> toCourseBasicInfoResponseDTOList(List<Course> courses) {
         return toDTOList(courses, ConvertDTO::toCourseBasicInfoResponseDTO);
     }
 
@@ -107,14 +107,14 @@ public class ConvertDTO {
 
 
     // 通用集合转换方法
-    public static List<CourseItemResponseDTO> toCourseItemDTOList(List<Course> courses) {
+    public static List<CourseItemResponseDTO> toCourseItemResponseDTOList(List<Course> courses) {
         return toDTOList(courses, ConvertDTO::toCourseItemResponseDTO);
     }
 
-    public static List<CourseMaterialResponseDTO> ResourceToCourseMaterialDTOList(List<Resource> resources) {
+    public static List<CourseMaterialResponseDTO> ResourceToCourseMaterialResponseDTOList(List<Resource> resources) {
         return toDTOList(resources, ConvertDTO::ResourceToCourseMaterialResponseDTO);
     }
-    public static List<CourseMaterialResponseDTO> AssignmentToCourseMaterialDTOList(List<Assignment> assignments) {
+    public static List<CourseMaterialResponseDTO> AssignmentToCourseMaterialResponseDTOList(List<Assignment> assignments) {
         return toDTOList(assignments, ConvertDTO::AssignmentToCourseMaterialResponseDTO);
     }
 
@@ -136,5 +136,6 @@ public class ConvertDTO {
     public static List<AttachmentResponseDTO> toAttachmentResponseDTOList(List<Attachment> attachments) {
         return toDTOList(attachments, ConvertDTO::toAttachmentResponseDTO);
     }
+
 
 }

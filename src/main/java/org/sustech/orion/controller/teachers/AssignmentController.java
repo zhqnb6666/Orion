@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
@@ -17,6 +19,7 @@ import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -35,10 +38,11 @@ public class AssignmentController {
         this.courseService = courseService;
         this.gradeService = gradeService;
     }
+
     /* useful */
     @PostMapping("/{courseId}/assignments")//ok
     @Operation(summary = "Create assignment")
-    public ResponseEntity<Assignment> createAssignment(
+    public ResponseEntity<AssignmentResponseDTO> createAssignment(
             @PathVariable Long courseId,
             @RequestBody AssignmentDTO request) {
         Assignment assignment = new Assignment();
@@ -46,10 +50,11 @@ public class AssignmentController {
         assignment.setDescription(request.getDescription());
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
-        assignment.setIsVisible(request.getIsVisible());
+        assignment.setStatus(Assignment.Status.valueOf(request.getStatus()));
         assignment.setMaxScore(request.getMaxScore());
-        return ResponseEntity.ok(assignmentService.createAssignment(assignment, courseId));
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
     }
+
     @GetMapping("/{assignmentId}/feedback")
     @Operation(summary = "获取作业反馈",
             description = "获取指定作业的所有评分反馈",
@@ -58,7 +63,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "未参加该作业"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<List<Grade>> getAssignmentFeedback(
+    public ResponseEntity<List<GradeResponseDTO>> getAssignmentFeedback(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student) {
 
@@ -70,8 +75,9 @@ public class AssignmentController {
             throw new ApiException("未参加该课程作业", HttpStatus.FORBIDDEN);
         }
 
-        return ResponseEntity.ok(gradeService.getFeedbackForAssignment(assignmentId, student.getUserId()));
+        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTOList(gradeService.getFeedbackForAssignment(assignmentId, student.getUserId())));
     }
+
     @PutMapping("/{assignmentId}")
     @Operation(summary = "更新作业信息",
             description = "更新作业标题、描述、截止日期等基本信息",
@@ -80,7 +86,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "无修改权限"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<Assignment> updateAssignment(
+    public ResponseEntity<AssignmentResponseDTO> updateAssignment(
             @PathVariable Long assignmentId,
             @RequestBody AssignmentDTO request,
             @AuthenticationPrincipal User currentUser) {
@@ -99,10 +105,11 @@ public class AssignmentController {
         existing.setType(request.getType());
         existing.setDueDate(request.getDueDate());
         existing.setMaxScore(request.getMaxScore());
-        existing.setIsVisible(request.getIsVisible());
+        existing.setStatus(Assignment.Status.valueOf(request.getStatus()));
 
-        return ResponseEntity.ok(assignmentService.updateAssignment(existing));
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(existing)));
     }
+
     @DeleteMapping("/{assignmentId}")
     @Operation(summary = "删除作业",
             responses = {
@@ -125,6 +132,7 @@ public class AssignmentController {
         assignmentService.deleteAssignmentWithDependencies(assignmentId);
         return ResponseEntity.noContent().build();
     }
+
     @PutMapping("/{assignmentId}/publish")
     @Operation(summary = "发布作业",
             description = "设置作业可见状态为公开",
@@ -133,7 +141,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "无操作权限"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<Assignment> publishAssignment(
+    public ResponseEntity<AssignmentResponseDTO> publishAssignment(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User currentUser) {
 
@@ -145,9 +153,10 @@ public class AssignmentController {
             throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
         }
 
-        assignment.setIsVisible(true);
-        return ResponseEntity.ok(assignmentService.updateAssignment(assignment));
+        assignment.setStatus(Assignment.Status.OPEN);
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
     }
+
     @PutMapping("/{assignmentId}/unpublish")
     @Operation(summary = "取消发布作业",
             description = "设置作业可见状态为不可见",
@@ -156,7 +165,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "无操作权限"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<Assignment> unpublishAssignment(
+    public ResponseEntity<AssignmentResponseDTO> unpublishAssignment(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User currentUser) {
 
@@ -168,18 +177,16 @@ public class AssignmentController {
             throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
         }
 
-        assignment.setIsVisible(false);
-        return ResponseEntity.ok(assignmentService.updateAssignment(assignment));
+        assignment.setStatus(Assignment.Status.CLOSED);
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
     }
-
-
 
 
     /* useless */
     @GetMapping("/course/{courseId}/active")//ok
     @Operation(summary = "Get active assignments")
-    public ResponseEntity<List<Assignment>> getActiveAssignments(@PathVariable Long courseId) {
-        return ResponseEntity.ok(assignmentService.getActiveAssignments(courseId));
+    public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
     }
 
     /*

@@ -11,8 +11,6 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     // 根据课程查询资源
     List<Resource> findByCourse_Id(Long courseId);
 
-    // 根据关联的作业查询资源
-    List<Resource> findByAssignment_Id(Long assignmentId);
 
     // 根据上传者查询资源
     List<Resource> findByUploadedBy_UserId(Long uploadedById);
@@ -23,6 +21,5 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     // 模糊搜索资源名称
     List<Resource> findByNameContainingIgnoreCase(String keyword);
 
-    List<Resource> findByAssignmentId(Long assignmentId);
 
 }

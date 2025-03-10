@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.dto.SubmissionDTO;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Grade;
 import org.sustech.orion.model.Submission;
@@ -17,6 +18,7 @@ import org.sustech.orion.model.User;
 import org.sustech.orion.service.GradeService;
 import org.sustech.orion.service.ResourceService;
 import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -169,7 +171,7 @@ public class SubmissionController {
                     @ApiResponse(responseCode = "403", description = "无权访问该提交"),
                     @ApiResponse(responseCode = "404", description = "提交或评分不存在")
             })
-    public ResponseEntity<Grade> getSubmissionGrade(
+    public ResponseEntity<GradeResponseDTO> getSubmissionGrade(
             @PathVariable Long submissionId,
             @AuthenticationPrincipal User student) {
 
@@ -184,7 +186,7 @@ public class SubmissionController {
             throw new ApiException("该提交尚未评分", HttpStatus.NOT_FOUND);
         }
 
-        return ResponseEntity.ok(submission.getGrade());
+        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO( submission.getGrade()));
     }
     @PostMapping("/{submissionId}/appeal")
     @Operation(summary = "提交成绩申诉",
