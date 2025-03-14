@@ -54,7 +54,7 @@ public class ConvertDTO {
     // Resource模型 转 CourseMaterialResponseDTO
     public static CourseMaterialResponseDTO ResourceToCourseMaterialResponseDTO(Resource resource) {
         CourseMaterialResponseDTO dto = new CourseMaterialResponseDTO();
-        dto.setId(resource.getId().toString());
+        dto.setId(resource.getId());
         dto.setTitle(resource.getName());
         dto.setType(resource.getType());
         dto.setDescription(resource.getDescription());
@@ -64,7 +64,7 @@ public class ConvertDTO {
     // Assignment模型 转 CourseMaterialResponseDTO
     public static CourseMaterialResponseDTO AssignmentToCourseMaterialResponseDTO(Assignment assignment) {
         CourseMaterialResponseDTO dto = new CourseMaterialResponseDTO();
-        dto.setId(assignment.getId().toString());
+        dto.setId(assignment.getId());
         dto.setTitle(assignment.getTitle());
         dto.setType(assignment.getType());
         dto.setDescription(assignment.getDescription());

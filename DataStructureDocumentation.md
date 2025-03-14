@@ -2,10 +2,10 @@
 
 #### Grade
 - **id**: 唯一的数字标识符
-- **name**: 名称（例如：作业1，期中考试，quiz2）
-- **type**: 成绩类型
+- **title**: 名称（例如：作业1，期中考试，quiz2）
+- **type**: 成绩类型（例如：作业，考试，测验）
 - **score**: 数字分数（如果未评分可以为 null）
-- **totalPoints**: 最大可能分数
+- **maxScore**: 最大可能分数
 - **dueDate**: 作业截止日期（日期时间格式）
 - **submittedDate**: 学生提交时间（可选）
 - **gradedDate**: 教师评分时间（可选）
@@ -68,7 +68,7 @@
 - **semester**: 学期
 - **description**: 课程描述
 - **isActive**: 布尔值，表示课程是否激活
-- **createdTime**: 创建时间（日期时间格式）
+- **createdAt**: 创建时间（日期时间格式）
 
 #### CourseBasicInfo
 - **courseName**: 课程名称
