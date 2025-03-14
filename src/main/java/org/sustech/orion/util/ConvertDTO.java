@@ -1,7 +1,10 @@
 package org.sustech.orion.util;
 
+import org.sustech.orion.dto.authDTO.LoginInfoDTO;
 import org.sustech.orion.dto.responseDTO.*;
 import org.sustech.orion.model.*;
+import org.sustech.orion.service.UserService;
+import org.sustech.orion.service.impl.UserServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +104,21 @@ public class ConvertDTO {
     // 集合转换方法
     public static List<CourseBasicInfoResponseDTO> toCourseBasicInfoResponseDTOList(List<Course> courses) {
         return toDTOList(courses, ConvertDTO::toCourseBasicInfoResponseDTO);
+    }
+
+    //转loginInfoDTO
+    public static LoginInfoDTO toLoginInfoDTO(User user, boolean isExpired) {
+        LoginInfoDTO dto = new LoginInfoDTO();
+        dto.setUserId(user.getUserId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole().name());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setBio(user.getBio());
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setExpired(isExpired);
+        return dto;
     }
 
 

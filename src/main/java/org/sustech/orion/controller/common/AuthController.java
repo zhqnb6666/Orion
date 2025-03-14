@@ -1,6 +1,7 @@
 package org.sustech.orion.controller.common;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.sustech.orion.dto.authDTO.RegisterRequest;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.impl.UserServiceImpl;
+import org.sustech.orion.util.ConvertDTO;
 import org.sustech.orion.util.JwtUtil;
 
 
@@ -89,6 +91,24 @@ public class AuthController {
             return ResponseEntity.ok("Password reset successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/user")
+    @Operation(summary = "Get basic information of user",description = "verify with jwt token")
+    public ResponseEntity<?> getUser(
+            @Parameter(hidden = true) @RequestHeader("Authorization") String jwt
+    ) {
+        try {
+            if(jwt == null || !jwt.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+            String jwtToken = jwt.substring(7);
+            User user = userService.getUserByName(jwtUtil.extractUsername(jwtToken));
+            boolean isExpired = jwtUtil.isTokenExpired(jwtToken);
+            return ResponseEntity.ok(ConvertDTO.toLoginInfoDTO(user, isExpired));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
