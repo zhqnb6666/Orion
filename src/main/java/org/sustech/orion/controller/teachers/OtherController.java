@@ -73,15 +73,15 @@ public class OtherController {
     @Operation(summary = "获取教师仪表盘数据",
             description = "获取待批改作业、课程概览等信息",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "成功获取仪表盘数据"),
-                    @ApiResponse(responseCode = "403", description = "无教师权限")
+                    @ApiResponse(responseCode = "200", description = "The dashboard data is successfully obtained"),
+                    @ApiResponse(responseCode = "403", description = "Unauthorized access")
             })
     public ResponseEntity<TeacherDashboardDTO> getTeacherDashboard(
             @AuthenticationPrincipal User currentUser) {
 
         // 验证教师身份
         if (!currentUser.getRole().equals("TEACHER")) {
-            throw new ApiException("无权限访问", HttpStatus.FORBIDDEN);
+            throw new ApiException("Unauthorized access", HttpStatus.FORBIDDEN);
         }
 
         TeacherDashboardDTO dashboard = new TeacherDashboardDTO();

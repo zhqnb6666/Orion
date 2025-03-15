@@ -100,6 +100,19 @@ public class CourseServiceImpl implements CourseService {
         course.getStudents().remove(student);
         courseRepository.save(course);
     }
+    @Transactional
+    @Override
+    public void joinCourseByCode(String courseCode, User student) {
+        Course course = courseRepository.findByCourseCode(courseCode);
+        if (course == null) {
+            throw new ApiException("课程不存在", HttpStatus.NOT_FOUND);
+        }
+        if (course.getStudents().contains(student)) {
+            throw new ApiException("您已加入该课程", HttpStatus.BAD_REQUEST);
+        }
+        course.getStudents().add(student);
+        courseRepository.save(course);
+    }
 
 
 }

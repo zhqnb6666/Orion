@@ -90,7 +90,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!existingCourse.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限修改该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to modify", HttpStatus.FORBIDDEN);
         }
 
         // 更新可修改字段
@@ -117,7 +117,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限删除该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to delete the course", HttpStatus.FORBIDDEN);
         }
 
         courseService.deleteCourseWithDependencies(courseId);
@@ -138,7 +138,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限查看该课程学生", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to view the course for students", HttpStatus.FORBIDDEN);
         }
 
         return ResponseEntity.ok(course.getStudents());
@@ -161,7 +161,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to operate this course", HttpStatus.FORBIDDEN);
         }
 
         User student = userService.getUserById(studentId);
@@ -188,7 +188,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to operate this course", HttpStatus.FORBIDDEN);
         }
 
         courseService.removeStudentFromCourse(courseId, studentId);
@@ -211,7 +211,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限查看该课程作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("Do not have permission to view the course work", HttpStatus.FORBIDDEN);
         }
 
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));

@@ -72,7 +72,7 @@ public class AssignmentController {
 
         // 验证学生课程权限
         if (!courseService.isStudentInCourse(assignment.getCourse().getId(), student.getUserId())) {
-            throw new ApiException("未参加该课程作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("Did not participate in the course assignment", HttpStatus.FORBIDDEN);
         }
 
         return ResponseEntity.ok(ConvertDTO.toGradeResponseDTOList(gradeService.getFeedbackForAssignment(assignmentId, student.getUserId())));
@@ -96,7 +96,7 @@ public class AssignmentController {
         // 通过课程验证教师权限
         Course course = existing.getCourse();
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限修改该作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to modify this job", HttpStatus.FORBIDDEN);
         }
 
         // 更新可修改字段
@@ -126,7 +126,7 @@ public class AssignmentController {
         // 通过课程验证教师权限
         Course course = assignment.getCourse();
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限删除该作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
         }
 
         assignmentService.deleteAssignmentWithDependencies(assignmentId);
@@ -150,7 +150,7 @@ public class AssignmentController {
         // 通过课程验证教师权限
         Course course = assignment.getCourse();
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
         }
 
         assignment.setStatus(Assignment.Status.OPEN);
@@ -174,7 +174,7 @@ public class AssignmentController {
         // 通过课程验证教师权限
         Course course = assignment.getCourse();
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
         }
 
         assignment.setStatus(Assignment.Status.CLOSED);

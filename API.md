@@ -24,6 +24,7 @@ GET /api/students/courses/{courseId}       # 获取特定课程基础信息     
 GET /api/students/courses/courseItem/{courseId}       # 获取特定课程详情              *pjh
 GET /api/students/courses/current          # 获取当前学期课程                         *pjh
 POST /api/students/courses/{courseId}/join # 加入课程                               *pjh
+POST /api/students/courses/join?courseCode={code}  # 通过课程代码加入课程              *pjh
 
 ```
 

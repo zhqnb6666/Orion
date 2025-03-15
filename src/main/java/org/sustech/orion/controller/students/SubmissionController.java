@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -60,39 +61,69 @@ public class SubmissionController {
         submissionService.updateSubmissionStatus(submissionId, request.getNewStatus());
         return ResponseEntity.noContent().build();
     }
+/*example
+* const formData = new FormData();
+formData.append('request', new Blob([JSON.stringify({
+    contents: [{
+        type: "CODE",
+        content: "System.out.println('Hello World');"
+    }]
+})], {type: "application/json"}));
 
-    // 创建新提交
-    @PostMapping("/assignments/{assignmentId}/submissions")
-    @Operation(summary = "Create new submission")
+// 添加文件
+const fileInput = document.getElementById('file-input');
+for (let i = 0; i < fileInput.files.length; i++) {
+    formData.append('files', fileInput.files[i]);
+}
+
+fetch('/api/students/submissions/assignments/123/submissions', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Bearer ' + token
+    },
+    body: formData
+});
+* */
+    @PostMapping(value = "/assignments/{assignmentId}/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "创建新提交（支持文件上传）")
     public ResponseEntity<Submission> createSubmission(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student,
-            @RequestBody SubmissionDTO request) {
-        Submission submission = new Submission();
-        /*
-        {
-            "contents": [
-                {
-                    "type": "CODE",
-                    "content": "System.out.println(\"Hello World\");",
-                    "fileUrl": null
-                },
-                {
-                    "type": "FILE",
-                    "fileUrl": "/uploads/file1.pdf",
-                    "mimeType": "application/pdf"
-                }
-            ]
+            @ModelAttribute SubmissionDTO request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+        // 处理文件上传
+        if (files != null && !files.isEmpty()) {
+            List<SubmissionDTO.SubmissionContentDTO> fileContents = files.stream().map(file -> {
+                String fileUrl = resourceService.uploadFile(file);
+                SubmissionDTO.SubmissionContentDTO content = new SubmissionDTO.SubmissionContentDTO();
+                content.setType("FILE");
+                content.setFileUrl(fileUrl);
+                return content;
+            }).collect(Collectors.toList());
+
+            request.getContents().addAll(fileContents);
         }
-        */
+
+        // 构建Submission实体
+        Submission submission = new Submission();
         submission.setContents(request.getContents().stream()
-                .peek(content -> content.setSubmission(submission))
+                .map(dto -> {
+                    SubmissionContent content = new SubmissionContent();
+                    content.setType(dto.getType());
+                    content.setContent(dto.getContent());
+                    content.setFileUrl(dto.getFileUrl());
+                    content.setSubmission(submission);
+                    return content;
+                })
                 .collect(Collectors.toList()));
 
         submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
         submission.setStudent(student);
+
         return ResponseEntity.ok(submissionService.createSubmission(assignmentId, submission));
     }
+
 
 
     // 获取作业提交历史（需补充到AssignmentController.java）
@@ -139,12 +170,12 @@ public class SubmissionController {
 
         // 权限校验
         if (!submission.getStudent().getUserId().equals(student.getUserId())) {
-            throw new ApiException("无权操作该提交", HttpStatus.FORBIDDEN);
+            throw new ApiException("The commit is not authorized to operate", HttpStatus.FORBIDDEN);
         }
 
         // 状态校验
         if (!"DRAFT".equals(submission.getStatus())) {
-            throw new ApiException("仅草稿状态可修改", HttpStatus.BAD_REQUEST);
+            throw new ApiException("Only draft status can be modified", HttpStatus.BAD_REQUEST);
         }
 
         // 上传文件并创建内容记录
@@ -167,9 +198,9 @@ public class SubmissionController {
     @Operation(summary = "获取提交评分详情",
             description = "获取指定提交的评分和评语",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "成功获取评分信息"),
-                    @ApiResponse(responseCode = "403", description = "无权访问该提交"),
-                    @ApiResponse(responseCode = "404", description = "提交或评分不存在")
+                    @ApiResponse(responseCode = "200", description = "Scoring information is obtained successfully"),
+                    @ApiResponse(responseCode = "403", description = "Do not have access to the submission"),
+                    @ApiResponse(responseCode = "404", description = "Submission or rating does not exist")
             })
     public ResponseEntity<GradeResponseDTO> getSubmissionGrade(
             @PathVariable Long submissionId,
@@ -179,11 +210,11 @@ public class SubmissionController {
 
         // 权限校验
         if (!submission.getStudent().getUserId().equals(student.getUserId())) {
-            throw new ApiException("无权查看该提交评分", HttpStatus.FORBIDDEN);
+            throw new ApiException("You have no right to view the submission score", HttpStatus.FORBIDDEN);
         }
 
         if (submission.getGrade() == null) {
-            throw new ApiException("该提交尚未评分", HttpStatus.NOT_FOUND);
+            throw new ApiException("The submission has not yet been scored", HttpStatus.NOT_FOUND);
         }
 
         return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO( submission.getGrade()));
@@ -192,9 +223,9 @@ public class SubmissionController {
     @Operation(summary = "提交成绩申诉",
             description = "对已评分的提交提出申诉",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "申诉已提交"),
-                    @ApiResponse(responseCode = "403", description = "无权操作"),
-                    @ApiResponse(responseCode = "409", description = "申诉已存在")
+                    @ApiResponse(responseCode = "201", description = "Complaint filed"),
+                    @ApiResponse(responseCode = "403", description = "No right to operate"),
+                    @ApiResponse(responseCode = "409", description = "Complaint exists")
             })
     public ResponseEntity<Void> submitAppeal(
             @PathVariable Long submissionId,
@@ -205,12 +236,12 @@ public class SubmissionController {
 
         // 权限校验
         if (!submission.getStudent().getUserId().equals(student.getUserId())) {
-            throw new ApiException("无权操作该提交", HttpStatus.FORBIDDEN);
+            throw new ApiException("The commit is not authorized to operate", HttpStatus.FORBIDDEN);
         }
 
         // 检查评分状态
         if (submission.getGrade() == null || !submission.getGrade().getIsFinalized()) {
-            throw new ApiException("成绩未最终确认", HttpStatus.BAD_REQUEST);
+            throw new ApiException("Grades have not been confirmed", HttpStatus.BAD_REQUEST);
         }
 
         gradeService.submitGradeAppeal(submission.getGrade().getId(), appealReason);

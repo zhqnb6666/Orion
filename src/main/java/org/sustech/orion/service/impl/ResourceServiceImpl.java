@@ -64,4 +64,12 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ApiException("资源不存在", HttpStatus.NOT_FOUND));
     }
+    @Override
+    public byte[] downloadResourceFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path)) {
+            throw new ApiException("File not found", HttpStatus.NOT_FOUND);
+        }
+        return Files.readAllBytes(path);
+    }
 }
