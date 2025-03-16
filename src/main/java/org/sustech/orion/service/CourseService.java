@@ -33,5 +33,5 @@ public interface CourseService {
     void deleteCourseWithDependencies(Long courseId);
 
     @Transactional
-    void joinCourseByCode(String courseCode, User student);
+    Course joinCourseByCode(String courseCode, User student);
 }

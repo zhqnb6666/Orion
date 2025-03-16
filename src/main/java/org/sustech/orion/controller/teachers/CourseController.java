@@ -18,6 +18,7 @@ import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.UserService;
 import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.SemesterUtil;
 
 import java.util.List;
 
@@ -44,10 +45,10 @@ public class CourseController {
         Course course = new Course();
         course.setCourseName(request.getCourseName());
         course.setCourseCode(request.getCourseCode());
-        course.setSemester(request.getSemester());
         course.setDescription(request.getDescription());
         course.setIsActive(request.getIsActive());
         course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.createCourse(course, currentUser)));
     }
 
@@ -96,7 +97,6 @@ public class CourseController {
         // 更新可修改字段
         existingCourse.setCourseName(request.getCourseName());
         existingCourse.setDescription(request.getDescription());
-        existingCourse.setSemester(request.getSemester());
         existingCourse.setIsActive(request.getIsActive());
 
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.updateCourse(existingCourse)));

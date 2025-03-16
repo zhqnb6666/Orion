@@ -21,6 +21,7 @@ import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
 import org.sustech.orion.service.ResourceService;
 import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.SemesterUtil;
 
 import java.util.List;
 
@@ -47,10 +48,10 @@ public class CourseController {
         Course course = new Course();
         course.setCourseName(request.getCourseName());
         course.setCourseCode(request.getCourseCode());
-        course.setSemester(request.getSemester());
         course.setDescription(request.getDescription());
         course.setIsActive(request.getIsActive());
         course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));
         return ResponseEntity.ok(courseService.createCourse(course, currentUser));
     }
 
@@ -143,11 +144,11 @@ public class CourseController {
                     @ApiResponse(responseCode = "400", description = "已加入课程"),
                     @ApiResponse(responseCode = "404", description = "课程不存在")
             })
-    public ResponseEntity<Void> joinCourseByCode(
+    public ResponseEntity<CourseItemResponseDTO> joinCourseByCode(
             @RequestParam String courseCode,
             @AuthenticationPrincipal User currentUser) {
 
-        courseService.joinCourseByCode(courseCode, currentUser);
-        return ResponseEntity.ok().build();
+        Course course = courseService.joinCourseByCode(courseCode, currentUser);
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(course));
     }
 }

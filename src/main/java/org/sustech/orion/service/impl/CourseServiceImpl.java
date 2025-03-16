@@ -102,7 +102,7 @@ public class CourseServiceImpl implements CourseService {
     }
     @Transactional
     @Override
-    public void joinCourseByCode(String courseCode, User student) {
+    public Course joinCourseByCode(String courseCode, User student) {
         Course course = courseRepository.findByCourseCode(courseCode);
         if (course == null) {
             throw new ApiException("课程不存在", HttpStatus.NOT_FOUND);
@@ -111,7 +111,7 @@ public class CourseServiceImpl implements CourseService {
             throw new ApiException("您已加入该课程", HttpStatus.BAD_REQUEST);
         }
         course.getStudents().add(student);
-        courseRepository.save(course);
+        return courseRepository.save(course);
     }
 
 
