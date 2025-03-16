@@ -93,6 +93,11 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.baidubce</groupId>
+            <artifactId>qianfan</artifactId>
+            <version>0.1.6</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
