@@ -3,12 +3,9 @@ package org.sustech.orion.util;
 import org.sustech.orion.dto.authDTO.LoginInfoDTO;
 import org.sustech.orion.dto.responseDTO.*;
 import org.sustech.orion.model.*;
-import org.sustech.orion.service.UserService;
-import org.sustech.orion.service.impl.UserServiceImpl;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -88,17 +85,17 @@ public class ConvertDTO {
     public static GradeResponseDTO toGradeResponseDTO(Grade grade) {
         GradeResponseDTO dto = new GradeResponseDTO();
         dto.setId(grade.getId());
-        dto.setName(grade.getSubmission().getAssignment().getTitle());
+        dto.setTitle(grade.getSubmission().getAssignment().getTitle());
         dto.setType(grade.getSubmission().getAssignment().getType());
         dto.setScore(grade.getScore());
-        dto.setTotalPoints(Double.valueOf(grade.getSubmission().getAssignment().getMaxScore()));
+        dto.setMaxScore(Double.valueOf(grade.getSubmission().getAssignment().getMaxScore()));
         dto.setDueDate(grade.getSubmission().getAssignment().getDueDate());
         dto.setSubmittedDate(grade.getSubmission().getSubmitTime());
         dto.setGradedDate(grade.getGradedTime());
         dto.setFeedback(grade.getFeedback());
         dto.setAppealReason(grade.getAppealReason());
         dto.setAppealTime(grade.getAppealTime());
-        dto.setStatus(grade.getStatus().name());
+        dto.setStatus(grade.getStatus().name().toLowerCase());
 
 
         return dto;

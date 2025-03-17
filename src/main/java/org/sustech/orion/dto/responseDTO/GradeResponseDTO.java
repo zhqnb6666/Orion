@@ -9,10 +9,10 @@ import java.sql.Timestamp;
 @Setter
 public class GradeResponseDTO {
     private Long id;
-    private String name;
+    private String title;
     private String type;
     private Double score;    // 允许为null
-    private Double totalPoints;
+    private Double maxScore;
     private Timestamp dueDate;
     private Timestamp submittedDate;
     private Timestamp gradedDate;
