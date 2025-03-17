@@ -33,6 +33,7 @@ public class AssignmentController {
         assignment.setDescription(request.getDescription());
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
+        assignment.setOpenDate(request.getOpenDate());
         return ResponseEntity.ok(assignmentService.createAssignment(assignment, courseId));
     }
 

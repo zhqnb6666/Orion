@@ -80,7 +80,7 @@ public class OtherController {
             @AuthenticationPrincipal User currentUser) {
 
         // 验证教师身份
-        if (!currentUser.getRole().equals("TEACHER")) {
+        if (!currentUser.getRole().equals(User.Role.TEACHER)) {
             throw new ApiException("Unauthorized access", HttpStatus.FORBIDDEN);
         }
 

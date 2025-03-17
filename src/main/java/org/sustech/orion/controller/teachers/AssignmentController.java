@@ -50,7 +50,7 @@ public class AssignmentController {
         assignment.setDescription(request.getDescription());
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
-        assignment.setStatus(Assignment.Status.valueOf(request.getStatus()));
+        assignment.setOpenDate(request.getOpenDate());
         assignment.setMaxScore(request.getMaxScore());
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
     }
@@ -104,8 +104,8 @@ public class AssignmentController {
         existing.setDescription(request.getDescription());
         existing.setType(request.getType());
         existing.setDueDate(request.getDueDate());
+        existing.setOpenDate(request.getOpenDate());
         existing.setMaxScore(request.getMaxScore());
-        existing.setStatus(Assignment.Status.valueOf(request.getStatus()));
 
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(existing)));
     }
@@ -133,53 +133,56 @@ public class AssignmentController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{assignmentId}/publish")
-    @Operation(summary = "发布作业",
-            description = "设置作业可见状态为公开",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "发布成功"),
-                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-                    @ApiResponse(responseCode = "404", description = "作业不存在")
-            })
-    public ResponseEntity<AssignmentResponseDTO> publishAssignment(
-            @PathVariable Long assignmentId,
-            @AuthenticationPrincipal User currentUser) {
 
-        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+    // useless api, 可以通过updateAssignment接口修改openDate和dueDate修改作业状态
 
-        // 通过课程验证教师权限
-        Course course = assignment.getCourse();
-        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-        }
-
-        assignment.setStatus(Assignment.Status.OPEN);
-        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-    }
-
-    @PutMapping("/{assignmentId}/unpublish")
-    @Operation(summary = "取消发布作业",
-            description = "设置作业可见状态为不可见",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "取消发布成功"),
-                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-                    @ApiResponse(responseCode = "404", description = "作业不存在")
-            })
-    public ResponseEntity<AssignmentResponseDTO> unpublishAssignment(
-            @PathVariable Long assignmentId,
-            @AuthenticationPrincipal User currentUser) {
-
-        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-
-        // 通过课程验证教师权限
-        Course course = assignment.getCourse();
-        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-        }
-
-        assignment.setStatus(Assignment.Status.CLOSED);
-        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-    }
+//    @PutMapping("/{assignmentId}/publish")
+//    @Operation(summary = "发布作业",
+//            description = "设置作业可见状态为公开",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "发布成功"),
+//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
+//                    @ApiResponse(responseCode = "404", description = "作业不存在")
+//            })
+//    public ResponseEntity<AssignmentResponseDTO> publishAssignment(
+//            @PathVariable Long assignmentId,
+//            @AuthenticationPrincipal User currentUser) {
+//
+//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+//
+//        // 通过课程验证教师权限
+//        Course course = assignment.getCourse();
+//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
+//        }
+//
+//        assignment.setStatus(Assignment.Status.OPEN);
+//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
+//    }
+//
+//    @PutMapping("/{assignmentId}/unpublish")
+//    @Operation(summary = "取消发布作业",
+//            description = "设置作业可见状态为不可见",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "取消发布成功"),
+//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
+//                    @ApiResponse(responseCode = "404", description = "作业不存在")
+//            })
+//    public ResponseEntity<AssignmentResponseDTO> unpublishAssignment(
+//            @PathVariable Long assignmentId,
+//            @AuthenticationPrincipal User currentUser) {
+//
+//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+//
+//        // 通过课程验证教师权限
+//        Course course = assignment.getCourse();
+//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
+//        }
+//
+//        assignment.setStatus(Assignment.Status.CLOSED);
+//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
+//    }
 
 
     /* useless */

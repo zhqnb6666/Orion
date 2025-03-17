@@ -11,9 +11,8 @@ public class NotificationDTO {
     private Long id;
     private String title;
     private String content;
+    private String senderUsername; // new
     private boolean isRead;
     private LocalDateTime createdAt;
     private String notificationType; // 如：SYSTEM, COURSE, GRADE
-
-
 }

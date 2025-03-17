@@ -89,6 +89,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new ApiException("Unauthorized to delete this submission", HttpStatus.FORBIDDEN);
         }
 
+        // todo: submission.getStatus()不存在DRAFT状态
         if (!"DRAFT".equals(submission.getStatus())) {
             throw new ApiException("Only DRAFT submissions can be deleted", HttpStatus.BAD_REQUEST);
         }
@@ -116,7 +117,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public List<Submission> getPendingSubmissions(Long teacherId) {
         return submissionRepository.findByStatusAndAssignment_Course_Instructor_UserId(
-                Submission.SubmissionStatus.ACCEPTED.toString(),
+                Submission.SubmissionStatus.ACCEPTED,
                 teacherId);
     }
 }

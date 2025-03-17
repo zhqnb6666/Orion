@@ -26,8 +26,13 @@ public class Notification {
 
     @ManyToOne
     @JsonIgnore
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "recipient_id")
     private User recipient;
+
+    @ManyToOne
+    @JsonIgnore
+    @JoinColumn(name = "sender_id")
+    private User sender; // new
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

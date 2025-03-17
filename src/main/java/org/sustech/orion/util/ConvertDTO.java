@@ -6,6 +6,8 @@ import org.sustech.orion.model.*;
 import org.sustech.orion.service.UserService;
 import org.sustech.orion.service.impl.UserServiceImpl;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -22,7 +24,16 @@ public class ConvertDTO {
         dto.setAttachments(toAttachmentResponseDTOList(assignment.getAttachments()));
         dto.setDueDate(assignment.getDueDate());
         dto.setMaxScore(assignment.getMaxScore());
-        dto.setStatus(assignment.getStatus().toString());
+
+        // new
+        if (assignment.getOpenDate().after(Timestamp.from(Instant.now()))) {
+            dto.setStatus("UPCOMING");
+        } else if (assignment.getDueDate().before(Timestamp.from(Instant.now()))) {
+            dto.setStatus("CLOSED");
+        } else {
+            dto.setStatus("OPEN");
+        }
+
         dto.setInstructions(assignment.getInstructions());
         dto.setSubmissionUrl(assignment.getSubmissionUrl());
 

@@ -30,6 +30,9 @@ public class Assignment {
     private String type;
 
     @Column(nullable = false)
+    private Timestamp openDate; // new
+
+    @Column(nullable = false)
     private Timestamp dueDate;
 
     @Column(nullable = false)
@@ -50,12 +53,15 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Status status;
 
-    public enum Status{
-        OPEN,CLOSED,UPCOMING
-    }
+    // delete status field, add openDate field, dynamically calculate the status when getting assignments
+
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    private Status status;
+//
+//    public enum Status{
+//        OPEN,CLOSED,UPCOMING
+//    }
 
 }

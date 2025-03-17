@@ -61,10 +61,13 @@ public class Initializer {
         User admin = createUser("admin", "admin@example.com", User.Role.ADMIN);
         User teacher = createUser("teacher", "teacher@example.com", User.Role.TEACHER);
         User student = createUser("student", "student@example.com", User.Role.STUDENT);
+        // 系统用户，用于发送系统通知
+        User system = createUser("SYSTEM", "system@example.com", User.Role.ADMIN);
         Map<String, User> userMap = new HashMap<>();
         userMap.put("admin", admin);
         userMap.put("teacher", teacher);
         userMap.put("student", student);
+        userMap.put("system", system);
         System.out.println("Created users: admin, teacher, student");
         return userMap;
     }

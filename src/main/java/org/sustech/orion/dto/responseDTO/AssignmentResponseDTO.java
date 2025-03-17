@@ -8,7 +8,6 @@ import java.util.List;
 
 @Getter
 @Setter
-
 public class AssignmentResponseDTO {
     // CourseMaterial部分
     private String id;          // 改为字符串类型
@@ -18,6 +17,7 @@ public class AssignmentResponseDTO {
     private List<AttachmentResponseDTO> attachments;
 
     // Assignment特有
+    private Timestamp openDate; // new
     private Timestamp dueDate;
     private Integer maxScore;
     private String status;      // 枚举值：open/closed/upcoming

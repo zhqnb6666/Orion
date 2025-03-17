@@ -174,6 +174,7 @@ fetch('/api/students/submissions/assignments/123/submissions', {
         }
 
         // 状态校验
+        // todo: submission.getStatus()不存在DRAFT状态
         if (!"DRAFT".equals(submission.getStatus())) {
             throw new ApiException("Only draft status can be modified", HttpStatus.BAD_REQUEST);
         }
