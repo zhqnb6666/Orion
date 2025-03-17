@@ -9,8 +9,10 @@ public class model {
     private static final QianfanV2 client = new Qianfan("bce-v3/ALTAK-rN1GJbJxabN8c2V0twWb5/acf494b1376487f599c2aa78c80f1fe8c06462f9").v2();
 
     public static String chat(String input){
+        String System = "你是一个智能的AI助手，你可以回答任何问题";
         RequestV2 request = client.chatCompletion()
                 .model("qwq-32b")
+                .addMessage("system" , System)
                 .addMessage("user", input)
                 .temperature(0.7)
                 .build();
