@@ -33,9 +33,16 @@ public class Resource {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    @OneToMany
-    @JsonIgnore
-    @JoinColumn(name = "resource_id", nullable = false)
+//    @OneToMany
+//    @JsonIgnore
+//    @JoinColumn(name = "resource_id", nullable = false)
+
+    @ManyToMany
+    @JoinTable(
+            name = "resource_attachments",
+            joinColumns = @JoinColumn(name = "resource_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
     private List<Attachment> attachments;
 
     @ManyToOne

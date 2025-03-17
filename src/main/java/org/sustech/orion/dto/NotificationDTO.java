@@ -2,7 +2,9 @@ package org.sustech.orion.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.query.results.TableGroupImpl;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Getter
@@ -13,6 +15,6 @@ public class NotificationDTO {
     private String content;
     private String senderUsername; // new
     private boolean isRead;
-    private LocalDateTime createdAt;
-    private String notificationType; // 如：SYSTEM, COURSE, GRADE
+    private Timestamp createdAt;
+    private String priority; // modified, "High Priority", "Medium Priority", or "Low Priority"
 }

@@ -35,7 +35,7 @@ public class ConvertDTO {
         }
 
         dto.setInstructions(assignment.getInstructions());
-        dto.setSubmissionUrl(assignment.getSubmissionUrl());
+//        dto.setSubmissionUrl(assignment.getSubmissionUrl());
 
         return dto;
     }

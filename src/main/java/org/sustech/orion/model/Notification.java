@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -36,13 +35,13 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type;
+    private Priority priority;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 
-    public enum NotificationType {
-        A, B, C
+    public enum Priority {
+        HIGH, MEDIUM, LOW
     }
 
 }

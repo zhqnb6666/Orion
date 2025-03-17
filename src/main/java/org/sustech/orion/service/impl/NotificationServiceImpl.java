@@ -45,7 +45,11 @@ public class NotificationServiceImpl implements NotificationService {
         dto.setContent(notification.getContent());
         dto.setRead(notification.isRead());
         dto.setCreatedAt(notification.getCreatedAt());
-        dto.setNotificationType(notification.getType().name());
+        dto.setPriority(switch (notification.getPriority()) {
+            case HIGH -> "High Priority";
+            case MEDIUM -> "Medium Priority";
+            case LOW -> "Low Priority";
+        });
         return dto;
     }
     @Override

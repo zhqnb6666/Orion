@@ -97,7 +97,7 @@ fetch('/api/students/submissions/assignments/123/submissions', {
             List<SubmissionDTO.SubmissionContentDTO> fileContents = files.stream().map(file -> {
                 String fileUrl = resourceService.uploadFile(file);
                 SubmissionDTO.SubmissionContentDTO content = new SubmissionDTO.SubmissionContentDTO();
-                content.setType("FILE");
+                content.setType(SubmissionContent.ContentType.FILE);
                 content.setFileUrl(fileUrl);
                 return content;
             }).collect(Collectors.toList());
@@ -182,7 +182,7 @@ fetch('/api/students/submissions/assignments/123/submissions', {
         // 上传文件并创建内容记录
         String fileUrl = resourceService.uploadFile(file);
         SubmissionContent content = new SubmissionContent();
-        content.setType("FILE");
+        content.setType(SubmissionContent.ContentType.FILE);
         content.setFileUrl(fileUrl);
         content.setMimeType(file.getContentType());
         content.setFileSize(file.getSize());

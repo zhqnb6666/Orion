@@ -41,12 +41,19 @@ public class Assignment {
     @Column(columnDefinition = "TEXT")
     private String instructions;//new
 
-    @Column(nullable = false)
-    private String submissionUrl;//new
+//    @Column(nullable = false)
+//    private String submissionUrl;//new
 
-    @OneToMany
-    @JsonIgnore
-    @JoinColumn(name = "assignment_id", nullable = false)
+//    @OneToMany
+//    @JsonIgnore
+//    @JoinColumn(name = "assignment_id", nullable = false)
+
+    @ManyToMany
+    @JoinTable(
+            name = "assignment_attachments",
+            joinColumns = @JoinColumn(name = "resource_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
     private List<Attachment> attachments;
 
     @JsonIgnore

@@ -14,7 +14,7 @@ public class SubmissionContent {
     private Long id;
 
     @Column(nullable = false)
-    private String type; // 文件/代码/文本
+    private ContentType type; // 文件/代码/文本
 
     @Column(columnDefinition = "TEXT")
     private String content; // 文本内容
@@ -29,4 +29,8 @@ public class SubmissionContent {
     @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
+
+    public enum ContentType {
+        FILE, CODE, TEXT
+    }
 }

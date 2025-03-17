@@ -15,7 +15,7 @@ public class SubmissionDTO {
 
     @Getter @Setter
     public static class SubmissionContentDTO {
-        private String type;
+        private SubmissionContent.ContentType type;
         private String content;
         private String fileUrl;
     }
