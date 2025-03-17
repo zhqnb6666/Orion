@@ -50,17 +50,19 @@ public class ResourcesController {
             throw new ApiException("无权访问该课程资源", HttpStatus.FORBIDDEN);
         }
 
-        try {
-            byte[] fileContent = resourceService.downloadResourceFile(resource.getUrl());
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + resource.getName() + "\"")
-                    .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
-                    .body(fileContent);
-        } catch (IOException e) {
-            throw new ApiException("文件下载失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // todo: 下载资源应下载Resource中的attachments中的文件
+//        try {
+//            byte[] fileContent = resourceService.downloadResourceFile(resource.getUrl());
+//
+//            return ResponseEntity.ok()
+//                    .header(HttpHeaders.CONTENT_DISPOSITION,
+//                            "attachment; filename=\"" + resource.getName() + "\"")
+//                    .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+//                    .body(fileContent);
+//        } catch (IOException e) {
+//            throw new ApiException("文件下载失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+        return null;
     }
 
 }

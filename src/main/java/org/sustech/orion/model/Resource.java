@@ -24,8 +24,9 @@ public class Resource {
     @Column(nullable = false)
     private String type;
 
-    @Column(nullable = false)
-    private String url;
+    // useless
+//    @Column(nullable = false)
+//    private String url;
 
     @ManyToOne
     @JsonIgnore
