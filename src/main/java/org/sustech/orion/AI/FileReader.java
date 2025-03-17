@@ -19,7 +19,7 @@ public class FileReader {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(document);
         }catch (Exception e){
-            return "Error reading PDF file: " + e.getMessage();
+            return null;
         }
     }
     // 读取.md 文件
@@ -32,7 +32,7 @@ public class FileReader {
             XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
             return extractor.getText();
         }catch (Exception e){
-            return "Error reading DOCX file: " + e.getMessage();
+            return null;
         }
     }
     // 读取 .doc 文件
@@ -41,7 +41,7 @@ public class FileReader {
             WordExtractor extractor = new WordExtractor(doc);
             return extractor.getText();
         }catch  (Exception e){
-            return "Error reading DOC file: " + e.getMessage();
+            return null;
         }
     }
 

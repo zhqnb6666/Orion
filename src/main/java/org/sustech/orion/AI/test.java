@@ -2,8 +2,8 @@ package org.sustech.orion.AI;
 
 public class test {
     public static void main(String[] args) throws Exception {
-//        String input =  "你好，你是谁";
-//        System.out.println(model.chat(input));
+        String input =  "你好，你是谁";
+        System.out.println(model.chat(input));
 
         String text = FileReader.readPdf("D:\\desktop\\江澈.pdf");
         System.out.println(text);
@@ -13,5 +13,8 @@ public class test {
 
         text = FileReader.readDocx("D:\\desktop\\简历.docx");
         System.out.println(text);
+
+        String photo = "D:\\desktop\\微信截图_20250317143531.png";
+        System.out.println(ocr.OCR(photo));
     }
 }
