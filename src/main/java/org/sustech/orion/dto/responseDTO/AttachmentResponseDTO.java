@@ -10,4 +10,5 @@ public class AttachmentResponseDTO {
     private Long id;
     private String name;
     private String size;
+    private String url;
 }

@@ -44,7 +44,7 @@ public class Submission {
     private Integer attempts;
 
     public enum SubmissionStatus {
-        PENDING, ACCEPTED, REJECTED
+        PENDING, ACCEPTED, REJECTED,DRAFT
     }
 
 
