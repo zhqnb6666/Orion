@@ -5,18 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
 import org.sustech.orion.repository.*;
 import org.sustech.orion.service.impl.UserServiceImpl;
-import org.sustech.orion.util.FileSizeChecker;
+import org.sustech.orion.util.FileSizeUtil;
 import org.sustech.orion.util.JwtUtil;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -166,7 +162,7 @@ public class Initializer {
         Attachment attachment = new Attachment();
         attachment.setName(name);
         attachment.setUrl(url);
-        attachment.setSize(FileSizeChecker.getFileSize(url));
+        attachment.setSize(FileSizeUtil.getFileSize(url));
         return attachmentRepository.save(attachment);
     }
 
@@ -202,7 +198,7 @@ public class Initializer {
         if (type == SubmissionContent.ContentType.FILE) {
             submissionContent.setFileUrl(fileUrl);
             submissionContent.setMimeType(mimeType);
-            submissionContent.setFileSize(FileSizeChecker.getFileSize(fileUrl));
+            submissionContent.setFileSize(FileSizeUtil.getFileSize(fileUrl));
         } else {
             submissionContent.setContent(content);
         }

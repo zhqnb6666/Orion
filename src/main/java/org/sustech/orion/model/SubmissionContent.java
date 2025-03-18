@@ -3,6 +3,7 @@ package org.sustech.orion.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Data
@@ -30,7 +31,12 @@ public class SubmissionContent {
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
 
+    @Getter
     public enum ContentType {
-        FILE, CODE, TEXT
+        FILE, CODE, TEXT;
+        private final String value;
+        ContentType() {
+            this.value = this.name().toLowerCase();
+        }
     }
 }

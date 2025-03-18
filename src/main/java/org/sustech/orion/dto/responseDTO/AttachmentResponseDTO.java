@@ -9,6 +9,6 @@ import lombok.Setter;
 public class AttachmentResponseDTO {
     private Long id;
     private String name;
-    private Long size;
+    private String size;
     private String url;
 }

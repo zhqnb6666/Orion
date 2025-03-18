@@ -3,6 +3,8 @@ package org.sustech.orion.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -43,8 +45,13 @@ public class Submission {
     @Column(nullable = false)
     private Integer attempts;
 
+    @Getter
     public enum SubmissionStatus {
-        PENDING, ACCEPTED, REJECTED,DRAFT
+        PENDING, ACCEPTED, REJECTED, DRAFT;
+        private final String value;
+        SubmissionStatus() {
+            this.value = this.name().toLowerCase();
+        }
     }
 
 

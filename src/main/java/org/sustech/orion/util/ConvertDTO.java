@@ -24,11 +24,11 @@ public class ConvertDTO {
 
         // new
         if (assignment.getOpenDate().after(Timestamp.from(Instant.now()))) {
-            dto.setStatus("UPCOMING");
+            dto.setStatus("upcoming");
         } else if (assignment.getDueDate().before(Timestamp.from(Instant.now()))) {
-            dto.setStatus("CLOSED");
+            dto.setStatus("closed");
         } else {
-            dto.setStatus("OPEN");
+            dto.setStatus("open");
         }
 
         dto.setInstructions(assignment.getInstructions());
@@ -42,7 +42,7 @@ public class ConvertDTO {
 
         dto.setId(attachment.getId());
         dto.setName(attachment.getName());
-        dto.setSize(attachment.getSize());
+        dto.setSize(FileSizeUtil.formatFileSize(attachment.getSize()));
         dto.setUrl(attachment.getUrl());
 
         return dto;
@@ -95,7 +95,7 @@ public class ConvertDTO {
         dto.setFeedback(grade.getFeedback());
         dto.setAppealReason(grade.getAppealReason());
         dto.setAppealTime(grade.getAppealTime());
-        dto.setStatus(grade.getStatus().name().toLowerCase());
+        dto.setStatus(grade.getStatus().getValue());
 
 
         return dto;

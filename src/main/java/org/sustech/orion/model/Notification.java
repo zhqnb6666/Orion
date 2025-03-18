@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+
 import java.sql.Timestamp;
 
 @Entity
@@ -40,8 +42,16 @@ public class Notification {
     @Column(nullable = false)
     private Timestamp createdAt;
 
+    @Getter
     public enum Priority {
-        HIGH, MEDIUM, LOW
+        HIGH("High Priority"),
+        MEDIUM("Medium Priority"),
+        LOW("Low Priority");
+        private final String value;
+
+        Priority(String value) {
+            this.value = value;
+        }
     }
 
 }

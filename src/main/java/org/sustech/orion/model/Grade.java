@@ -3,6 +3,8 @@ package org.sustech.orion.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+
 import java.sql.Timestamp;
 
 @Entity
@@ -45,8 +47,15 @@ public class Grade {
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPCOMING;
 
+    @Getter
     public enum Status
     {
-        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED
+        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED;
+
+        private final String value;
+
+        Status() {
+            this.value = this.name().toLowerCase();
+        }
     }
 }
