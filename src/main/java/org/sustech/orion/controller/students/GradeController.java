@@ -38,21 +38,7 @@ public class GradeController {
     }
 
     /* useless */
-    @PostMapping("/{submissionId}")
-    @Operation(summary = "Grade submission")
-    public ResponseEntity<GradeResponseDTO> gradeSubmission(
-            @PathVariable Long submissionId,
-            @RequestBody GradeDTO request,
-            @AuthenticationPrincipal User grader) {
-        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO(
-                gradeService.gradeSubmission(
-                        submissionId,
-                        request.getScore(),
-                        request.getFeedback(),
-                        grader
-                )
-        ));
-    }
+
     @GetMapping("/summary")
     @Operation(summary = "获取成绩汇总",
             description = "获取当前学生的成绩统计概览",

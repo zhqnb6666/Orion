@@ -66,7 +66,7 @@ public class CourseServiceImpl implements CourseService {
     public void addStudentToCourse(Long courseId, User student) {
         Course course = getCourseById(courseId);
         if (course.getStudents().contains(student)) {
-            throw new ApiException("您已加入该课程", HttpStatus.BAD_REQUEST);
+            throw new ApiException("You have joined the course", HttpStatus.BAD_REQUEST);
         }
         course.getStudents().add(student);
         courseRepository.save(course);
@@ -91,10 +91,10 @@ public class CourseServiceImpl implements CourseService {
     public void removeStudentFromCourse(Long courseId, Long studentId) {
         Course course = getCourseById(courseId);
         User student = userRepository.findById(studentId)
-                .orElseThrow(() -> new ApiException("学生不存在", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("Student does not exist", HttpStatus.NOT_FOUND));
 
         if (!course.getStudents().contains(student)) {
-            throw new ApiException("学生未加入该课程", HttpStatus.BAD_REQUEST);
+            throw new ApiException("The student is not enrolled in the course", HttpStatus.BAD_REQUEST);
         }
 
         course.getStudents().remove(student);
@@ -105,10 +105,10 @@ public class CourseServiceImpl implements CourseService {
     public Course joinCourseByCode(String courseCode, User student) {
         Course course = courseRepository.findByCourseCode(courseCode);
         if (course == null) {
-            throw new ApiException("课程不存在", HttpStatus.NOT_FOUND);
+            throw new ApiException("Curriculum does not exist", HttpStatus.NOT_FOUND);
         }
         if (course.getStudents().contains(student)) {
-            throw new ApiException("您已加入该课程", HttpStatus.BAD_REQUEST);
+            throw new ApiException("You have joined the course", HttpStatus.BAD_REQUEST);
         }
         course.getStudents().add(student);
         return courseRepository.save(course);

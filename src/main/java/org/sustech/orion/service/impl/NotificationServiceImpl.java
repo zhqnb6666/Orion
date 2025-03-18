@@ -55,7 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification getNotificationById(Long notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ApiException("通知不存在", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("The complaint has been recorded", HttpStatus.NOT_FOUND));
     }
 
     @Transactional

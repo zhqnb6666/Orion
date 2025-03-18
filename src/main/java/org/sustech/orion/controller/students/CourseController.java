@@ -43,7 +43,7 @@ public class CourseController {
     /* useful */
     @PostMapping
     @Operation(summary = "Create course", description = "Create a new course")//tested
-    public ResponseEntity<Course> createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<CourseItemResponseDTO> createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
         //system.out.println(currentUser.getUsername());
         Course course = new Course();
         course.setCourseName(request.getCourseName());
@@ -52,7 +52,7 @@ public class CourseController {
         course.setIsActive(request.getIsActive());
         course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));
         course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));
-        return ResponseEntity.ok(courseService.createCourse(course, currentUser));
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO( courseService.createCourse(course, currentUser)));
     }
 
     @GetMapping("/{courseId}")//ok
@@ -86,7 +86,7 @@ public class CourseController {
     public ResponseEntity<List<CourseItemResponseDTO>> getCurrentCourses(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCurrentSemesterCourses(currentUser.getUserId())));
     }
-
+/*
     @PostMapping("/{courseId}/join")
     @Operation(summary = "加入课程")
     public ResponseEntity<Void> joinCourse(@PathVariable Long courseId,
@@ -94,6 +94,8 @@ public class CourseController {
         courseService.addStudentToCourse(courseId, currentUser);
         return ResponseEntity.ok().build();
     }
+
+ */
 
     @GetMapping("/courses/{courseId}")
     @Operation(summary = "获取课程成绩",

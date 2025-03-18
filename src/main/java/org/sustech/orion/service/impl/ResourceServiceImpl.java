@@ -52,7 +52,7 @@ public class ResourceServiceImpl implements ResourceService {
             Files.write(path, file.getBytes());
             return "/uploads/" + fileName;
         } catch (IOException e) {
-            throw new ApiException("文件上传失败", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new ApiException("File upload failure", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -62,7 +62,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public Resource getResourceById(Long resourceId) {
         return resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new ApiException("资源不存在", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("Resource does not exist", HttpStatus.NOT_FOUND));
     }
     @Override
     public byte[] downloadResourceFile(String filePath) throws IOException {

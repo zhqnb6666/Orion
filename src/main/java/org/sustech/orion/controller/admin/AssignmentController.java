@@ -6,8 +6,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.service.AssignmentService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -25,7 +27,7 @@ public class AssignmentController {
     /* useful */
     @PostMapping("/{courseId}")
     @Operation(summary = "Create assignment")
-    public ResponseEntity<Assignment> createAssignment(
+    public ResponseEntity<AssignmentResponseDTO> createAssignment(
             @PathVariable Long courseId,
             @RequestBody AssignmentDTO request) {
         Assignment assignment = new Assignment();
@@ -34,13 +36,13 @@ public class AssignmentController {
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
         assignment.setOpenDate(request.getOpenDate());
-        return ResponseEntity.ok(assignmentService.createAssignment(assignment, courseId));
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO( assignmentService.createAssignment(assignment, courseId)));
     }
 
     @GetMapping("/course/{courseId}/active")
     @Operation(summary = "Get active assignments")
-    public ResponseEntity<List<Assignment>> getActiveAssignments(@PathVariable Long courseId) {
-        return ResponseEntity.ok(assignmentService.getActiveAssignments(courseId));
+    public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList( assignmentService.getActiveAssignments(courseId)));
     }
 
     @PatchMapping("/{assignmentId}/due-date")

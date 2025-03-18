@@ -6,9 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.CourseDTO;
+import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.CourseService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.List;
 
@@ -25,18 +27,18 @@ public class CourseController {
     /* useful */
 
 
-    @GetMapping("/{courseId}")//ok
+    @GetMapping("/{courseId}")
     @Operation(summary = "Get course details", description = "Get course by ID")
-    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getCourseById(courseId));
+    public ResponseEntity<CourseItemResponseDTO> getCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.getCourseById(courseId)));
     }
 
 
     /* useless */
-    @GetMapping("/semester/{semester}")//ok
+    @GetMapping("/semester/{semester}")
     @Operation(summary = "List courses by semester")
-    public ResponseEntity<List<Course>> getCoursesBySemester(@PathVariable String semester) {
-        return ResponseEntity.ok(courseService.getCoursesBySemester(semester));
+    public ResponseEntity<List<CourseItemResponseDTO>> getCoursesBySemester(@PathVariable String semester) {
+        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCoursesBySemester(semester)));
     }
 
 }

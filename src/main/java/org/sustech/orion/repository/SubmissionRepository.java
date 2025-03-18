@@ -42,4 +42,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 //    List<Submission> findByStatusAndAssignment_Course_Teacher_UserId(
 //            @Param("teacherId") Long teacherId);
     List<Submission> findByStatusAndAssignment_Course_Instructor_UserId(Submission.SubmissionStatus status, Long assignment_course_instructor_userId);
+
+
 }

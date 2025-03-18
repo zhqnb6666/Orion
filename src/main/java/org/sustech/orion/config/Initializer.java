@@ -35,7 +35,7 @@ public class Initializer {
     private final SubmissionRepository submissionRepository;
     private final GradeRepository gradeRepository;
     private final AttachmentRepository attachmentRepository;
-
+    private final SubmissionConfigRepository submissionConfigRepository;
     private final PasswordEncoder passwordEncoder;
 
     private final UserServiceImpl userService;
@@ -77,6 +77,7 @@ public class Initializer {
 
         createResource(course, List.of(pic, pdf, codeFile));
 
+        /*
         Assignment closedAssignment = createAssignment("test closed assignment", course, List.of(pic),
                 Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
@@ -86,6 +87,28 @@ public class Initializer {
         Assignment upcomingAssignment = createAssignment("test upcoming assignment", course, List.of(codeFile),
                 Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)));
+
+         */
+        Assignment closedAssignment = createAssignmentWithConfig(
+                "test closed assignment", course, List.of(pic),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)),
+                10 * 1024 * 1024L, "pdf,docx,txt", 3
+        );
+
+        Assignment openAssignment = createAssignmentWithConfig(
+                "test open assignment", course, List.of(pdf),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
+                20 * 1024 * 1024L, "java,txt", 5
+        );
+
+        Assignment upcomingAssignment = createAssignmentWithConfig(
+                "test upcoming assignment", course, List.of(codeFile),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)),
+                40 * 1024 * 1024L, "zip,txt", 1
+        );
 
         SubmissionContent pdfContent = createSubmissionContent(SubmissionContent.ContentType.FILE, null,
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf", "application/pdf");
@@ -190,6 +213,20 @@ public class Initializer {
         assignment.setDueDate(dueDate);
         assignment.setMaxScore(100);
         return assignmentRepository.save(assignment);
+    }
+    private Assignment createAssignmentWithConfig(String title, Course course, List<Attachment> attachments,
+                                                  Timestamp openDate, Timestamp dueDate,
+                                                  Long maxFileSize, String allowedTypes, Integer maxAttempts) {
+        Assignment assignment = createAssignment(title, course, attachments, openDate, dueDate);
+
+        SubmissionConfig config = new SubmissionConfig();
+        config.setMaxFileSize(maxFileSize);
+        config.setAllowedFileTypes(allowedTypes);
+        config.setMaxSubmissionAttempts(maxAttempts);
+        config.setAssignment(assignment);
+        submissionConfigRepository.save(config);
+
+        return assignment;
     }
 
     private SubmissionContent createSubmissionContent(SubmissionContent.ContentType type, String content, String fileUrl, String mimeType) {

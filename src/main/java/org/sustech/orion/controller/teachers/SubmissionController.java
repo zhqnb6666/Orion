@@ -35,12 +35,24 @@ public class SubmissionController {
         return ResponseEntity.ok(submissionService.getSubmissionsByStatus(status));
     }
 
+    /*
     @PostMapping("/{submissionId}/status")
     @Operation(summary = "Update submission status")
     public ResponseEntity<Void> updateStatus(
             @PathVariable Long submissionId,
             @RequestBody SubmissionDTO request) {
         submissionService.updateSubmissionStatus(submissionId, request.getNewStatus());
+        return ResponseEntity.noContent().build();
+    }
+
+     */
+    //似乎学生端不需要?
+    @PostMapping("/{submissionId}/status")
+    @Operation(summary = "Update submission status")
+    public ResponseEntity<Void> updateStatus(
+            @PathVariable Long submissionId,
+            @RequestParam String newStatus) {
+        submissionService.updateSubmissionStatus(submissionId, newStatus);
         return ResponseEntity.noContent().build();
     }
 }

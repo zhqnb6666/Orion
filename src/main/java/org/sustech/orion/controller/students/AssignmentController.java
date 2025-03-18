@@ -135,10 +135,10 @@ fetch('/api/students/submissions/assignments/123/submissions', {
         // 获取提交配置
         SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);
 
-        // 使用正确的字段名称
+
         Integer maxAttempts = config.getMaxSubmissionAttempts();
 
-        // 剩余计算逻辑保持不变
+
         Integer usedAttempts = submissionService.getSubmissionAttempts(
                 student.getUserId(),
                 assignmentId

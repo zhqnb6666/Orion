@@ -1,6 +1,7 @@
 package org.sustech.orion.service;
 
 import org.sustech.orion.model.Submission;
+import org.sustech.orion.model.SubmissionConfig;
 
 import java.util.List;
 
@@ -26,4 +27,6 @@ public interface SubmissionService {
     void saveSubmission(Submission submission);
 
     List<Submission> getPendingSubmissions(Long teacherId);
+
+    SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId);
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,7 +37,7 @@ public class Submission {
 
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SubmissionContent> contents;
+    private List<SubmissionContent> contents = new ArrayList<>();
 
     @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -49,12 +50,12 @@ public class Submission {
     public enum SubmissionStatus {
         PENDING, ACCEPTED, REJECTED, DRAFT;
         private final String value;
+
         SubmissionStatus() {
             this.value = this.name().toLowerCase();
         }
+
     }
-
-
 
 
 }

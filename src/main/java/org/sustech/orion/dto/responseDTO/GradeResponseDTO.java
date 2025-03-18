@@ -20,5 +20,10 @@ public class GradeResponseDTO {
     private String appealReason;
     private Timestamp appealTime;
     private String status;   // 枚举值：graded/upcoming等
+
+    // 添加枚举类型
+    public enum GradeStatus {
+        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED
+    }
 }
 

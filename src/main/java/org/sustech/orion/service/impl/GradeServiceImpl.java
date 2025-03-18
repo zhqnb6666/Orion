@@ -12,7 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class GradeServiceImpl implements GradeService {
@@ -60,20 +63,46 @@ public class GradeServiceImpl implements GradeService {
         return gradeRepository.findBySubmission_Assignment_IdAndSubmission_Student_UserId(assignmentId, studentId);
     }
 
+
     @Override
     public GradeSummaryDTO getGradeSummary(Long studentId) {
         List<Grade> grades = gradeRepository.findBySubmission_Student_UserId(studentId);
-        // TODO:统计计算逻辑...
-        return new GradeSummaryDTO();
+
+        // 基础统计
+        DoubleSummaryStatistics stats = grades.stream()
+                .filter(g -> g.getIsFinalized() && g.getScore() != null)
+                .mapToDouble(Grade::getScore)
+                .summaryStatistics();
+
+        // 课程分布统计
+        Map<String, Double> courseDistribution = grades.stream()
+                .filter(g -> g.getIsFinalized() && g.getScore() != null)
+                .collect(Collectors.groupingBy(
+                        g -> g.getSubmission().getAssignment().getCourse().getCourseName(),
+                        Collectors.averagingDouble(Grade::getScore)
+                ));
+
+
+
+        // 构造DTO
+        return GradeSummaryDTO.builder()
+                .averageScore(stats.getAverage())
+                .highestScore(stats.getMax())
+                .lowestScore(stats.getMin())
+                .totalCourses((long) courseDistribution.size())
+                .courseDistribution(courseDistribution)
+                .totalAssignments((long) grades.size())
+                .build();
     }
+
 
     @Override
     public void submitGradeAppeal(Long gradeId, String appealReason) {
         Grade grade = gradeRepository.findById(gradeId)
-                .orElseThrow(() -> new ApiException("评分记录不存在", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("The score record does not exist", HttpStatus.NOT_FOUND));
 
         if (grade.getAppealReason() != null) {
-            throw new ApiException("已存在申诉记录", HttpStatus.CONFLICT);
+            throw new ApiException("The complaint has been recorded", HttpStatus.CONFLICT);
         }
 
         grade.setAppealReason(appealReason);

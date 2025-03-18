@@ -3,6 +3,7 @@ package org.sustech.orion.service.impl;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Submission;
+import org.sustech.orion.model.SubmissionConfig;
 import org.sustech.orion.repository.AssignmentRepository;
 import org.sustech.orion.repository.SubmissionConfigRepository;
 import org.sustech.orion.repository.SubmissionRepository;
@@ -41,6 +42,15 @@ public class SubmissionServiceImpl implements SubmissionService {
     public void updateSubmissionStatus(Long submissionId, String newStatus) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
+
+        // 验证状态有效性
+        try {
+            Submission.SubmissionStatus status =
+                    Submission.SubmissionStatus.valueOf(newStatus.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ApiException("Invalid status: " + newStatus, HttpStatus.BAD_REQUEST);
+        }
+
         submission.setStatus(Submission.SubmissionStatus.valueOf(newStatus));
         submissionRepository.save(submission);
     }
@@ -90,7 +100,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         // todo: submission.getStatus()不存在DRAFT状态
-        if (!"DRAFT".equals(submission.getStatus())) {
+        if (!Submission.SubmissionStatus.DRAFT.equals(submission.getStatus())) {
             throw new ApiException("Only DRAFT submissions can be deleted", HttpStatus.BAD_REQUEST);
         }
 
@@ -106,7 +116,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new ApiException("Unauthorized to view this submission", HttpStatus.FORBIDDEN);
         }
 
-        return submission.getStatus().toString();
+        return submission.getStatus().getValue().toString();
     }
 
     @Override
@@ -119,5 +129,10 @@ public class SubmissionServiceImpl implements SubmissionService {
         return submissionRepository.findByStatusAndAssignment_Course_Instructor_UserId(
                 Submission.SubmissionStatus.ACCEPTED,
                 teacherId);
+    }
+
+    @Override
+    public SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId) {
+        return submissionConfigRepository.findByAssignmentId(assignmentId);
     }
 }
