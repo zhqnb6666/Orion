@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.dto.AssignmentDTO;
 import org.sustech.orion.dto.SubmissionDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.CourseMaterialResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
@@ -47,8 +48,8 @@ public class AssignmentController {
     /* useless */
     @GetMapping("/course/{courseId}/active")
     @Operation(summary = "Get active assignments")
-    public ResponseEntity<List<Assignment>> getActiveAssignments(@PathVariable Long courseId) {
-        return ResponseEntity.ok(assignmentService.getActiveAssignments(courseId));
+    public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
     }
     /*使用示例
     * const formData = new FormData();
