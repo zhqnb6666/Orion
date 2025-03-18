@@ -42,7 +42,7 @@ public class ConvertDTO {
 
         dto.setId(attachment.getId());
         dto.setName(attachment.getName());
-        dto.setSize(String.valueOf(attachment.getSize()));
+        dto.setSize(attachment.getSize());
         dto.setUrl(attachment.getUrl());
 
         return dto;
