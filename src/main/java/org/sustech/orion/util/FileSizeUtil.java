@@ -33,18 +33,21 @@ public class FileSizeUtil {
         if (size == null) {
             return "0B";
         }
-        if (size < 1024) {
-            return size + "B";
-        } else if (size < 1024 * 1024) {
-            Double kb = size / 1024.0;
-            return String.format("%.2f", kb) + "KB";
-        } else if (size < 1024 * 1024 * 1024) {
-            Double mb = size / 1024.0 / 1024;
-            return String.format("%.2f", mb) + "MB";
-        } else {
-            Double gb = size / 1024.0 / 1024 / 1024;
-            return String.format("%.2f", gb) + "GB";
+        if (size < 0) {
+            throw new ApiException("File size cannot be negative", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        String[] units = {"B", "KB", "MB", "GB", "TB"};
+        double base = 1024;
+
+        int unitIndex = 0;
+        double filesize = size;
+        while (filesize >= base && unitIndex < units.length - 1) {
+            filesize /= base;
+            unitIndex++;
+        }
+
+        return String.format("%.2f%s", filesize, units[unitIndex]);
     }
 
     public static void main(String[] args) {
