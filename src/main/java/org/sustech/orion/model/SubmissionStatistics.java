@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
@@ -14,6 +15,7 @@ public class SubmissionStatistics {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 

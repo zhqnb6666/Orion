@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
@@ -21,6 +22,7 @@ public class Assignment {
     private String description;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
@@ -28,14 +30,45 @@ public class Assignment {
     private String type;
 
     @Column(nullable = false)
+    private Timestamp openDate; // new
+
+    @Column(nullable = false)
     private Timestamp dueDate;
 
     @Column(nullable = false)
     private Integer maxScore;
 
+    @Column(columnDefinition = "TEXT")
+    private String instructions;//new
+
+//    @Column(nullable = false)
+//    private String submissionUrl;//new
+
+//    @OneToMany
+//    @JsonIgnore
+//    @JoinColumn(name = "assignment_id", nullable = false)
+
+    @ManyToMany
+    @JoinTable(
+            name = "assignment_attachments",
+            joinColumns = @JoinColumn(name = "resource_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
+    private List<Attachment> attachments;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
-    @Column(nullable = false)
-    private Boolean isVisible;
+
+    // delete status field, add openDate field, dynamically calculate the status when getting assignments
+
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    private Status status;
+//
+//    public enum Status{
+//        OPEN,CLOSED,UPCOMING
+//    }
+
 }

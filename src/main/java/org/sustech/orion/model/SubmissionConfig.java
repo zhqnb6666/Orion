@@ -1,5 +1,6 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,4 +21,9 @@ public class SubmissionConfig {
 
     @Column(nullable = false)
     private Integer maxSubmissionAttempts; // 最大提交次数
+
+    @OneToOne
+    @JsonIgnore
+    @JoinColumn(name = "assignment_id", nullable = false)
+    private Assignment assignment;
 }

@@ -1,8 +1,10 @@
 package org.sustech.orion.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Data
@@ -22,21 +24,33 @@ public class Resource {
     @Column(nullable = false)
     private String type;
 
-    @Column(nullable = false)
-    private String url;
+    // useless
+//    @Column(nullable = false)
+//    private String url;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    @ManyToOne
-    @JoinColumn(name = "assignment_id")
-    private Assignment assignment;
+//    @OneToMany
+//    @JsonIgnore
+//    @JoinColumn(name = "resource_id", nullable = false)
+
+    @ManyToMany
+    @JoinTable(
+            name = "resource_attachments",
+            joinColumns = @JoinColumn(name = "resource_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
+    private List<Attachment> attachments;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;
 
     @Column(nullable = false)
     private Timestamp uploadTime;
+
 }
