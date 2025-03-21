@@ -112,6 +112,17 @@ public class GradeServiceImpl implements GradeService {
         // TODO:触发通知逻辑...
     }
 
-
+    @Override
+    public Grade createAutoGrade(Submission submission, Double score) {
+        Grade grade = new Grade();
+        grade.setSubmission(submission);
+        grade.setGrader(null);  // 自动评分没有具体的评分人
+        grade.setScore(score);
+        grade.setFeedback("自动评分结果");
+        grade.setGradedTime(new Timestamp(System.currentTimeMillis()));
+        grade.setIsFinalized(false);
+        grade.setStatus(Grade.Status.GRADED);
+        return gradeRepository.save(grade);
+    }
 
 }

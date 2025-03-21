@@ -13,6 +13,14 @@ public class CodeExecutionResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "testcase_id", nullable = false)
+    private TestCase testCase;
+
+    @ManyToOne
+    @JoinColumn(name = "submission_id", nullable = false)
+    private Submission submission;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String output;
 
@@ -30,9 +38,6 @@ public class CodeExecutionResult {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String compilationStatus;
-
-    @Column(nullable = false, length = 100)
-    private String projectKey;
 
     @JsonProperty("isExecutionSuccess")
     @Column(nullable = false)

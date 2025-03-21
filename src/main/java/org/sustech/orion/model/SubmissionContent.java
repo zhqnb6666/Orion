@@ -26,6 +26,10 @@ public class SubmissionContent {
 
     private Long fileSize; // 文件大小
 
+    @OneToOne
+    @JoinColumn(name = "code_id")
+    private CodeSubmission codeSubmission;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)

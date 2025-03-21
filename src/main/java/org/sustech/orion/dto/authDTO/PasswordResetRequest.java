@@ -1,4 +1,4 @@
-package org.sustech.orion.dto.auth;
+package org.sustech.orion.dto.authDTO;
 
 import lombok.Getter;
 

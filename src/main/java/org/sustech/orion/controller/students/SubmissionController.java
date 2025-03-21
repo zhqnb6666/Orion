@@ -3,6 +3,7 @@ package org.sustech.orion.controller.students;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.aspectj.apache.bcel.classfile.Code;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,19 +11,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.dto.CodeSubmissionDTO;
 import org.sustech.orion.dto.SubmissionDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
-import org.sustech.orion.service.AssignmentService;
-import org.sustech.orion.service.GradeService;
-import org.sustech.orion.service.ResourceService;
-import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.service.*;
 import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RestController("studentsSubmissionController")
@@ -35,13 +35,15 @@ public class SubmissionController {
     private final SubmissionService submissionService;
     private final GradeService gradeService;
     private final AssignmentService assignmentService;
+    private final CodeService codeService;
 
     public SubmissionController(SubmissionService submissionService,
-                                ResourceService resourceService, GradeService gradeService, AssignmentService assignmentService) {
+                                ResourceService resourceService, GradeService gradeService, AssignmentService assignmentService, CodeService codeService) {
         this.submissionService = submissionService;
         this.resourceService = resourceService;
         this.gradeService = gradeService;
         this.assignmentService = assignmentService;
+        this.codeService = codeService;
     }
 
     /* useful */
@@ -217,7 +219,43 @@ fetch(`/api/students/submissions/assignments/${assignmentId}/submissions`, {
         return ResponseEntity.ok(submissionService.createSubmission(assignmentId, submission));
     }
 
+    //提交代码作业并且异步运行
+    @PostMapping("/assignments/{assignmentId}/submissions/code")
+    @Operation(summary = "Create a new code submission")
+    public ResponseEntity<Submission> createCodeSubmission(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student,
+            @RequestBody CodeSubmissionDTO codeSubmissionDTO) {
+        Submission submission = new Submission();
+        submission.setStudent(student);
+        submission.setAssignment(assignmentService.getAssignmentById(assignmentId));
+        submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));
+        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
+        SubmissionContent content = new SubmissionContent();
+        content.setType(SubmissionContent.ContentType.CODE);
+        CodeSubmission codeSubmission = new CodeSubmission();
+        codeSubmission.setScript(codeSubmissionDTO.getScript());
+        codeSubmission.setLanguage(codeSubmissionDTO.getLanguage());
+        codeSubmission.setVersionIndex(codeSubmissionDTO.getVersionIndex());
+        content.setCodeSubmission(codeSubmission);
+        content.setSubmission(submission);
+        submission.setContents(List.of(content));
+        Submission savedSubmission = submissionService.createSubmission(assignmentId, submission);
+        CompletableFuture.runAsync(() -> {
+            codeService.executeAndEvaluateSubmission(savedSubmission.getId());
+        });
+        return ResponseEntity.ok(savedSubmission);
+    }
 
+    //获得代码作业的运行结果
+    @GetMapping("/assignments/{assignmentId}/submissions/code/{submissionId}")
+    @Operation(summary = "Get code submission result")
+    public ResponseEntity<CodeSubmissionResult> getCodeSubmissionResult(
+            @PathVariable Long assignmentId,
+            @PathVariable Long submissionId) {
+        return ResponseEntity.ok(submissionService.getCodeSubmissionResult(submissionId));
+    }
+    
     // 获取作业提交历史（需补充到AssignmentController.java）
     @GetMapping("/assignments/{assignmentId}/submissions")
     @Operation(summary = "Get submission history")
