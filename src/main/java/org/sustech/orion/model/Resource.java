@@ -28,7 +28,7 @@ public class Resource {
 //    @Column(nullable = false)
 //    private String url;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
@@ -37,7 +37,7 @@ public class Resource {
 //    @JsonIgnore
 //    @JoinColumn(name = "resource_id", nullable = false)
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "resource_attachments",
             joinColumns = @JoinColumn(name = "resource_id"),
@@ -45,7 +45,7 @@ public class Resource {
     )
     private List<Attachment> attachments;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;

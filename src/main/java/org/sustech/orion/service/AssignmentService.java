@@ -3,6 +3,7 @@ package org.sustech.orion.service;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Submission;
 import org.sustech.orion.model.SubmissionConfig;
+import org.sustech.orion.model.TestCase;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -36,4 +37,14 @@ public interface AssignmentService {
     Assignment updateAssignment(Assignment assignment);
 
     void deleteAssignmentWithDependencies(Long assignmentId);
+
+    List<TestCase> getTestCasesByAssignmentId(Long assignmentId);
+
+    TestCase getTestCaseById(Long testCaseId);
+
+    void updateTestcase(TestCase testcase);
+
+    void addTestcase(TestCase testcase);
+
+    void deleteTestcase(Long testcaseId);
 }

@@ -19,12 +19,12 @@ public class Submission {
     private Long id;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
@@ -42,6 +42,14 @@ public class Submission {
     @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Grade grade;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AIGrading aiGrading;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CodeExecutionResult> codeExecutionResults;
 
     @Column(nullable = false)
     private Integer attempts;

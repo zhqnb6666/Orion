@@ -7,6 +7,7 @@ import org.sustech.orion.model.*;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -153,6 +154,9 @@ public class ConvertDTO {
 
 
     public static <T, R> List<R> toDTOList(List<T> entities, Function<T, R> converter) {
+        if (entities == null) {
+            return new ArrayList<>();
+        }
         return entities.stream()
                 .map(converter)
                 .collect(Collectors.toList());

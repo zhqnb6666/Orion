@@ -3,25 +3,24 @@ package org.sustech.orion.controller.teachers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.dto.TestcaseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
-import org.sustech.orion.model.Grade;
+import org.sustech.orion.model.TestCase;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
 import org.sustech.orion.util.ConvertDTO;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @RestController("teachersAssignmentController")
@@ -53,6 +52,103 @@ public class AssignmentController {
         assignment.setOpenDate(request.getOpenDate());
         assignment.setMaxScore(request.getMaxScore());
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
+    }
+
+    @PutMapping("/{assignmentId}/testcases/{testcaseId}")
+    @Operation(summary = "Update test case",
+            description = "Update the test case for a specific assignment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Update successful"),
+                    @ApiResponse(responseCode = "403", description = "No permission to modify"),
+                    @ApiResponse(responseCode = "404", description = "Assignment or test case not found")
+            })
+    public ResponseEntity<Void> updateTestcase(
+            @PathVariable Long assignmentId,
+            @PathVariable Long testcaseId,
+            @RequestBody TestcaseDTO request,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // Validate instructor permission
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to modify this testcase", HttpStatus.FORBIDDEN);
+        }
+
+        TestCase testcase = assignmentService.getTestCaseById(testcaseId);
+        if (testcase == null || !testcase.getAssignment().getId().equals(assignmentId)) {
+            throw new ApiException("Testcase not found", HttpStatus.NOT_FOUND);
+        }
+
+        // Update test case fields
+        testcase.setInput(request.getInput());
+        testcase.setExpectedOutput(request.getExpectedOutput());
+        testcase.setWeight(request.getWeight());
+        assignmentService.updateTestcase(testcase);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{assignmentId}/testcases")
+    @Operation(summary = "Upload test case",
+            description = "Upload a new test case for a specific assignment",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Upload successful"),
+                    @ApiResponse(responseCode = "403", description = "No permission to upload"),
+                    @ApiResponse(responseCode = "404", description = "Assignment not found")
+            })
+    public ResponseEntity<Void> uploadTestcase(
+            @PathVariable Long assignmentId,
+            @RequestBody TestcaseDTO request,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // Validate instructor permission
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to upload this testcase", HttpStatus.FORBIDDEN);
+        }
+
+        // Create and save new test case
+        TestCase testcase = new TestCase();
+        testcase.setInput(request.getInput());
+        testcase.setExpectedOutput(request.getExpectedOutput());
+        testcase.setWeight(request.getWeight());
+        testcase.setAssignment(assignment);
+
+        assignmentService.addTestcase(testcase);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @DeleteMapping("/{assignmentId}/testcases/{testcaseId}")
+    @Operation(summary = "Delete test case",
+            description = "Delete a test case for a specific assignment",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Delete successful"),
+                    @ApiResponse(responseCode = "403", description = "No permission to delete"),
+                    @ApiResponse(responseCode = "404", description = "Assignment or test case not found")
+            })
+    public ResponseEntity<Void> deleteTestcase(
+            @PathVariable Long assignmentId,
+            @PathVariable Long testcaseId,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // Validate instructor permission
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to delete this testcase", HttpStatus.FORBIDDEN);
+        }
+
+        TestCase testcase = assignmentService.getTestCaseById(testcaseId);
+        if (testcase == null || !testcase.getAssignment().getId().equals(assignmentId)) {
+            throw new ApiException("Testcase not found", HttpStatus.NOT_FOUND);
+        }
+
+        assignmentService.deleteTestcase(testcaseId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{assignmentId}/feedback")

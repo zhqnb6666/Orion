@@ -1,17 +1,15 @@
 package org.sustech.orion.service.impl;
 
 import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.Assignment;
-import org.sustech.orion.model.Submission;
-import org.sustech.orion.model.SubmissionConfig;
-import org.sustech.orion.repository.AssignmentRepository;
-import org.sustech.orion.repository.SubmissionConfigRepository;
-import org.sustech.orion.repository.SubmissionRepository;
+import org.sustech.orion.model.*;
+import org.sustech.orion.repository.*;
 import org.sustech.orion.service.SubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.sustech.orion.dto.CodeSubmissionResult;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SubmissionServiceImpl implements SubmissionService {
@@ -19,12 +17,16 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final SubmissionConfigRepository submissionConfigRepository;
+    private final CodeExecutionResultRepository codeExecutionResultRepository;
 
-
-    public SubmissionServiceImpl(SubmissionRepository submissionRepository, AssignmentRepository assignmentRepository, SubmissionConfigRepository submissionConfigRepository) {
+    public SubmissionServiceImpl(SubmissionRepository submissionRepository, 
+                               AssignmentRepository assignmentRepository, 
+                               SubmissionConfigRepository submissionConfigRepository,
+                               CodeExecutionResultRepository codeExecutionResultRepository) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.submissionConfigRepository = submissionConfigRepository;
+        this.codeExecutionResultRepository = codeExecutionResultRepository;
     }
 
     @Override
@@ -134,5 +136,63 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId) {
         return submissionConfigRepository.findByAssignmentId(assignmentId);
+    }
+
+    @Override
+    public CodeSubmissionResult getCodeSubmissionResult(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
+
+        CodeSubmissionResult result = new CodeSubmissionResult();
+        result.setSubmissionId(submissionId);
+        
+        // 获取代码提交内容
+        CodeSubmission codeSubmission = submission.getContents().stream()
+                .filter(content -> content.getType() == SubmissionContent.ContentType.CODE)
+                .findFirst()
+                .map(SubmissionContent::getCodeSubmission)
+                .orElseThrow(() -> new ApiException("Code submission not found", HttpStatus.NOT_FOUND));
+        
+        result.setScript(codeSubmission.getScript());
+        result.setLanguage(codeSubmission.getLanguage());
+        result.setVersionIndex(codeSubmission.getVersionIndex());
+        result.setStatus(submission.getStatus().getValue());
+        
+        // 获取成绩和反馈
+        if (submission.getGrade() != null) {
+            result.setScore(submission.getGrade().getScore());
+            result.setFeedback(submission.getGrade().getFeedback());
+        }
+        
+        // 获取测试用例执行结果
+        List<CodeExecutionResult> executionResults = codeExecutionResultRepository.findBySubmission_Id(submissionId);
+        List<CodeSubmissionResult.TestCaseResult> testCaseResults = executionResults.stream()
+                .map(executionResult -> {
+                    CodeSubmissionResult.TestCaseResult testCaseResult = new CodeSubmissionResult.TestCaseResult();
+                    TestCase testCase = executionResult.getTestCase();
+                    
+                    testCaseResult.setTestCaseId(testCase.getId());
+                    testCaseResult.setInput(testCase.getInput());
+                    testCaseResult.setExpectedOutput(testCase.getExpectedOutput());
+                    testCaseResult.setActualOutput(executionResult.getOutput());
+                    testCaseResult.setError(executionResult.getError());
+                    testCaseResult.setStatusCode(executionResult.getStatusCode());
+                    testCaseResult.setMemory(executionResult.getMemory());
+                    testCaseResult.setCpuTime(executionResult.getCpuTime());
+                    testCaseResult.setCompilationStatus(executionResult.getCompilationStatus());
+                    testCaseResult.setExecutionSuccess(executionResult.isExecutionSuccess());
+                    testCaseResult.setCompiled(executionResult.isCompiled());
+                    testCaseResult.setWeight(testCase.getWeight());
+                    
+                    // 判断测试用例是否通过
+                    testCaseResult.setPassed(executionResult.isExecutionSuccess() && 
+                            executionResult.getOutput().trim().equals(testCase.getExpectedOutput().trim()));
+                    
+                    return testCaseResult;
+                })
+                .collect(Collectors.toList());
+        
+        result.setTestCaseResults(testCaseResults);
+        return result;
     }
 }

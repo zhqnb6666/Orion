@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.dto.CodeSubmissionDTO;
+import org.sustech.orion.dto.CodeSubmissionResult;
 import org.sustech.orion.dto.SubmissionDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
@@ -192,8 +193,7 @@ fetch(`/api/students/submissions/assignments/${assignmentId}/submissions`, {
 
                 // 验证文件类型
                 String fileName = file.getOriginalFilename();
-                String fileType = fileName != null ?
-                        fileName.substring(fileName.lastIndexOf(".") + 1) : "";
+                String fileType = fileName.substring(fileName.lastIndexOf(".") + 1);
                 if (!Arrays.asList(config.getAllowedFileTypes().split(",")).contains(fileType)) {
                     throw new ApiException("Disallowed file type: " + fileType, HttpStatus.BAD_REQUEST);
                 }
@@ -248,10 +248,9 @@ fetch(`/api/students/submissions/assignments/${assignmentId}/submissions`, {
     }
 
     //获得代码作业的运行结果
-    @GetMapping("/assignments/{assignmentId}/submissions/code/{submissionId}")
+    @GetMapping("/assignments/submissions/code/{submissionId}")
     @Operation(summary = "Get code submission result")
     public ResponseEntity<CodeSubmissionResult> getCodeSubmissionResult(
-            @PathVariable Long assignmentId,
             @PathVariable Long submissionId) {
         return ResponseEntity.ok(submissionService.getCodeSubmissionResult(submissionId));
     }

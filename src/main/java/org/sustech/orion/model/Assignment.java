@@ -21,7 +21,7 @@ public class Assignment {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
@@ -48,7 +48,7 @@ public class Assignment {
 //    @JsonIgnore
 //    @JoinColumn(name = "assignment_id", nullable = false)
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "assignment_attachments",
             joinColumns = @JoinColumn(name = "resource_id"),
@@ -60,15 +60,17 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Submission> submissions;
 
-    // delete status field, add openDate field, dynamically calculate the status when getting assignments
+    @JsonIgnore
+    @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private SubmissionConfig submissionConfig;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private Status status;
-//
-//    public enum Status{
-//        OPEN,CLOSED,UPCOMING
-//    }
+    @Override
+    public String toString() {
+        return "Assignment{id=" + id + ", title='" + title + "'}";
+    }
 
 }

@@ -26,11 +26,11 @@ public class SubmissionContent {
 
     private Long fileSize; // 文件大小
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "code_id")
     private CodeSubmission codeSubmission;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;

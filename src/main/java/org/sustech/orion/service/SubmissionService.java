@@ -1,5 +1,6 @@
 package org.sustech.orion.service;
 
+import org.sustech.orion.dto.CodeSubmissionResult;
 import org.sustech.orion.model.Submission;
 import org.sustech.orion.model.SubmissionConfig;
 
@@ -29,4 +30,6 @@ public interface SubmissionService {
     List<Submission> getPendingSubmissions(Long teacherId);
 
     SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId);
+
+    CodeSubmissionResult getCodeSubmissionResult(Long submissionId);
 }
