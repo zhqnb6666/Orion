@@ -37,7 +37,9 @@ public class Resource {
 //    @JsonIgnore
 //    @JoinColumn(name = "resource_id", nullable = false)
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(
+//            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
     @JoinTable(
             name = "resource_attachments",
             joinColumns = @JoinColumn(name = "resource_id"),

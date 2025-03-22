@@ -14,17 +14,17 @@ public class PlagiarismCheck {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "submission_a_id", nullable = false)
     private Submission submissionA;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "submission_b_id", nullable = false)
     private Submission submissionB;

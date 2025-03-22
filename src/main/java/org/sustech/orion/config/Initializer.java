@@ -9,9 +9,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.sustech.orion.model.*;
 import org.sustech.orion.repository.*;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.NotificationService;
 import org.sustech.orion.service.impl.UserServiceImpl;
+import org.sustech.orion.service.impl.CourseServiceImpl;
 import org.sustech.orion.util.FileSizeUtil;
 import org.sustech.orion.util.JwtUtil;
+import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.service.AssignmentService;
+import org.sustech.orion.service.SubmissionConfigService;
+import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.service.GradeService;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -39,8 +47,18 @@ public class Initializer {
     private final PasswordEncoder passwordEncoder;
 
     private final UserServiceImpl userService;
+    private final CourseService courseService;
+    private final NotificationService notificationService;
 
     private final JwtUtil jwtUtil;
+
+    private final ResourceService resourceService;
+
+    private final AssignmentService assignmentService;
+    private final SubmissionConfigService submissionConfigService;
+
+    private final SubmissionService submissionService;
+    private final GradeService gradeService;
 
     @Bean
     public CommandLineRunner initializeDatabase() {
@@ -119,16 +137,16 @@ public class Initializer {
 
         Submission submission1 = createSubmission(closedAssignment, users.get("student"),
                 Timestamp.from(Instant.now().minus(5, ChronoUnit.DAYS)),
-                List.of(pdfContent), 1);
+                List.of(pdfContent));
         Submission submission2 = createSubmission(openAssignment, users.get("student"),
                 Timestamp.from(Instant.now().minus(3, ChronoUnit.DAYS)),
-                List.of(textContent), 1);
+                List.of(textContent));
         Submission submission3 = createSubmission(upcomingAssignment, users.get("student"),
                 Timestamp.from(Instant.now()),
-                List.of(codeContent), 2);
+                List.of(codeContent));
 
-        createGrade(submission1, users.get("teacher"), 90.0, "good job",
-                Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        createGrade(submission1, users.get("teacher"), 90.0, "good job"
+                );
     }
 
     public Map<String, User> createUsers() {
@@ -162,12 +180,13 @@ public class Initializer {
         course.setCourseName("test course");
         course.setCourseCode("TEST-000");
         course.setDescription("test description");
-        course.setInstructor(instructor);
-        course.setStudents(List.of(student));
         course.setSemester("2025-Spring");
         course.setIsActive(true);
         course.setCreatedTime(Timestamp.from(Instant.now()));
-        return courseRepository.save(course);
+        Course savedCourse = courseService.createCourse(course, instructor);
+        courseService.addStudentToCourse(savedCourse.getId(), student);
+        
+        return savedCourse;
     }
 
     private void createTestNotification(User sender, User recipient, String title, String content, Notification.Priority priority) {
@@ -203,28 +222,27 @@ public class Initializer {
 
     private Assignment createAssignment(String title, Course course, List<Attachment> attachments, Timestamp openDate, Timestamp dueDate) {
         Assignment assignment = new Assignment();
-        assignment.setTitle("test assignment");
+        assignment.setTitle(title);
         assignment.setDescription("test description");
         assignment.setType("test");
-        assignment.setCourse(course);
         assignment.setAttachments(attachments);
         assignment.setInstructions("test instructions");
         assignment.setOpenDate(openDate);
         assignment.setDueDate(dueDate);
         assignment.setMaxScore(100);
-        return assignmentRepository.save(assignment);
+        return assignmentService.createAssignment(assignment, course.getId());
     }
+
     private Assignment createAssignmentWithConfig(String title, Course course, List<Attachment> attachments,
-                                                  Timestamp openDate, Timestamp dueDate,
-                                                  Long maxFileSize, String allowedTypes, Integer maxAttempts) {
+                                                Timestamp openDate, Timestamp dueDate,
+                                                Long maxFileSize, String allowedTypes, Integer maxAttempts) {
         Assignment assignment = createAssignment(title, course, attachments, openDate, dueDate);
 
-        SubmissionConfig config = new SubmissionConfig();
+        SubmissionConfig config = submissionConfigService.getSubmissionConfigByAssignmentId(assignment.getId());
         config.setMaxFileSize(maxFileSize);
         config.setAllowedFileTypes(allowedTypes);
         config.setMaxSubmissionAttempts(maxAttempts);
-        config.setAssignment(assignment);
-        submissionConfigRepository.save(config);
+        submissionConfigService.saveSubmissionConfig(config);
 
         return assignment;
     }
@@ -243,30 +261,21 @@ public class Initializer {
     }
 
     private Submission createSubmission(Assignment assignment, User student, Timestamp submissionTime,
-                                        List<SubmissionContent> contents, Integer attempts) {
+                                      List<SubmissionContent> contents) {
         Submission submission = new Submission();
         submission.setAssignment(assignment);
         submission.setStudent(student);
         submission.setSubmitTime(submissionTime);
         submission.setStatus(Submission.SubmissionStatus.PENDING);
         submission.setContents(contents);
-        submission.setAttempts(attempts);
         for (SubmissionContent content : contents) {
             content.setSubmission(submission);
         }
-        return submissionRepository.save(submission);
+        return submissionService.createSubmission(assignment.getId(), submission);
     }
 
-    private void createGrade(Submission submission, User grader, Double score, String feedback, Timestamp gradedTime) {
-        Grade grade = new Grade();
-        grade.setSubmission(submission);
-        grade.setGrader(grader);
-        grade.setScore(score);
-        grade.setFeedback(feedback);
-        grade.setGradedTime(gradedTime);
-        grade.setIsFinalized(true);
-        grade.setStatus(Grade.Status.GRADED);
-        gradeRepository.save(grade);
+    private void createGrade(Submission submission, User grader, Double score, String feedback) {
+        gradeService.gradeSubmission(submission.getId(), score, feedback, grader);
     }
 
     private void generateAndPrintJwt() {

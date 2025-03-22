@@ -21,9 +21,9 @@ public class CodeRunnerController {
     private final CodeRunnerUtil codeRunnerUtil;
     private final ObjectMapper objectMapper;
 
-    public CodeRunnerController(
+    public CodeRunnerController(CodeRunnerUtil codeRunnerUtil,
             ObjectMapper objectMapper) {
-        this.codeRunnerUtil = new CodeRunnerUtil();
+        this.codeRunnerUtil = codeRunnerUtil;
         this.objectMapper = objectMapper;
     }
 

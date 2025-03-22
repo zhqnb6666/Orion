@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class GradeServiceImpl implements GradeService {
         grade.setGrader(grader);
         grade.setScore(score);
         grade.setFeedback(feedback);
+        grade.setGradedTime(Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
         return gradeRepository.save(grade);
     }
 

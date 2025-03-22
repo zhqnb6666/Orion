@@ -25,12 +25,12 @@ public class Notification {
     @Column(nullable = true)
     private boolean isRead;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "recipient_id")
     private User recipient;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "sender_id")
     private User sender; // new

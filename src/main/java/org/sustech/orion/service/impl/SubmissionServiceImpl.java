@@ -59,9 +59,8 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     public Integer getSubmissionAttempts(Long studentId, Long assignmentId) {
-        return submissionRepository.findByAssignment_IdAndStudent_UserId(assignmentId, studentId)
-                .map(Submission::getAttempts)
-                .orElse(0);
+        List<Submission> submissions = submissionRepository.findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(assignmentId, studentId);
+        return submissions.isEmpty() ? 0 : submissions.size();
     }
 
     @Override
@@ -83,7 +82,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         submission.setAssignment(assignment);
-        submission.setAttempts(attempts + 1);
         return submissionRepository.save(submission);
     }
 

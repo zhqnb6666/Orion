@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -56,6 +57,10 @@ public class CodeRunnerUtil {
     private String clientSecret5;
 
     public CodeRunnerUtil() {
+    }
+
+    @PostConstruct
+    public void init() {
         credentials.add(new ApiCredential(clientId1, clientSecret1));
         credentials.add(new ApiCredential(clientId2, clientSecret2));
         credentials.add(new ApiCredential(clientId3, clientSecret3));

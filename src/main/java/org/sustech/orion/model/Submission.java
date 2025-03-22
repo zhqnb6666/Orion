@@ -51,9 +51,6 @@ public class Submission {
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CodeExecutionResult> codeExecutionResults;
 
-    @Column(nullable = false)
-    private Integer attempts;
-
     @Getter
     public enum SubmissionStatus {
         PENDING, ACCEPTED, REJECTED, DRAFT;

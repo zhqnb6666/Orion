@@ -16,12 +16,12 @@ public class Grade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "grader_id", nullable = false)
     private User grader;
@@ -35,7 +35,7 @@ public class Grade {
     @Column(nullable = false)
     private Timestamp gradedTime; // 评分时间
 
-    @Column(nullable = false)
+    @Column()
     private Boolean isFinalized; // 是否最终评分
 
     @Column(columnDefinition = "TEXT")
