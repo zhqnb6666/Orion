@@ -23,7 +23,7 @@ public class Grade {
 
     @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
-    @JoinColumn(name = "grader_id", nullable = false)
+    @JoinColumn(name = "grader_id")
     private User grader;
 
     @Column(nullable = false)

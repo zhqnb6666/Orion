@@ -2,15 +2,18 @@ package org.sustech.orion.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"assignment", "student", "contents", "grade", "aiGrading", "codeExecutionResults"})
 @Table(name = "submissions")
 public class Submission {
 
@@ -59,8 +62,14 @@ public class Submission {
         SubmissionStatus() {
             this.value = this.name().toLowerCase();
         }
-
     }
 
-
+    @Override
+    public String toString() {
+        return "Submission{" +
+                "id=" + id +
+                ", submitTime=" + submitTime +
+                ", status=" + status +
+                '}';
+    }
 }
