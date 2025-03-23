@@ -91,7 +91,7 @@ fetch('/api/students/submissions/assignments/123/submissions', {
                 content.setType(SubmissionContent.ContentType.FILE);
                 content.setFileUrl(fileUrl);
                 return content;
-            }).collect(Collectors.toList());
+            }).toList();
 
             request.getContents().addAll(fileContents);
         }

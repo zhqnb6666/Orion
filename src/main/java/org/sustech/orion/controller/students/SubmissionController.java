@@ -194,9 +194,9 @@ fetch(`/api/students/submissions/assignments/${assignmentId}/submissions`, {
                 // 验证文件类型
                 String fileName = file.getOriginalFilename();
                 String fileType = fileName.substring(fileName.lastIndexOf(".") + 1);
-                if (!Arrays.asList(config.getAllowedFileTypes().split(",")).contains(fileType)) {
-                    throw new ApiException("Disallowed file type: " + fileType, HttpStatus.BAD_REQUEST);
-                }
+//                if (!Arrays.asList(config.getAllowedFileTypes().split(",")).contains(fileType)) {
+//                    throw new ApiException("Disallowed file type: " + fileType, HttpStatus.BAD_REQUEST);
+//                }
 
                 // 上传文件
                 String fileUrl = resourceService.uploadFile(file);
