@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.dto.AssignmentDTO;
@@ -20,9 +21,11 @@ import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.ResourceService;
 import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,12 +38,14 @@ public class AssignmentController {
     private final SubmissionService submissionService;
     private final CourseService courseService;
     private final ResourceService resourceService;
+    private final AttachmentService attachmentService;
 
-    public AssignmentController(AssignmentService assignmentService, SubmissionService submissionService, CourseService courseService, ResourceService resourceService) {
+    public AssignmentController(AssignmentService assignmentService, SubmissionService submissionService, CourseService courseService, ResourceService resourceService, AttachmentService attachmentService) {
         this.assignmentService = assignmentService;
         this.submissionService = submissionService;
         this.courseService = courseService;
         this.resourceService = resourceService;
+        this.attachmentService = attachmentService;
     }
     /* useful */
 
@@ -51,29 +56,7 @@ public class AssignmentController {
     public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
     }
-    /*使用示例
-    * const formData = new FormData();
-formData.append('request', new Blob([JSON.stringify({
-    contents: [{
-        type: "CODE",
-        content: "System.out.println('Hello World');"
-    }]
-})], {type: "application/json"}));
 
-// 添加文件
-const fileInput = document.getElementById('file-input');
-for (let i = 0; i < fileInput.files.length; i++) {
-    formData.append('files', fileInput.files[i]);
-}
-
-fetch('/api/students/submissions/assignments/123/submissions', {
-    method: 'POST',
-    headers: {
-        'Authorization': 'Bearer ' + token
-    },
-    body: formData
-});
-    * */
 
     @PostMapping(value = "/{assignmentId}/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "创建新提交（支持文件上传）")
@@ -83,36 +66,84 @@ fetch('/api/students/submissions/assignments/123/submissions', {
             @ModelAttribute SubmissionDTO request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
 
-        // 处理文件上传
-        if (files != null && !files.isEmpty()) {
-            List<SubmissionDTO.SubmissionContentDTO> fileContents = files.stream().map(file -> {
-                String fileUrl = resourceService.uploadFile(file);
-                SubmissionDTO.SubmissionContentDTO content = new SubmissionDTO.SubmissionContentDTO();
-                content.setType(SubmissionContent.ContentType.FILE);
-                content.setFileUrl(fileUrl);
-                return content;
-            }).collect(Collectors.toList());
+        // 获取作业
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
 
-            request.getContents().addAll(fileContents);
+        // 验证学生是否参加了该课程
+        if (!courseService.isStudentInCourse(assignment.getCourse().getId(), student.getUserId())) {
+            throw new ApiException("没有参加该课程", HttpStatus.FORBIDDEN);
+        }
+        
+        // 检查截止日期
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (now.after(assignment.getDueDate())) {
+            throw new ApiException("作业已截止提交", HttpStatus.BAD_REQUEST);
         }
 
-        // 构建Submission实体
+        // 获取提交配置
+        SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);
+        
+        // 检查剩余提交次数
+        Integer maxAttempts = config.getMaxSubmissionAttempts();
+        Integer usedAttempts = submissionService.getSubmissionAttempts(student.getUserId(), assignmentId);
+        
+        if (usedAttempts >= maxAttempts) {
+            throw new ApiException("已达到最大提交次数", HttpStatus.BAD_REQUEST);
+        }
+
+        // 创建提交
         Submission submission = new Submission();
-        submission.setContents(request.getContents().stream()
-                .map(dto -> {
-                    SubmissionContent content = new SubmissionContent();
-                    content.setType(dto.getType());
-                    content.setContent(dto.getContent());
-                    content.setFileUrl(dto.getFileUrl());
-                    content.setSubmission(submission);
-                    return content;
-                })
-                .collect(Collectors.toList()));
-
-        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
         submission.setStudent(student);
-
-        return ResponseEntity.ok(submissionService.createSubmission(assignmentId, submission));
+        submission.setAssignment(assignment);
+        submission.setSubmitTime(now);
+        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
+        submission.setContents(new ArrayList<>());
+        
+        // 添加文本内容（如果有）
+        if (StringUtils.hasText(request.getTextResponse())) {
+            SubmissionContent textContent = new SubmissionContent();
+            textContent.setType(SubmissionContent.ContentType.TEXT);
+            textContent.setContent(request.getTextResponse());
+            textContent.setSubmission(submission);
+            submission.getContents().add(textContent);
+        }
+        
+        // 处理文件附件（如果有）
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        // 上传附件
+                        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);
+                        
+                        // 创建提交内容
+                        SubmissionContent fileContent = new SubmissionContent();
+                        fileContent.setType(SubmissionContent.ContentType.FILE);
+                        
+                        // 创建JSON存储附件信息
+                        String attachmentInfo = String.format(
+                            "{\"attachmentId\":%d,\"url\":\"%s\",\"size\":%d,\"mimeType\":\"%s\",\"name\":\"%s\"}",
+                            attachment.getId(),
+                            attachment.getUrl(),
+                            attachment.getSize(),
+                            attachment.getMimeType(),
+                            attachment.getName()
+                        );
+                        
+                        fileContent.setContent(attachmentInfo);
+                        fileContent.setSubmission(submission);
+                        submission.getContents().add(fileContent);
+                    } catch (Exception e) {
+                        throw new ApiException("文件上传失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+        }
+        
+        // 保存提交
+        submissionService.saveSubmission(submission);
+        
+        return ResponseEntity.ok(submission);
     }
 
     @GetMapping("/{assignmentId}/submissions")

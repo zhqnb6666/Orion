@@ -2,11 +2,13 @@ package org.sustech.orion.service.impl;
 
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Attachment;
 import org.sustech.orion.model.Resource;
 import org.sustech.orion.repository.CourseRepository;
 import org.sustech.orion.repository.ResourceRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.service.ResourceService;
 
 import java.io.IOException;
@@ -20,11 +22,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceRepository resourceRepository;
     private final CourseRepository courseRepository;
+    private final AttachmentService attachmentService;
 
     public ResourceServiceImpl(ResourceRepository resourceRepository,
-                               CourseRepository courseRepository) {
+                               CourseRepository courseRepository,
+                               AttachmentService attachmentService) {
         this.resourceRepository = resourceRepository;
         this.courseRepository = courseRepository;
+        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -37,39 +42,33 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void deleteResource(Long resourceId) {
-        resourceRepository.deleteById(resourceId);
-    }
-
-
-    @Override
-    public String uploadFile(MultipartFile file) {
-        // 实现文件存储逻辑，返回文件访问路径
-        // 示例：存储到本地文件系统
-        try {
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path path = Paths.get("uploads/" + fileName);
-            Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
-            return "/uploads/" + fileName;
-        } catch (IOException e) {
-            throw new ApiException("File upload failure", HttpStatus.INTERNAL_SERVER_ERROR);
+        Resource resource = getResourceById(resourceId);
+        
+        // 删除所有关联的附件
+        if (resource.getAttachments() != null && !resource.getAttachments().isEmpty()) {
+            for (Attachment attachment : resource.getAttachments()) {
+                try {
+                    attachmentService.deleteAttachment(attachment.getId());
+                } catch (Exception e) {
+                    // 记录错误但继续执行
+                    // TODO: 添加日志记录
+                }
+            }
         }
+        
+        // 删除资源
+        resourceRepository.delete(resource);
     }
-
-
-
 
     @Override
     public Resource getResourceById(Long resourceId) {
         return resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ApiException("Resource does not exist", HttpStatus.NOT_FOUND));
     }
+
+    
     @Override
-    public byte[] downloadResourceFile(String filePath) throws IOException {
-        Path path = Paths.get(filePath);
-        if (!Files.exists(path)) {
-            throw new ApiException("File not found", HttpStatus.NOT_FOUND);
-        }
-        return Files.readAllBytes(path);
+    public Resource saveResource(Resource resource) {
+        return resourceRepository.save(resource);
     }
 }

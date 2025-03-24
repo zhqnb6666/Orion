@@ -20,11 +20,9 @@ public class SubmissionContent {
     @Column(columnDefinition = "TEXT")
     private String content; // 文本内容
 
-    private String fileUrl; // 文件URL
-
-    private String mimeType; // 文件类型
-
-    private Long fileSize; // 文件大小
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
+    @JoinColumn(name = "file_id")
+    private Attachment file;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "code_id")

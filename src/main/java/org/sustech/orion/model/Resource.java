@@ -38,7 +38,7 @@ public class Resource {
 //    @JoinColumn(name = "resource_id", nullable = false)
 
     @ManyToMany(
-//            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
     )
     @JoinTable(
             name = "resource_attachments",
