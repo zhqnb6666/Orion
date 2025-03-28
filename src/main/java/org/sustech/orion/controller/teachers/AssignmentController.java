@@ -39,7 +39,7 @@ import java.util.ArrayList;
 
 @RestController("teachersAssignmentController")
 @RequestMapping("/api/teachers/assignments")
-@Tag(name = "Assignment API", description = "APIs for assignment management")
+@Tag(name = "Teacher Assignment API", description = "APIs for assignment management by teacher")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
@@ -252,7 +252,7 @@ public class AssignmentController {
      * @param currentUser 当前用户
      * @return 附件信息
      */
-    @PostMapping("/{assignmentId}/attachments")
+    @PostMapping(value = "/{assignmentId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "上传作业附件",
             description = "向指定作业添加附件文件",
             responses = {
@@ -401,74 +401,10 @@ public class AssignmentController {
                 .body(resource);
     }
 
-    /* useless api, 可以通过updateAssignment接口修改openDate和dueDate修改作业状态
 
-//    @PutMapping("/{assignmentId}/publish")
-//    @Operation(summary = "发布作业",
-//            description = "设置作业可见状态为公开",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "发布成功"),
-//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-//                    @ApiResponse(responseCode = "404", description = "作业不存在")
-//            })
-//    public ResponseEntity<AssignmentResponseDTO> publishAssignment(
-//            @PathVariable Long assignmentId,
-//            @AuthenticationPrincipal User currentUser) {
-//
-//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-//
-//        // 通过课程验证教师权限
-//        Course course = assignment.getCourse();
-//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-//        }
-//
-//        assignment.setStatus(Assignment.Status.OPEN);
-//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-//    }
-//
-//    @PutMapping("/{assignmentId}/unpublish")
-//    @Operation(summary = "取消发布作业",
-//            description = "设置作业可见状态为不可见",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "取消发布成功"),
-//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-//                    @ApiResponse(responseCode = "404", description = "作业不存在")
-//            })
-//    public ResponseEntity<AssignmentResponseDTO> unpublishAssignment(
-//            @PathVariable Long assignmentId,
-//            @AuthenticationPrincipal User currentUser) {
-//
-//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-//
-//        // 通过课程验证教师权限
-//        Course course = assignment.getCourse();
-//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-//        }
-//
-//        assignment.setStatus(Assignment.Status.CLOSED);
-//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-//    }
-
-    */
-
-    /* useless */
-    @GetMapping("/course/{courseId}/active")//ok
-    @Operation(summary = "Get active assignments")
-    public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
-        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
+    @GetMapping("/course/{courseId}")
+    @Operation(summary = "Get assignments")
+    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));
     }
-
-    /*
-    @PatchMapping("/{assignmentId}/due-date")
-    @Operation(summary = "Extend due date")
-    public ResponseEntity<Void> extendDueDate(
-            @PathVariable Long assignmentId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp newDueDate) {
-        assignmentService.extendDueDate(assignmentId, newDueDate);
-        return ResponseEntity.noContent().build();
-    }
-    */
-
 }

@@ -216,20 +216,10 @@ public class SubmissionController {
             // 上传附件
             Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);
             
-            // 创建提交内容，将附件信息存储在content中，格式为JSON字符串
+            // 创建提交内容，将附件设置到file字段
             SubmissionContent fileContent = new SubmissionContent();
             fileContent.setType(SubmissionContent.ContentType.FILE);
-            
-            // 创建JSON存储附件信息
-            String attachmentInfo = String.format(
-                "{\"attachmentId\":%d,\"url\":\"%s\",\"size\":%d,\"mimeType\":\"%s\"}",
-                attachment.getId(),
-                attachment.getUrl(),
-                attachment.getSize(),
-                attachment.getMimeType()
-            );
-            
-            fileContent.setContent(attachmentInfo);
+            fileContent.setFile(attachment); // 直接设置file字段
             fileContent.setSubmission(submission);
             
             // 更新提交

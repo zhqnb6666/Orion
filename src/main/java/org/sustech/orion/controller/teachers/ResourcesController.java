@@ -167,7 +167,7 @@ public class ResourcesController {
      * @param currentUser 当前用户
      * @return 附件信息
      */
-    @PostMapping("/{resourceId}/attachments")
+    @PostMapping(value = "/{resourceId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "为资源添加附件",
               description = "上传附件并关联到指定资源",
               responses = {

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 @RestController("studentsResourcesController")
 @RequestMapping("/api/students/resources")
-@Tag(name = "Resources API", description = "APIs for Resources access")
+@Tag(name = "Student Resources API", description = "APIs for Resources access by students")
 public class ResourcesController {
     
     private final AttachmentService attachmentService;

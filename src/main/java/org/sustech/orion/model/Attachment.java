@@ -17,7 +17,7 @@ public class Attachment {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column()
     private String mimeType;
 
     @Column(nullable = false)

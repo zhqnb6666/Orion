@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -69,6 +70,23 @@ public class ResourceServiceImpl implements ResourceService {
     
     @Override
     public Resource saveResource(Resource resource) {
+        // 优化保存过程，确保所有关联的附件都是托管状态
+        if (resource.getAttachments() != null && !resource.getAttachments().isEmpty()) {
+            // 确保所有附件都是从数据库获取的托管状态
+            List<Attachment> managedAttachments = new ArrayList<>();
+            for (Attachment attachment : resource.getAttachments()) {
+                if (attachment.getId() != null) {
+                    // 对于已有ID的附件，重新从数据库获取确保是托管状态
+                    Attachment managedAttachment = attachmentService.getAttachmentById(attachment.getId());
+                    managedAttachments.add(managedAttachment);
+                } else {
+                    // 新创建的附件，直接保存
+                    managedAttachments.add(attachment);
+                }
+            }
+            resource.setAttachments(managedAttachments);
+        }
+        
         return resourceRepository.save(resource);
     }
 }
