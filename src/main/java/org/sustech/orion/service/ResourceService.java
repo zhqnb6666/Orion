@@ -11,9 +11,7 @@ public interface ResourceService {
 
     void deleteResource(Long resourceId);
 
-    String uploadFile(MultipartFile file);
-
     Resource getResourceById(Long resourceId);
 
-    byte[] downloadResourceFile(String url) throws IOException;
+    Resource saveResource(Resource resource);
 }

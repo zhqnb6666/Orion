@@ -49,11 +49,11 @@ public class Assignment {
 //    @JoinColumn(name = "assignment_id", nullable = false)
 
     @ManyToMany(
-//            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
     )
     @JoinTable(
             name = "assignment_attachments",
-            joinColumns = @JoinColumn(name = "resource_id"),
+            joinColumns = @JoinColumn(name = "assignment_id"),
             inverseJoinColumns = @JoinColumn(name = "attachment_id")
     )
     private List<Attachment> attachments;

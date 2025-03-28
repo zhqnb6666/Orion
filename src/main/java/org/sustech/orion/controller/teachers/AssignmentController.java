@@ -7,35 +7,51 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.dto.AttachmentDTO;
 import org.sustech.orion.dto.TestcaseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.TestCase;
 import org.sustech.orion.model.User;
+import org.sustech.orion.model.Attachment;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
+import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.util.ConvertDTO;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @RestController("teachersAssignmentController")
 @RequestMapping("/api/teachers/assignments")
-@Tag(name = "Assignment API", description = "APIs for assignment management")
+@Tag(name = "Teacher Assignment API", description = "APIs for assignment management by teacher")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
     private final CourseService courseService;
     private final GradeService gradeService;
+    private final AttachmentService attachmentService;
 
-    public AssignmentController(AssignmentService assignmentService, CourseService courseService, GradeService gradeService) {
+    public AssignmentController(AssignmentService assignmentService, CourseService courseService, GradeService gradeService, AttachmentService attachmentService) {
         this.assignmentService = assignmentService;
         this.courseService = courseService;
         this.gradeService = gradeService;
+        this.attachmentService = attachmentService;
     }
 
     /* useful */
@@ -229,74 +245,166 @@ public class AssignmentController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * 为作业上传附件
+     * @param assignmentId 作业ID
+     * @param file 文件
+     * @param currentUser 当前用户
+     * @return 附件信息
+     */
+    @PostMapping(value = "/{assignmentId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "上传作业附件",
+            description = "向指定作业添加附件文件",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "上传成功"),
+                    @ApiResponse(responseCode = "403", description = "无权限操作"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<AttachmentDTO> uploadAssignmentAttachment(
+            @PathVariable Long assignmentId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal User currentUser) {
 
-    // useless api, 可以通过updateAssignment接口修改openDate和dueDate修改作业状态
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
 
-//    @PutMapping("/{assignmentId}/publish")
-//    @Operation(summary = "发布作业",
-//            description = "设置作业可见状态为公开",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "发布成功"),
-//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-//                    @ApiResponse(responseCode = "404", description = "作业不存在")
-//            })
-//    public ResponseEntity<AssignmentResponseDTO> publishAssignment(
-//            @PathVariable Long assignmentId,
-//            @AuthenticationPrincipal User currentUser) {
-//
-//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-//
-//        // 通过课程验证教师权限
-//        Course course = assignment.getCourse();
-//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-//        }
-//
-//        assignment.setStatus(Assignment.Status.OPEN);
-//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-//    }
-//
-//    @PutMapping("/{assignmentId}/unpublish")
-//    @Operation(summary = "取消发布作业",
-//            description = "设置作业可见状态为不可见",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "取消发布成功"),
-//                    @ApiResponse(responseCode = "403", description = "无操作权限"),
-//                    @ApiResponse(responseCode = "404", description = "作业不存在")
-//            })
-//    public ResponseEntity<AssignmentResponseDTO> unpublishAssignment(
-//            @PathVariable Long assignmentId,
-//            @AuthenticationPrincipal User currentUser) {
-//
-//        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-//
-//        // 通过课程验证教师权限
-//        Course course = assignment.getCourse();
-//        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-//            throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
-//        }
-//
-//        assignment.setStatus(Assignment.Status.CLOSED);
-//        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.updateAssignment(assignment)));
-//    }
+        // 验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+        }
 
+        // 上传附件
+        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
 
-    /* useless */
-    @GetMapping("/course/{courseId}/active")//ok
-    @Operation(summary = "Get active assignments")
-    public ResponseEntity<List<AssignmentResponseDTO>> getActiveAssignments(@PathVariable Long courseId) {
-        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
+        // 添加附件到作业
+        if (assignment.getAttachments() == null) {
+            assignment.setAttachments(new ArrayList<>());
+        }
+        assignment.getAttachments().add(attachment);
+        assignmentService.updateAssignment(assignment);
+
+        // 返回附件信息
+        return ResponseEntity.ok(AttachmentDTO.fromAttachment(attachment));
     }
 
-    /*
-    @PatchMapping("/{assignmentId}/due-date")
-    @Operation(summary = "Extend due date")
-    public ResponseEntity<Void> extendDueDate(
+    /**
+     * 获取作业的所有附件
+     * @param assignmentId 作业ID
+     * @param currentUser 当前用户
+     * @return 附件列表
+     */
+    @GetMapping("/{assignmentId}/attachments")
+    @Operation(summary = "获取作业附件列表",
+            description = "获取指定作业的所有附件文件",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "获取成功"),
+                    @ApiResponse(responseCode = "403", description = "无权限操作"),
+                    @ApiResponse(responseCode = "404", description = "作业不存在")
+            })
+    public ResponseEntity<AssignmentAttachmentResponseDTO> getAssignmentAttachments(
             @PathVariable Long assignmentId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp newDueDate) {
-        assignmentService.extendDueDate(assignmentId, newDueDate);
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限查看该作业", HttpStatus.FORBIDDEN);
+        }
+
+        // 返回作业及附件信息
+        return ResponseEntity.ok(AssignmentAttachmentResponseDTO.fromAssignment(assignment));
+    }
+
+    /**
+     * 删除作业附件
+     * @param assignmentId 作业ID
+     * @param attachmentId 附件ID
+     * @param currentUser 当前用户
+     * @return 操作状态
+     */
+    @DeleteMapping("/{assignmentId}/attachments/{attachmentId}")
+    @Operation(summary = "删除作业附件",
+            description = "删除指定作业的附件文件",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "删除成功"),
+                    @ApiResponse(responseCode = "403", description = "无权限操作"),
+                    @ApiResponse(responseCode = "404", description = "作业或附件不存在")
+            })
+    public ResponseEntity<Void> deleteAssignmentAttachment(
+            @PathVariable Long assignmentId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User currentUser) {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+        }
+
+        // 验证附件存在性
+        Attachment attachment = attachmentService.getAttachmentById(attachmentId);
+        
+        // 从作业中移除附件
+        assignment.getAttachments().removeIf(att -> att.getId().equals(attachmentId));
+        assignmentService.updateAssignment(assignment);
+        
+        // 删除附件
+        attachmentService.deleteAttachment(attachmentId);
+
         return ResponseEntity.noContent().build();
     }
-    */
 
+    /**
+     * 下载作业附件
+     * @param assignmentId 作业ID
+     * @param attachmentId 附件ID
+     * @param currentUser 当前用户
+     * @return 附件内容
+     * @throws IOException 文件读取错误
+     */
+    @GetMapping("/{assignmentId}/attachments/{attachmentId}/download")
+    @Operation(summary = "下载作业附件",
+            description = "下载指定作业的附件文件",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "下载成功"),
+                    @ApiResponse(responseCode = "403", description = "无权限操作"),
+                    @ApiResponse(responseCode = "404", description = "作业或附件不存在")
+            })
+    public ResponseEntity<org.springframework.core.io.Resource> downloadAssignmentAttachment(
+            @PathVariable Long assignmentId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User currentUser) throws IOException {
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 验证教师权限
+        Course course = assignment.getCourse();
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
+        }
+
+        // 获取附件信息
+        Attachment attachment = attachmentService.getAttachmentById(attachmentId);
+        
+        // 下载附件内容
+        byte[] data = attachmentService.downloadAttachment(attachmentId);
+        ByteArrayResource resource = new ByteArrayResource(data);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getName() + "\"")
+                .contentType(MediaType.parseMediaType(attachment.getMimeType()))
+                .contentLength(attachment.getSize())
+                .body(resource);
+    }
+
+
+    @GetMapping("/course/{courseId}")
+    @Operation(summary = "Get assignments")
+    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));
+    }
 }

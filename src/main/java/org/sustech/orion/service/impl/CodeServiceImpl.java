@@ -75,7 +75,6 @@ public class CodeServiceImpl implements CodeService {
                 if (passed) {
                     totalScore += weight;
                 }
-
                 codeExecutionResultRepository.save(result);
 
             } catch (IOException e) {

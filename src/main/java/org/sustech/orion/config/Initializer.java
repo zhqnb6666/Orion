@@ -24,6 +24,7 @@ import org.sustech.orion.service.GradeService;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,14 +87,20 @@ public class Initializer {
                 "Test teacher Notification", "This is a test notification with medium priority",
                 Notification.Priority.MEDIUM);
 
-        Attachment pic = createAttachment("test picture",
+        Attachment pic_1 = createAttachment("test picture",
                 "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a?x-bce-process=image/format,f_auto/watermark,image_d2F0ZXIvYmFpa2UyNzI,g_7,xp_5,yp_5,P_20/resize,m_lfit,limit_1,h_1080");
-        Attachment pdf = createAttachment("test pdf",
+        Attachment pdf_1 = createAttachment("test pdf",
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
-        Attachment codeFile = createAttachment("test code file",
+        Attachment codeFile_1 = createAttachment("test code file",
+                "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
+        Attachment pic_2 = createAttachment("test picture",
+                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a?x-bce-process=image/format,f_auto/watermark,image_d2F0ZXIvYmFpa2UyNzI,g_7,xp_5,yp_5,P_20/resize,m_lfit,limit_1,h_1080");
+        Attachment pdf_2 = createAttachment("test pdf",
+                "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
+        Attachment codeFile_2 = createAttachment("test code file",
                 "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
 
-        createResource(course, List.of(pic, pdf, codeFile));
+        createResource(course, List.of(pic_1, pdf_1, codeFile_1));
 
         /*
         Assignment closedAssignment = createAssignment("test closed assignment", course, List.of(pic),
@@ -108,21 +115,21 @@ public class Initializer {
 
          */
         Assignment closedAssignment = createAssignmentWithConfig(
-                "test closed assignment", course, List.of(pic),
+                "test closed assignment", course, List.of(pic_2),
                 Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)),
                 10 * 1024 * 1024L, "pdf,docx,txt", 3
         );
 
         Assignment openAssignment = createAssignmentWithConfig(
-                "test open assignment", course, List.of(pdf),
+                "test open assignment", course, List.of(pdf_2),
                 Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
                 20 * 1024 * 1024L, "java,txt", 5
         );
 
         Assignment upcomingAssignment = createAssignmentWithConfig(
-                "test upcoming assignment", course, List.of(codeFile),
+                "test upcoming assignment", course, List.of(codeFile_2),
                 Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)),
                 40 * 1024 * 1024L, "zip,txt", 1
@@ -146,7 +153,7 @@ public class Initializer {
                 List.of(codeContent));
 
         createGrade(submission1, users.get("teacher"), 90.0, "good job"
-                );
+        );
     }
 
     public Map<String, User> createUsers() {
@@ -185,7 +192,7 @@ public class Initializer {
         course.setCreatedTime(Timestamp.from(Instant.now()));
         Course savedCourse = courseService.createCourse(course, instructor);
         courseService.addStudentToCourse(savedCourse.getId(), student);
-        
+
         return savedCourse;
     }
 
@@ -205,7 +212,9 @@ public class Initializer {
         attachment.setName(name);
         attachment.setUrl(url);
         attachment.setSize(FileSizeUtil.getFileSize(url));
-        return attachmentRepository.save(attachment);
+        attachment.setAttachmentType(Attachment.AttachmentType.Resource);
+        attachment.setUploadedAt(Timestamp.from(Instant.now()));
+        return attachment;
     }
 
     private void createResource(Course course, List<Attachment> attachments) {
@@ -217,7 +226,7 @@ public class Initializer {
         resource.setUploadedBy(course.getInstructor());
         resource.setUploadTime(Timestamp.from(Instant.now()));
         resource.setAttachments(attachments);
-        resourceRepository.save(resource);
+        resourceService.saveResource(resource);
     }
 
     private Assignment createAssignment(String title, Course course, List<Attachment> attachments, Timestamp openDate, Timestamp dueDate) {
@@ -234,8 +243,8 @@ public class Initializer {
     }
 
     private Assignment createAssignmentWithConfig(String title, Course course, List<Attachment> attachments,
-                                                Timestamp openDate, Timestamp dueDate,
-                                                Long maxFileSize, String allowedTypes, Integer maxAttempts) {
+                                                  Timestamp openDate, Timestamp dueDate,
+                                                  Long maxFileSize, String allowedTypes, Integer maxAttempts) {
         Assignment assignment = createAssignment(title, course, attachments, openDate, dueDate);
 
         SubmissionConfig config = submissionConfigService.getSubmissionConfigByAssignmentId(assignment.getId());
@@ -251,9 +260,20 @@ public class Initializer {
         SubmissionContent submissionContent = new SubmissionContent();
         submissionContent.setType(type);
         if (type == SubmissionContent.ContentType.FILE) {
-            submissionContent.setFileUrl(fileUrl);
-            submissionContent.setMimeType(mimeType);
-            submissionContent.setFileSize(FileSizeUtil.getFileSize(fileUrl));
+            // 创建Attachment对象
+            Attachment attachment = new Attachment();
+            attachment.setUrl(fileUrl);
+            attachment.setMimeType(mimeType);
+            attachment.setSize(FileSizeUtil.getFileSize(fileUrl));
+            attachment.setName(fileUrl.substring(fileUrl.lastIndexOf('/') + 1));
+            attachment.setAttachmentType(Attachment.AttachmentType.Submission);
+            attachment.setUploadedAt(Timestamp.from(Instant.now()));
+            
+            // 先保存attachment以确保它是托管状态
+            Attachment managedAttachment = attachmentRepository.save(attachment);
+
+            // 设置file字段
+            submissionContent.setFile(managedAttachment);
         } else {
             submissionContent.setContent(content);
         }
@@ -261,7 +281,7 @@ public class Initializer {
     }
 
     private Submission createSubmission(Assignment assignment, User student, Timestamp submissionTime,
-                                      List<SubmissionContent> contents) {
+                                        List<SubmissionContent> contents) {
         Submission submission = new Submission();
         submission.setAssignment(assignment);
         submission.setStudent(student);
@@ -292,3 +312,4 @@ public class Initializer {
     }
 
 }
+
