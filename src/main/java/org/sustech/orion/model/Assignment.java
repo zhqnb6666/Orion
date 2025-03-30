@@ -69,6 +69,10 @@ public class Assignment {
     @JsonIgnore
     @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private SubmissionConfig submissionConfig;
+    
+    @JsonIgnore
+    @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CodeAssignmentConfig codeAssignmentConfig;
 
     @Override
     public String toString() {

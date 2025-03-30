@@ -7,9 +7,11 @@ import org.sustech.orion.service.SubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.sustech.orion.dto.CodeSubmissionResult;
+import org.sustech.orion.dto.CodeSubmissionDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 public class SubmissionServiceImpl implements SubmissionService {
@@ -193,4 +195,16 @@ public class SubmissionServiceImpl implements SubmissionService {
         result.setTestCaseResults(testCaseResults);
         return result;
     }
+
+    @Override
+    public Map<Long, Submission> getLatestSubmissionsByAssignment(Long assignmentId) {
+        List<Submission> submissions = submissionRepository.findByAssignment_IdOrderBySubmitTimeDesc(assignmentId);
+        return submissions.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getStudent().getUserId(),
+                        s -> s,
+                        (existing, replacement) -> existing
+                ));
+    }
+
 }

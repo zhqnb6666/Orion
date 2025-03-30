@@ -24,7 +24,7 @@ import java.util.List;
 
 @RestController("teachersCourseController")
 @RequestMapping("/api/teachers/courses")
-@Tag(name = "Course API", description = "APIs for course management")
+@Tag(name = "Teacher Course API", description = "APIs for course management")
 public class CourseController {
 
     private final CourseService courseService;

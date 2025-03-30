@@ -27,7 +27,7 @@ import java.util.List;
 
 @RestController("studentsCourseController")
 @RequestMapping("/api/students/courses")
-@Tag(name = "Course API", description = "APIs for course management")
+@Tag(name = "Student Course API", description = "APIs for course management")
 public class CourseController {
 
     private final CourseService courseService;
@@ -86,16 +86,6 @@ public class CourseController {
     public ResponseEntity<List<CourseItemResponseDTO>> getCurrentCourses(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCurrentSemesterCourses(currentUser.getUserId())));
     }
-/*
-    @PostMapping("/{courseId}/join")
-    @Operation(summary = "加入课程")
-    public ResponseEntity<Void> joinCourse(@PathVariable Long courseId,
-                                           @AuthenticationPrincipal User currentUser) {
-        courseService.addStudentToCourse(courseId, currentUser);
-        return ResponseEntity.ok().build();
-    }
-
- */
 
     @GetMapping("/courses/{courseId}")
     @Operation(summary = "获取课程成绩",

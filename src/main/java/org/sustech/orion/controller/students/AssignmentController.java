@@ -62,83 +62,21 @@ public class AssignmentController {
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));
     }
 
-
-    @PostMapping(value = "/{assignmentId}/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "创建新提交（支持文件上传）")
-    public ResponseEntity<Submission> createSubmission(
-            @PathVariable Long assignmentId,
-            @AuthenticationPrincipal User student,
-            @ModelAttribute SubmissionDTO request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-
-        // 获取作业
-        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-
-        // 验证学生是否参加了该课程
-        if (!courseService.isStudentInCourse(assignment.getCourse().getId(), student.getUserId())) {
-            throw new ApiException("没有参加该课程", HttpStatus.FORBIDDEN);
-        }
-        
-        // 检查截止日期
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        if (now.after(assignment.getDueDate())) {
-            throw new ApiException("作业已截止提交", HttpStatus.BAD_REQUEST);
-        }
-
-        // 获取提交配置
-        SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);
-        
-        // 检查剩余提交次数
-        Integer maxAttempts = config.getMaxSubmissionAttempts();
-        Integer usedAttempts = submissionService.getSubmissionAttempts(student.getUserId(), assignmentId);
-        
-        if (usedAttempts >= maxAttempts) {
-            throw new ApiException("已达到最大提交次数", HttpStatus.BAD_REQUEST);
-        }
-
-        // 创建提交
-        Submission submission = new Submission();
-        submission.setStudent(student);
-        submission.setAssignment(assignment);
-        submission.setSubmitTime(now);
-        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
-        submission.setContents(new ArrayList<>());
-        
-        // 添加文本内容（如果有）
-        if (StringUtils.hasText(request.getTextResponse())) {
-            SubmissionContent textContent = new SubmissionContent();
-            textContent.setType(SubmissionContent.ContentType.TEXT);
-            textContent.setContent(request.getTextResponse());
-            textContent.setSubmission(submission);
-            submission.getContents().add(textContent);
-        }
-        
-        // 处理文件附件（如果有）
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    try {
-                        // 上传附件
-                        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);
-                        
-                        // 创建提交内容，将附件信息存储在file字段中
-                        SubmissionContent fileContent = new SubmissionContent();
-                        fileContent.setType(SubmissionContent.ContentType.FILE);
-                        fileContent.setFile(attachment); // 直接设置file字段
-                        fileContent.setSubmission(submission);
-                        
-                        // 更新提交
-                        submission.getContents().add(fileContent);
-                        submissionService.saveSubmission(submission);
-                    } catch (Exception e) {
-                        throw new ApiException("文件上传失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                }
-            }
-        }
-        
-        return ResponseEntity.ok(submission);
+    @GetMapping("/course/{courseId}")
+    @Operation(summary = "获取课程所有作业", 
+            description = "获取指定课程的所有作业列表",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "成功获取作业列表"),
+                    @ApiResponse(responseCode = "403", description = "未参加该课程"),
+                    @ApiResponse(responseCode = "404", description = "课程不存在")
+            })
+    public ResponseEntity<List<AssignmentResponseDTO>> getAllAssignments(@PathVariable Long courseId) {
+        List<Assignment> assignments = assignmentService.getAssignmentsByCourseId(courseId);
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignments));
     }
+
+
+    
 
     @GetMapping("/{assignmentId}/submissions")
     @Operation(summary = "获取提交历史")

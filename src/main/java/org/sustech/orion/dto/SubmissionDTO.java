@@ -10,5 +10,4 @@ import java.util.List;
 @Getter @Setter
 public class SubmissionDTO {
     private String textResponse;
-    private List<MultipartFile> files;
 }

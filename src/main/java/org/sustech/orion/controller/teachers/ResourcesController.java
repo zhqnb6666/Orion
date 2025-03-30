@@ -30,7 +30,7 @@ import java.util.List;
 
 @RestController("teachersResourcesController")
 @RequestMapping("/api/teachers/resources")
-@Tag(name = "Resources API", description = "APIs for Resources management")
+@Tag(name = "Teacher Resources API", description = "APIs for Resources management")
 public class ResourcesController {
     
     private final AttachmentService attachmentService;

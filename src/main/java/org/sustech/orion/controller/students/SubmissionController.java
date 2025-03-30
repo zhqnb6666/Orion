@@ -65,16 +65,6 @@ public class SubmissionController {
         return ResponseEntity.ok(submissionService.getSubmissionsByStatus(status));
     }
 
-    //似乎学生端不需要?
-    @PostMapping("/{submissionId}/status")
-    @Operation(summary = "Update submission status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable Long submissionId,
-            @RequestParam String newStatus) {
-        submissionService.updateSubmissionStatus(submissionId, newStatus);
-        return ResponseEntity.noContent().build();
-    }
-
     //提交代码作业并且异步运行
     @PostMapping("/assignments/{assignmentId}/submissions/code")
     @Operation(summary = "Create a new code submission")
@@ -110,172 +100,76 @@ public class SubmissionController {
             @PathVariable Long submissionId) {
         return ResponseEntity.ok(submissionService.getCodeSubmissionResult(submissionId));
     }
-    
-    /**
-     * 创建提交并准备附件上传
-     * @param assignmentId 作业ID
-     * @param student 当前学生
-     * @param fileCount 文件数量
-     * @param textResponse 文本回答内容
-     * @return 创建的提交及附件占位符列表
-     */
-    @PostMapping("/assignments/{assignmentId}/prepare")
-    @Operation(summary = "创建提交并准备附件上传",
-              description = "创建一个新的提交，并生成指定数量的附件占位符，用于后续异步上传文件",
-              responses = {
-                  @ApiResponse(responseCode = "200", description = "创建成功"),
-                  @ApiResponse(responseCode = "400", description = "参数错误"),
-                  @ApiResponse(responseCode = "404", description = "作业不存在")
-              })
-    public ResponseEntity<Map<String, Object>> prepareSubmissionWithAttachments(
+
+    @PostMapping(value = "/{assignmentId}/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "创建新提交（支持文件上传）")
+    public ResponseEntity<Submission> createSubmission(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student,
-            @RequestParam(value = "fileCount", defaultValue = "0") int fileCount,
-            @RequestParam(value = "textResponse", required = false) String textResponse) {
-        
+            @ModelAttribute SubmissionDTO request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+        // 获取作业
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+
+        // 检查截止日期
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (now.after(assignment.getDueDate())) {
+            throw new ApiException("作业已截止提交", HttpStatus.BAD_REQUEST);
+        }
+
+        // 获取提交配置
+        SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);
+
+        // 检查剩余提交次数
+        Integer maxAttempts = config.getMaxSubmissionAttempts();
+        Integer usedAttempts = submissionService.getSubmissionAttempts(student.getUserId(), assignmentId);
+
+        if (usedAttempts >= maxAttempts) {
+            throw new ApiException("已达到最大提交次数", HttpStatus.BAD_REQUEST);
+        }
+
         // 创建提交
         Submission submission = new Submission();
         submission.setStudent(student);
-        submission.setAssignment(assignmentService.getAssignmentById(assignmentId));
-        submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));
-        submission.setStatus(Submission.SubmissionStatus.DRAFT); // 设置为草稿状态
-        
+        submission.setAssignment(assignment);
+        submission.setSubmitTime(now);
+        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
+        submission.setContents(new ArrayList<>());
+
         // 添加文本内容（如果有）
-        if (StringUtils.hasText(textResponse)) {
+        if (StringUtils.hasText(request.getTextResponse())) {
             SubmissionContent textContent = new SubmissionContent();
             textContent.setType(SubmissionContent.ContentType.TEXT);
-            textContent.setContent(textResponse);
+            textContent.setContent(request.getTextResponse());
             textContent.setSubmission(submission);
             submission.getContents().add(textContent);
         }
-        
-        // 保存提交获取ID
-        submissionService.saveSubmission(submission);
-        
-        // 创建附件占位符列表
-        List<Map<String, Object>> attachmentPlaceholders = new ArrayList<>();
-        for (int i = 0; i < fileCount; i++) {
-            // 创建占位符附件（暂不保存到数据库）
-            Map<String, Object> placeholder = new HashMap<>();
-            placeholder.put("placeholderId", i);
-            placeholder.put("status", "pending");
-            attachmentPlaceholders.add(placeholder);
+
+        // 处理文件附件（如果有）
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        // 上传附件
+                        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);
+
+                        // 创建提交内容，将附件信息存储在file字段中
+                        SubmissionContent fileContent = new SubmissionContent();
+                        fileContent.setType(SubmissionContent.ContentType.FILE);
+                        fileContent.setFile(attachment); // 直接设置file字段
+                        fileContent.setSubmission(submission);
+
+                        // 更新提交
+                        submission.getContents().add(fileContent);
+                        submissionService.saveSubmission(submission);
+                    } catch (Exception e) {
+                        throw new ApiException("文件上传失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
         }
-        
-        // 构建响应
-        Map<String, Object> response = new HashMap<>();
-        response.put("submissionId", submission.getId());
-        response.put("status", submission.getStatus());
-        response.put("attachmentPlaceholders", attachmentPlaceholders);
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    /**
-     * 异步上传提交的附件
-     * @param submissionId 提交ID
-     * @param placeholderId 附件占位符ID
-     * @param file 文件
-     * @param student 当前学生
-     * @return 上传的附件信息
-     */
-    @PostMapping("/{submissionId}/attachments/{placeholderId}")
-    @Operation(summary = "异步上传提交附件",
-              description = "为已创建的提交异步上传附件文件",
-              responses = {
-                  @ApiResponse(responseCode = "200", description = "上传成功"),
-                  @ApiResponse(responseCode = "400", description = "参数错误"),
-                  @ApiResponse(responseCode = "403", description = "无权限操作"),
-                  @ApiResponse(responseCode = "404", description = "提交不存在")
-              })
-    public ResponseEntity<Map<String, Object>> uploadSubmissionAttachment(
-            @PathVariable Long submissionId,
-            @PathVariable Integer placeholderId,
-            @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal User student) {
-        
-        // 获取提交
-        Submission submission = submissionService.getSubmissionOrThrow(submissionId);
-        
-        // 权限验证
-        if (!submission.getStudent().getUserId().equals(student.getUserId())) {
-            throw new ApiException("无权限操作此提交", HttpStatus.FORBIDDEN);
-        }
-        
-        // 状态验证
-        if (!Submission.SubmissionStatus.DRAFT.equals(submission.getStatus())) {
-            throw new ApiException("只能修改草稿状态的提交", HttpStatus.BAD_REQUEST);
-        }
-        
-        // 验证文件
-        if (file.isEmpty()) {
-            throw new ApiException("文件为空", HttpStatus.BAD_REQUEST);
-        }
-        
-        try {
-            // 上传附件
-            Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);
-            
-            // 创建提交内容，将附件设置到file字段
-            SubmissionContent fileContent = new SubmissionContent();
-            fileContent.setType(SubmissionContent.ContentType.FILE);
-            fileContent.setFile(attachment); // 直接设置file字段
-            fileContent.setSubmission(submission);
-            
-            // 更新提交
-            submission.getContents().add(fileContent);
-            submissionService.saveSubmission(submission);
-            
-            // 构建响应
-            Map<String, Object> response = new HashMap<>();
-            response.put("placeholderId", placeholderId);
-            response.put("attachmentId", attachment.getId());
-            response.put("name", attachment.getName());
-            response.put("status", "completed");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            throw new ApiException("文件上传失败: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    
-    /**
-     * 完成提交过程
-     * @param submissionId 提交ID
-     * @param student 当前学生
-     * @return 提交信息
-     */
-    @PostMapping("/{submissionId}/complete")
-    @Operation(summary = "完成提交过程",
-              description = "将草稿状态的提交转为已提交状态",
-              responses = {
-                  @ApiResponse(responseCode = "200", description = "提交成功"),
-                  @ApiResponse(responseCode = "403", description = "无权限操作"),
-                  @ApiResponse(responseCode = "404", description = "提交不存在")
-              })
-    public ResponseEntity<Submission> completeSubmission(
-            @PathVariable Long submissionId,
-            @AuthenticationPrincipal User student) {
-        
-        // 获取提交
-        Submission submission = submissionService.getSubmissionOrThrow(submissionId);
-        
-        // 权限验证
-        if (!submission.getStudent().getUserId().equals(student.getUserId())) {
-            throw new ApiException("无权限操作此提交", HttpStatus.FORBIDDEN);
-        }
-        
-        // 状态验证
-        if (!Submission.SubmissionStatus.DRAFT.equals(submission.getStatus())) {
-            throw new ApiException("只能提交草稿状态的提交", HttpStatus.BAD_REQUEST);
-        }
-        
-        // 更新状态为已接受
-        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
-        submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));
-        
-        // 保存并返回
-        submissionService.saveSubmission(submission);
+
         return ResponseEntity.ok(submission);
     }
 
@@ -287,31 +181,6 @@ public class SubmissionController {
             @AuthenticationPrincipal User student) {
         return ResponseEntity.ok(submissionService.getSubmissionsByAssignmentAndStudent(assignmentId, student.getUserId()));
     }
-
-    @DeleteMapping("/{submissionId}")
-    @Operation(summary = "Delete submission",
-            description = "Students can only delete their own submissions in DRAFT status")
-    public ResponseEntity<Void> deleteSubmission(
-            @PathVariable Long submissionId,
-            @AuthenticationPrincipal User student) {
-        submissionService.deleteStudentSubmission(submissionId, student.getUserId());
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{submissionId}/status")
-    @Operation(summary = "Check submission status",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Status retrieved"),
-                    @ApiResponse(responseCode = "403", description = "Unauthorized access")
-            })
-    public ResponseEntity<String> checkSubmissionStatus(
-            @PathVariable Long submissionId,
-            @AuthenticationPrincipal User student) {
-        return ResponseEntity.ok(
-                submissionService.getSubmissionStatus(submissionId, student.getUserId())
-        );
-    }
-
 
     // src/main/java/org/sustech/orion/controller/students/SubmissionController.java
     @GetMapping("/{submissionId}/grade")
