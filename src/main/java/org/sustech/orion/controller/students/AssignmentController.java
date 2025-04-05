@@ -118,7 +118,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "未参加该课程作业"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<CourseMaterialResponseDTO> getAssignmentDetails(
+    public ResponseEntity<AssignmentResponseDTO> getAssignmentDetails(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student) {
 
@@ -131,7 +131,7 @@ public class AssignmentController {
             throw new ApiException("未参加该课程作业", HttpStatus.FORBIDDEN);
         }
 
-        return ResponseEntity.ok(ConvertDTO.AssignmentToCourseMaterialResponseDTO(assignment));
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignment));
     }
 
     /**
