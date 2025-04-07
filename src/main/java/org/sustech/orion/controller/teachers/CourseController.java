@@ -9,9 +9,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.CourseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseBasicInfoResponseDTO;
 import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
 import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
@@ -53,9 +53,9 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}")//ok
-    @Operation(summary = "Get course details", description = "Get course by ID")
-    public ResponseEntity<CourseItemResponseDTO> getCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.getCourseById(courseId)));
+    @Operation(summary = "Get course basic info", description = "Get course by ID")
+    public ResponseEntity<CourseBasicInfoResponseDTO> getCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toCourseBasicInfoResponseDTO(courseService.getCourseById(courseId)));
     }
 
     /* useless */

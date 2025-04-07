@@ -106,7 +106,7 @@ public class SubmissionController {
     public ResponseEntity<Submission> createSubmission(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User student,
-            @ModelAttribute SubmissionDTO request,
+            @RequestParam(required = false) String content,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
 
         // 获取作业
@@ -138,12 +138,13 @@ public class SubmissionController {
         submission.setContents(new ArrayList<>());
 
         // 添加文本内容（如果有）
-        if (StringUtils.hasText(request.getTextResponse())) {
+        if (content != null && !content.trim().isEmpty()) {
             SubmissionContent textContent = new SubmissionContent();
             textContent.setType(SubmissionContent.ContentType.TEXT);
-            textContent.setContent(request.getTextResponse());
+            textContent.setContent(content);
             textContent.setSubmission(submission);
             submission.getContents().add(textContent);
+            submissionService.saveSubmission(submission);
         }
 
         // 处理文件附件（如果有）

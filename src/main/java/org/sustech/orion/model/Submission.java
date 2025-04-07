@@ -38,19 +38,15 @@ public class Submission {
     @Column(nullable = false)
     private SubmissionStatus status;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubmissionContent> contents = new ArrayList<>();
 
-    @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Grade grade;
 
-    @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private AIGrading aiGrading;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CodeExecutionResult> codeExecutionResults;
 
