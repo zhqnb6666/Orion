@@ -42,9 +42,9 @@ public interface AssignmentService {
 
     TestCase getTestCaseById(Long testCaseId);
 
-    void updateTestcase(TestCase testcase);
+    TestCase updateTestcase(TestCase testcase);
 
-    void addTestcase(TestCase testcase);
+    TestCase addTestcase(TestCase testcase);
 
     void deleteTestcase(Long testcaseId);
 }

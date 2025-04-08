@@ -80,7 +80,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "No permission to modify"),
                     @ApiResponse(responseCode = "404", description = "Assignment or test case not found")
             })
-    public ResponseEntity<Void> updateTestcase(
+    public ResponseEntity<TestCaseResponseDTO> updateTestcase(
             @PathVariable Long assignmentId,
             @PathVariable Long testcaseId,
             @RequestBody TestcaseDTO request,
@@ -103,8 +103,8 @@ public class AssignmentController {
         testcase.setInput(request.getInput());
         testcase.setExpectedOutput(request.getExpectedOutput());
         testcase.setWeight(request.getWeight());
-        assignmentService.updateTestcase(testcase);
-        return ResponseEntity.ok().build();
+        testcase = assignmentService.updateTestcase(testcase);
+        return ResponseEntity.ok(new TestCaseResponseDTO(testcase));
     }
 
     @PostMapping("/{assignmentId}/testcases")
@@ -115,7 +115,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "No permission to upload"),
                     @ApiResponse(responseCode = "404", description = "Assignment not found")
             })
-    public ResponseEntity<Void> uploadTestcase(
+    public ResponseEntity<TestCaseResponseDTO> uploadTestcase(
             @PathVariable Long assignmentId,
             @RequestBody TestcaseDTO request,
             @AuthenticationPrincipal User currentUser) {
@@ -135,8 +135,8 @@ public class AssignmentController {
         testcase.setWeight(request.getWeight());
         testcase.setAssignment(assignment);
 
-        assignmentService.addTestcase(testcase);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        testcase = assignmentService.addTestcase(testcase);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new TestCaseResponseDTO(testcase));
     }
 
     @DeleteMapping("/{assignmentId}/testcases/{testcaseId}")

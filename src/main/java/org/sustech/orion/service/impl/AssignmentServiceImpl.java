@@ -148,23 +148,23 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public void updateTestcase(TestCase testcase) {
+    public TestCase updateTestcase(TestCase testcase) {
         if (testcase == null || testcase.getId() == null) {
             throw new ApiException("Invalid test case", HttpStatus.BAD_REQUEST);
         }
         testCaseRepository.findById(testcase.getId())
                 .orElseThrow(() -> new ApiException("Test case not found", HttpStatus.NOT_FOUND));
-        testCaseRepository.save(testcase);
+        return testCaseRepository.save(testcase);
     }
 
     @Override
-    public void addTestcase(TestCase testcase) {
+    public TestCase addTestcase(TestCase testcase) {
         if (testcase == null) {
             throw new ApiException("Test case cannot be null", HttpStatus.BAD_REQUEST);
         }
         // Set id to null to ensure it creates a new test case
         testcase.setId(null);
-        testCaseRepository.save(testcase);
+        return testCaseRepository.save(testcase);
     }
 
     @Override
