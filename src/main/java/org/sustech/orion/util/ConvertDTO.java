@@ -15,7 +15,7 @@ public class ConvertDTO {
     public static AssignmentResponseDTO toAssignmentResponseDTO(Assignment assignment) {
         AssignmentResponseDTO dto = new AssignmentResponseDTO();
 
-        dto.setId(String.valueOf(assignment.getId()));
+        dto.setId(assignment.getId());
         dto.setTitle(assignment.getTitle());
         dto.setType(assignment.getType());
         dto.setDescription(assignment.getDescription());

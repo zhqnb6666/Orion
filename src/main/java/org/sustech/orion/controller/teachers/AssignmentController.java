@@ -18,6 +18,7 @@ import org.sustech.orion.dto.TestcaseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.TestCaseResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
@@ -66,6 +67,7 @@ public class AssignmentController {
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
         assignment.setOpenDate(request.getOpenDate());
+        assignment.setInstructions(request.getInstructions());
         assignment.setMaxScore(request.getMaxScore());
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
     }
@@ -404,7 +406,38 @@ public class AssignmentController {
 
     @GetMapping("/course/{courseId}")
     @Operation(summary = "Get assignments")
-    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId) {
+    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId,
+                                                                      @AuthenticationPrincipal User currentUser) {
+        Course course = courseService.getCourseById(courseId);
+        if (course == null) {
+            throw new ApiException("Course not found", HttpStatus.NOT_FOUND);
+        }
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to view this course", HttpStatus.FORBIDDEN);
+        }
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));
+    }
+
+    @GetMapping("/{assignmentId}/testcases")
+    @Operation(summary = "Get test cases",
+            description = "获取指定作业的所有测试用例")
+    public ResponseEntity<List<TestCaseResponseDTO>> getTestCases(@PathVariable Long assignmentId,
+                                                                  @AuthenticationPrincipal User currentUser) {
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        if (assignment == null) {
+            throw new ApiException("Assignment not found", HttpStatus.NOT_FOUND);
+        }
+        Course course = assignment.getCourse();
+        if (course == null) {
+            throw new ApiException("Course not found", HttpStatus.NOT_FOUND);
+        }
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to view this assignment", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok(
+                assignment.getTestCases().stream()
+                .map(TestCaseResponseDTO::new)
+                .collect(Collectors.toList())
+        );
     }
 }

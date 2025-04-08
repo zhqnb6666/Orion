@@ -3,6 +3,7 @@ package org.sustech.orion.dto.responseDTO;
 import lombok.Data;
 import org.sustech.orion.dto.AttachmentDTO;
 import org.sustech.orion.model.Resource;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ public class ResourceAttachmentResponseDTO {
     private Long resourceId;
     private String resourceName;
     private String resourceType;
-    private List<AttachmentDTO> attachments = new ArrayList<>();
+    private List<AttachmentResponseDTO> attachments = new ArrayList<>();
     
     public static ResourceAttachmentResponseDTO fromResource(Resource resource) {
         ResourceAttachmentResponseDTO dto = new ResourceAttachmentResponseDTO();
@@ -24,7 +25,7 @@ public class ResourceAttachmentResponseDTO {
         if (resource.getAttachments() != null) {
             dto.setAttachments(
                 resource.getAttachments().stream()
-                    .map(AttachmentDTO::fromAttachment)
+                    .map(ConvertDTO::toAttachmentResponseDTO)
                     .collect(Collectors.toList())
             );
         }

@@ -153,7 +153,7 @@ public class CodeServiceImpl implements CodeService {
 
                 boolean passed = result.isExecutionSuccess() &&
                         result.getOutput().trim().equals(testCase.getExpectedOutput().trim());
-                double weight = testCase.getWeight();
+                int weight = testCase.getWeight();
                 totalWeight += weight;
                 if (passed) {
                     totalScore += weight;

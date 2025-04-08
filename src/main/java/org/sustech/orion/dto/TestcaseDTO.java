@@ -6,5 +6,5 @@ import lombok.Data;
 public class TestcaseDTO {
     private String input;
     private String expectedOutput;
-    private Double weight;
+    private Integer weight;
 }
