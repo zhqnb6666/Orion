@@ -248,21 +248,21 @@ public class AssignmentController {
     /**
      * 为作业上传附件
      * @param assignmentId 作业ID
-     * @param file 文件
+     * @param files 文件列表
      * @param currentUser 当前用户
-     * @return 附件信息
+     * @return 附件信息列表
      */
     @PostMapping(value = "/{assignmentId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "上传作业附件",
-            description = "向指定作业添加附件文件",
+            description = "向指定作业添加多个附件文件",
             responses = {
                     @ApiResponse(responseCode = "200", description = "上传成功"),
                     @ApiResponse(responseCode = "403", description = "无权限操作"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<AttachmentDTO> uploadAssignmentAttachment(
+    public ResponseEntity<List<AttachmentDTO>> uploadAssignmentAttachment(
             @PathVariable Long assignmentId,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("files") MultipartFile[] files,
             @AuthenticationPrincipal User currentUser) {
 
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
@@ -273,18 +273,25 @@ public class AssignmentController {
             throw new ApiException("无权限操作该作业", HttpStatus.FORBIDDEN);
         }
 
-        // 上传附件
-        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
+        List<AttachmentDTO> attachmentDTOs = new ArrayList<>();
+        
+        // 上传多个附件
+        for (MultipartFile file : files) {
+            // 上传附件
+            Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
 
-        // 添加附件到作业
-        if (assignment.getAttachments() == null) {
-            assignment.setAttachments(new ArrayList<>());
+            // 添加附件到作业
+            if (assignment.getAttachments() == null) {
+                assignment.setAttachments(new ArrayList<>());
+            }
+            assignment.getAttachments().add(attachment);
+            attachmentDTOs.add(AttachmentDTO.fromAttachment(attachment));
         }
-        assignment.getAttachments().add(attachment);
+        
         assignmentService.updateAssignment(assignment);
 
-        // 返回附件信息
-        return ResponseEntity.ok(AttachmentDTO.fromAttachment(attachment));
+        // 返回附件信息列表
+        return ResponseEntity.ok(attachmentDTOs);
     }
 
     /**
