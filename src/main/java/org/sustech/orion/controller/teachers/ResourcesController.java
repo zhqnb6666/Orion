@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.dto.AttachmentDTO;
 import org.sustech.orion.dto.ResourceDTO;
+import org.sustech.orion.dto.responseDTO.AttachmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.ResourceAttachmentResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Attachment;
@@ -21,6 +22,7 @@ import org.sustech.orion.model.User;
 import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -175,7 +177,7 @@ public class ResourcesController {
                   @ApiResponse(responseCode = "403", description = "无权限操作该资源"),
                   @ApiResponse(responseCode = "404", description = "资源不存在")
               })
-    public ResponseEntity<AttachmentDTO> addResourceAttachment(
+    public ResponseEntity<AttachmentResponseDTO> addResourceAttachment(
             @PathVariable Long resourceId,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal User currentUser) {
@@ -202,7 +204,7 @@ public class ResourcesController {
         resourceService.saveResource(resource);
         
         // 返回附件信息
-        return ResponseEntity.ok(AttachmentDTO.fromAttachment(attachment));
+        return ResponseEntity.ok(ConvertDTO.toAttachmentResponseDTO(attachment));
     }
     
     /**
@@ -212,7 +214,7 @@ public class ResourcesController {
      * @return 资源及其附件列表
      */
     @GetMapping("/{resourceId}/attachments")
-    @Operation(summary = "获取资源附件列表",
+    @Operation(summary = "获取资源附件列表 (好像没什么用?)",
               description = "获取指定资源的所有附件信息",
               responses = {
                   @ApiResponse(responseCode = "200", description = "获取成功"),
