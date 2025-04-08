@@ -18,6 +18,7 @@ import org.sustech.orion.dto.TestcaseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.TestCaseResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
@@ -66,6 +67,7 @@ public class AssignmentController {
         assignment.setType(request.getType());
         assignment.setDueDate(request.getDueDate());
         assignment.setOpenDate(request.getOpenDate());
+        assignment.setInstructions(request.getInstructions());
         assignment.setMaxScore(request.getMaxScore());
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
     }
@@ -78,7 +80,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "No permission to modify"),
                     @ApiResponse(responseCode = "404", description = "Assignment or test case not found")
             })
-    public ResponseEntity<Void> updateTestcase(
+    public ResponseEntity<TestCaseResponseDTO> updateTestcase(
             @PathVariable Long assignmentId,
             @PathVariable Long testcaseId,
             @RequestBody TestcaseDTO request,
@@ -101,8 +103,8 @@ public class AssignmentController {
         testcase.setInput(request.getInput());
         testcase.setExpectedOutput(request.getExpectedOutput());
         testcase.setWeight(request.getWeight());
-        assignmentService.updateTestcase(testcase);
-        return ResponseEntity.ok().build();
+        testcase = assignmentService.updateTestcase(testcase);
+        return ResponseEntity.ok(new TestCaseResponseDTO(testcase));
     }
 
     @PostMapping("/{assignmentId}/testcases")
@@ -113,7 +115,7 @@ public class AssignmentController {
                     @ApiResponse(responseCode = "403", description = "No permission to upload"),
                     @ApiResponse(responseCode = "404", description = "Assignment not found")
             })
-    public ResponseEntity<Void> uploadTestcase(
+    public ResponseEntity<TestCaseResponseDTO> uploadTestcase(
             @PathVariable Long assignmentId,
             @RequestBody TestcaseDTO request,
             @AuthenticationPrincipal User currentUser) {
@@ -133,8 +135,8 @@ public class AssignmentController {
         testcase.setWeight(request.getWeight());
         testcase.setAssignment(assignment);
 
-        assignmentService.addTestcase(testcase);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        testcase = assignmentService.addTestcase(testcase);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new TestCaseResponseDTO(testcase));
     }
 
     @DeleteMapping("/{assignmentId}/testcases/{testcaseId}")
@@ -411,7 +413,38 @@ public class AssignmentController {
 
     @GetMapping("/course/{courseId}")
     @Operation(summary = "Get assignments")
-    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId) {
+    public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId,
+                                                                      @AuthenticationPrincipal User currentUser) {
+        Course course = courseService.getCourseById(courseId);
+        if (course == null) {
+            throw new ApiException("Course not found", HttpStatus.NOT_FOUND);
+        }
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to view this course", HttpStatus.FORBIDDEN);
+        }
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));
+    }
+
+    @GetMapping("/{assignmentId}/testcases")
+    @Operation(summary = "Get test cases",
+            description = "获取指定作业的所有测试用例")
+    public ResponseEntity<List<TestCaseResponseDTO>> getTestCases(@PathVariable Long assignmentId,
+                                                                  @AuthenticationPrincipal User currentUser) {
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        if (assignment == null) {
+            throw new ApiException("Assignment not found", HttpStatus.NOT_FOUND);
+        }
+        Course course = assignment.getCourse();
+        if (course == null) {
+            throw new ApiException("Course not found", HttpStatus.NOT_FOUND);
+        }
+        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("No permission to view this assignment", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok(
+                assignment.getTestCases().stream()
+                .map(TestCaseResponseDTO::new)
+                .collect(Collectors.toList())
+        );
     }
 }

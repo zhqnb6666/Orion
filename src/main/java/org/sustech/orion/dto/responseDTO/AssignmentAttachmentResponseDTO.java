@@ -3,6 +3,7 @@ package org.sustech.orion.dto.responseDTO;
 import lombok.Data;
 import org.sustech.orion.dto.AttachmentDTO;
 import org.sustech.orion.model.Assignment;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 public class AssignmentAttachmentResponseDTO {
     private Long assignmentId;
     private String assignmentTitle;
-    private List<AttachmentDTO> attachments = new ArrayList<>();
+    private List<AttachmentResponseDTO> attachments = new ArrayList<>();
     
     public static AssignmentAttachmentResponseDTO fromAssignment(Assignment assignment) {
         AssignmentAttachmentResponseDTO dto = new AssignmentAttachmentResponseDTO();
@@ -22,7 +23,7 @@ public class AssignmentAttachmentResponseDTO {
         if (assignment.getAttachments() != null) {
             dto.setAttachments(
                 assignment.getAttachments().stream()
-                    .map(AttachmentDTO::fromAttachment)
+                    .map(ConvertDTO::toAttachmentResponseDTO)
                     .collect(Collectors.toList())
             );
         }

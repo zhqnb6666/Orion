@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
 import org.sustech.orion.repository.*;
 import org.sustech.orion.service.CourseService;
@@ -88,13 +89,13 @@ public class Initializer {
                 Notification.Priority.MEDIUM);
 
         Attachment pic_1 = createAttachment("test picture",
-                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a?x-bce-process=image/format,f_auto/watermark,image_d2F0ZXIvYmFpa2UyNzI,g_7,xp_5,yp_5,P_20/resize,m_lfit,limit_1,h_1080");
+                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a");
         Attachment pdf_1 = createAttachment("test pdf",
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
         Attachment codeFile_1 = createAttachment("test code file",
                 "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
         Attachment pic_2 = createAttachment("test picture",
-                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a?x-bce-process=image/format,f_auto/watermark,image_d2F0ZXIvYmFpa2UyNzI,g_7,xp_5,yp_5,P_20/resize,m_lfit,limit_1,h_1080");
+                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a");
         Attachment pdf_2 = createAttachment("test pdf",
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
         Attachment codeFile_2 = createAttachment("test code file",
@@ -211,7 +212,11 @@ public class Initializer {
         Attachment attachment = new Attachment();
         attachment.setName(name);
         attachment.setUrl(url);
-        attachment.setSize(FileSizeUtil.getFileSize(url));
+        try {
+            attachment.setSize(FileSizeUtil.getFileSize(url));
+        } catch (Exception e) {
+            attachment.setSize(0L);
+        }
         attachment.setAttachmentType(Attachment.AttachmentType.Resource);
         attachment.setUploadedAt(Timestamp.from(Instant.now()));
         return attachment;
@@ -264,7 +269,11 @@ public class Initializer {
             Attachment attachment = new Attachment();
             attachment.setUrl(fileUrl);
             attachment.setMimeType(mimeType);
-            attachment.setSize(FileSizeUtil.getFileSize(fileUrl));
+            try {
+                attachment.setSize(FileSizeUtil.getFileSize(fileUrl));
+            } catch (ApiException e) {
+                attachment.setSize(0L);
+            }
             attachment.setName(fileUrl.substring(fileUrl.lastIndexOf('/') + 1));
             attachment.setAttachmentType(Attachment.AttachmentType.Submission);
             attachment.setUploadedAt(Timestamp.from(Instant.now()));

@@ -21,7 +21,7 @@ public class TestCase {
     private String expectedOutput;
 
     @Column(nullable = false)
-    private Double weight;
+    private Integer weight;
 
     @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore

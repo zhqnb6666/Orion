@@ -28,6 +28,6 @@ public class CodeSubmissionResult {
         private boolean executionSuccess;
         private boolean compiled;
         private boolean passed;
-        private Double weight;
+        private Integer weight;
     }
 } 
