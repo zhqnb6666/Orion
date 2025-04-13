@@ -20,6 +20,7 @@ public class ConvertDTO {
         dto.setType(assignment.getType());
         dto.setDescription(assignment.getDescription());
         dto.setAttachments(toAttachmentResponseDTOList(assignment.getAttachments()));
+        dto.setOpenDate(assignment.getOpenDate());
         dto.setDueDate(assignment.getDueDate());
         dto.setMaxScore(assignment.getMaxScore());
 
