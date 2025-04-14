@@ -21,6 +21,9 @@ public class GradeResponseDTO {
     private Timestamp appealTime;
     private String status;   // 枚举值：graded/upcoming等
 
+    private Double aiScore; // 添加 AI 评分字段
+    private Long assignmentId; // 添加作业ID字段
+
     // 添加枚举类型
     public enum GradeStatus {
         GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED

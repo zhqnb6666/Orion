@@ -36,12 +36,31 @@ public class GradeServiceImpl implements GradeService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
 
+        // 检查是否已存在评分记录
+        Grade existingGrade = gradeRepository.findBySubmission_Id(submissionId);
+        if (existingGrade != null) {
+            // 如果已有评分且当前评分更高，则更新评分
+            if (score > existingGrade.getScore()) {
+                existingGrade.setScore(score);
+                existingGrade.setFeedback(feedback);
+                existingGrade.setGrader(grader);
+                existingGrade.setGradedTime(Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+                existingGrade.setIsFinalized(false);//
+                return gradeRepository.save(existingGrade);
+            }
+            // 如果当前评分不高于已有评分，则不做修改
+            return existingGrade;
+        }
+
+        // 如果没有评分记录，则创建新的评分
         Grade grade = new Grade();
         grade.setSubmission(submission);
         grade.setGrader(grader);
         grade.setScore(score);
         grade.setFeedback(feedback);
         grade.setGradedTime(Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        grade.setIsFinalized(false);
+        grade.setStatus(Grade.Status.GRADED);
         return gradeRepository.save(grade);
     }
 

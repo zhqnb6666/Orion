@@ -89,6 +89,13 @@ public class ConvertDTO {
         dto.setAppealTime(grade.getAppealTime());
         dto.setStatus(grade.getStatus().getValue());
 
+        // 添加 AI 评分和作业ID
+        AIGrading aiGrading = grade.getSubmission().getAiGrading();
+        if (aiGrading != null) {
+            dto.setAiScore(aiGrading.getAiScore());
+        }
+        dto.setAssignmentId(grade.getSubmission().getAssignment().getId());
+
 
         return dto;
     }
@@ -122,8 +129,22 @@ public class ConvertDTO {
         return dto;
     }
 
+    // 新增转换方法
+    public static SubmissionResponseDTO toSubmissionResponseDTO(Submission submission) {
+        SubmissionResponseDTO dto = new SubmissionResponseDTO();
+        dto.setId(submission.getId());
+        dto.setStudent(submission.getStudent());
+        dto.setAssignment(submission.getAssignment());
 
-
+        dto.setSubmitTime(submission.getSubmitTime());
+        dto.setStatus(submission.getStatus());
+        if (submission.getGrade() != null) {
+            dto.setScore(submission.getGrade().getScore());
+        }
+        dto.setContents(submission.getContents());
+        dto.setCodeExecutionResults(submission.getCodeExecutionResults());
+        return dto;
+    }
 
     // 通用集合转换方法
     public static List<CourseItemResponseDTO> toCourseItemResponseDTOList(List<Course> courses) {
@@ -154,6 +175,9 @@ public class ConvertDTO {
     }
     public static List<AttachmentResponseDTO> toAttachmentResponseDTOList(List<Attachment> attachments) {
         return toDTOList(attachments, ConvertDTO::toAttachmentResponseDTO);
+    }
+    public static List<SubmissionResponseDTO> toSubmissionResponseDTOList(List<Submission> submissions) {
+        return toDTOList(submissions, ConvertDTO::toSubmissionResponseDTO);
     }
 
 

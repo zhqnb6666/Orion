@@ -8,12 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.SubmissionDTO;
+import org.sustech.orion.dto.responseDTO.SubmissionResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Submission;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +37,10 @@ public class SubmissionController {
     @GetMapping("/{submissionId}")
     @Operation(summary = "获取提交详情",
             description = "获取指定ID的提交详细信息")
-    public ResponseEntity<Submission> getSubmission(@PathVariable Long submissionId) {
-        return ResponseEntity.ok(submissionService.getSubmissionOrThrow(submissionId));
+    public ResponseEntity<SubmissionResponseDTO> getSubmission(@PathVariable Long submissionId) {
+        return ResponseEntity.ok(ConvertDTO.toSubmissionResponseDTO(submissionService.getSubmissionOrThrow(submissionId)));
     }
-    
+
     @GetMapping("/assignment/{assignmentId}/latest")
     @Operation(summary = "获取作业的所有最新提交",
             description = "获取指定作业的所有学生最新提交（每个学生只返回最新的一次提交）",
@@ -47,23 +49,23 @@ public class SubmissionController {
                     @ApiResponse(responseCode = "403", description = "无权访问该作业的提交"),
                     @ApiResponse(responseCode = "404", description = "作业不存在")
             })
-    public ResponseEntity<List<Submission>> getLatestSubmissionsByAssignment(
+    public ResponseEntity<List<SubmissionResponseDTO>> getLatestSubmissionsByAssignment(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal User teacher) {
-        
+
         // 验证作业存在性并检查教师权限
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
         if (!assignment.getCourse().getInstructor().getUserId().equals(teacher.getUserId())) {
             throw new ApiException("无权查看该作业的提交", HttpStatus.FORBIDDEN);
         }
-        
+
         // 获取所有最新提交
         Map<Long, Submission> latestSubmissions = submissionService.getLatestSubmissionsByAssignment(assignmentId);
-        
+
         // 转换为列表返回
-        return ResponseEntity.ok(new ArrayList<>(latestSubmissions.values()));
+        return ResponseEntity.ok(ConvertDTO.toSubmissionResponseDTOList(new ArrayList<>(latestSubmissions.values())));
     }
-    
+
     @GetMapping("/assignment/{assignmentId}/student/{studentId}")
     @Operation(summary = "获取学生的作业提交历史",
             description = "获取特定学生对指定作业的所有提交记录",
@@ -72,20 +74,20 @@ public class SubmissionController {
                     @ApiResponse(responseCode = "403", description = "无权访问该学生的提交"),
                     @ApiResponse(responseCode = "404", description = "作业或学生不存在")
             })
-    public ResponseEntity<List<Submission>> getStudentSubmissionsForAssignment(
+    public ResponseEntity<List<SubmissionResponseDTO>> getStudentSubmissionsForAssignment(
             @PathVariable Long assignmentId,
             @PathVariable Long studentId,
             @AuthenticationPrincipal User teacher) {
-        
+
         // 验证作业存在性并检查教师权限
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
         if (!assignment.getCourse().getInstructor().getUserId().equals(teacher.getUserId())) {
             throw new ApiException("无权查看该作业的提交", HttpStatus.FORBIDDEN);
         }
-        
+
         // 获取学生的所有提交记录
         List<Submission> submissions = submissionService.getSubmissionsByAssignmentAndStudent(assignmentId, studentId);
-        
-        return ResponseEntity.ok(submissions);
+
+        return ResponseEntity.ok(ConvertDTO.toSubmissionResponseDTOList(submissions));
     }
 }
