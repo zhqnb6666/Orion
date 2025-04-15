@@ -14,7 +14,6 @@ import org.sustech.orion.service.CodeAssignmentConfigService;
 @RequestMapping("/api/teachers/code-config")
 @Tag(name = "Code Assignment Config API", description = "教师管理代码作业配置的API")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('TEACHER')")
 public class CodeAssignmentConfigController {
 
     private final CodeAssignmentConfigService codeAssignmentConfigService;
