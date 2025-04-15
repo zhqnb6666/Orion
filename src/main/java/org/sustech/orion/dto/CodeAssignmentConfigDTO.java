@@ -10,8 +10,6 @@ public class CodeAssignmentConfigDTO {
     private Integer memoryLimitMB;
     private Boolean timeLimitEnabled;
     private Integer timeLimitSeconds;
-    private String languageVersions;
-    private String disabledLibraries;
     private Boolean autoGradingEnabled;
     private Boolean showDetailedResults;
     private Long assignmentId;

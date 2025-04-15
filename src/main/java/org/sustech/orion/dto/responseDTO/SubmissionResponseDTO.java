@@ -26,7 +26,8 @@ public class SubmissionResponseDTO {
 
     private SubmissionStatus status;
 
-    private Double score; // 新增成绩字段
+    private Grade grade;
+    private AIGrading aiGrading;
 
 
     private List<SubmissionContent> contents;

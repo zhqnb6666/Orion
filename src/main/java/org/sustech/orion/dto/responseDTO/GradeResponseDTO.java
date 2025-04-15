@@ -2,6 +2,7 @@ package org.sustech.orion.dto.responseDTO;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.sustech.orion.model.AIGrading;
 
 import java.sql.Timestamp;
 
@@ -21,7 +22,7 @@ public class GradeResponseDTO {
     private Timestamp appealTime;
     private String status;   // 枚举值：graded/upcoming等
 
-    private Double aiScore; // 添加 AI 评分字段
+    private AIGrading aiGrading; // 添加 AI 评分字段
     private Long assignmentId; // 添加作业ID字段
 
     // 添加枚举类型

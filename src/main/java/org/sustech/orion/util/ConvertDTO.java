@@ -92,7 +92,7 @@ public class ConvertDTO {
         // 添加 AI 评分和作业ID
         AIGrading aiGrading = grade.getSubmission().getAiGrading();
         if (aiGrading != null) {
-            dto.setAiScore(aiGrading.getAiScore());
+            dto.setAiGrading(aiGrading);
         }
         dto.setAssignmentId(grade.getSubmission().getAssignment().getId());
 
@@ -139,7 +139,10 @@ public class ConvertDTO {
         dto.setSubmitTime(submission.getSubmitTime());
         dto.setStatus(submission.getStatus());
         if (submission.getGrade() != null) {
-            dto.setScore(submission.getGrade().getScore());
+            dto.setGrade(submission.getGrade());
+        }
+        if(submission.getAiGrading() != null) {
+            dto.setAiGrading(submission.getAiGrading());
         }
         dto.setContents(submission.getContents());
         dto.setCodeExecutionResults(submission.getCodeExecutionResults());
