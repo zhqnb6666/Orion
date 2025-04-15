@@ -1,15 +1,18 @@
 package org.sustech.orion.dto;
 
+import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
-@Getter
+@Getter @Setter
+@Builder
 public class GradeSummaryDTO {
-    private Double averageScore;
-    private Double highestScore;
-    private Double lowestScore;
-    private Map<String, Long> gradeDistribution; // 成绩分布
-    private Integer totalAssignments;
-    private Integer gradedAssignments;
+    private double averageScore;
+    private double highestScore;
+    private double lowestScore;
+    private long totalCourses;
+    private Map<String, Double> courseDistribution; // <课程名称, 平均分>
+    private long totalAssignments;
 }

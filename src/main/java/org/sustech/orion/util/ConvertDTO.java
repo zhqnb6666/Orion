@@ -1,10 +1,13 @@
 package org.sustech.orion.util;
 
+import org.sustech.orion.dto.authDTO.LoginInfoDTO;
 import org.sustech.orion.dto.responseDTO.*;
 import org.sustech.orion.model.*;
 
-import java.util.ArrayList;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -12,16 +15,26 @@ public class ConvertDTO {
     public static AssignmentResponseDTO toAssignmentResponseDTO(Assignment assignment) {
         AssignmentResponseDTO dto = new AssignmentResponseDTO();
 
-        dto.setId(String.valueOf(assignment.getId()));
+        dto.setId(assignment.getId());
         dto.setTitle(assignment.getTitle());
         dto.setType(assignment.getType());
         dto.setDescription(assignment.getDescription());
         dto.setAttachments(toAttachmentResponseDTOList(assignment.getAttachments()));
+        dto.setOpenDate(assignment.getOpenDate());
         dto.setDueDate(assignment.getDueDate());
         dto.setMaxScore(assignment.getMaxScore());
-        dto.setStatus(assignment.getStatus().toString());
+
+        // new
+        if (assignment.getOpenDate().after(Timestamp.from(Instant.now()))) {
+            dto.setStatus("upcoming");
+        } else if (assignment.getDueDate().before(Timestamp.from(Instant.now()))) {
+            dto.setStatus("closed");
+        } else {
+            dto.setStatus("open");
+        }
+
         dto.setInstructions(assignment.getInstructions());
-        dto.setSubmissionUrl(assignment.getSubmissionUrl());
+//        dto.setSubmissionUrl(assignment.getSubmissionUrl());
 
         return dto;
     }
@@ -31,7 +44,8 @@ public class ConvertDTO {
 
         dto.setId(attachment.getId());
         dto.setName(attachment.getName());
-        dto.setSize(String.valueOf(attachment.getSize()));
+        dto.setSize(FileSizeUtil.formatFileSize(attachment.getSize()));
+        dto.setUrl(attachment.getUrl());
 
         return dto;
     }
@@ -51,21 +65,11 @@ public class ConvertDTO {
     // Resource模型 转 CourseMaterialResponseDTO
     public static CourseMaterialResponseDTO ResourceToCourseMaterialResponseDTO(Resource resource) {
         CourseMaterialResponseDTO dto = new CourseMaterialResponseDTO();
-        dto.setId(resource.getId().toString());
+        dto.setId(resource.getId());
         dto.setTitle(resource.getName());
         dto.setType(resource.getType());
         dto.setDescription(resource.getDescription());
         dto.setAttachments(toAttachmentResponseDTOList(resource.getAttachments()));
-        return dto;
-    }
-    // Assignment模型 转 CourseMaterialResponseDTO
-    public static CourseMaterialResponseDTO AssignmentToCourseMaterialResponseDTO(Assignment assignment) {
-        CourseMaterialResponseDTO dto = new CourseMaterialResponseDTO();
-        dto.setId(assignment.getId().toString());
-        dto.setTitle(assignment.getTitle());
-        dto.setType(assignment.getType());
-        dto.setDescription(assignment.getDescription());
-        dto.setAttachments(toAttachmentResponseDTOList(assignment.getAttachments()));
         return dto;
     }
 
@@ -73,17 +77,24 @@ public class ConvertDTO {
     public static GradeResponseDTO toGradeResponseDTO(Grade grade) {
         GradeResponseDTO dto = new GradeResponseDTO();
         dto.setId(grade.getId());
-        dto.setName(grade.getSubmission().getAssignment().getTitle());
+        dto.setTitle(grade.getSubmission().getAssignment().getTitle());
         dto.setType(grade.getSubmission().getAssignment().getType());
         dto.setScore(grade.getScore());
-        dto.setTotalPoints(Double.valueOf(grade.getSubmission().getAssignment().getMaxScore()));
+        dto.setMaxScore(Double.valueOf(grade.getSubmission().getAssignment().getMaxScore()));
         dto.setDueDate(grade.getSubmission().getAssignment().getDueDate());
         dto.setSubmittedDate(grade.getSubmission().getSubmitTime());
         dto.setGradedDate(grade.getGradedTime());
         dto.setFeedback(grade.getFeedback());
         dto.setAppealReason(grade.getAppealReason());
         dto.setAppealTime(grade.getAppealTime());
-        dto.setStatus(grade.getStatus().name());
+        dto.setStatus(grade.getStatus().getValue());
+
+        // 添加 AI 评分和作业ID
+        AIGrading aiGrading = grade.getSubmission().getAiGrading();
+        if (aiGrading != null) {
+            dto.setAiGrading(aiGrading);
+        }
+        dto.setAssignmentId(grade.getSubmission().getAssignment().getId());
 
 
         return dto;
@@ -103,8 +114,40 @@ public class ConvertDTO {
         return toDTOList(courses, ConvertDTO::toCourseBasicInfoResponseDTO);
     }
 
+    //转loginInfoDTO
+    public static LoginInfoDTO toLoginInfoDTO(User user, boolean isExpired) {
+        LoginInfoDTO dto = new LoginInfoDTO();
+        dto.setUserId(user.getUserId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole().name());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setBio(user.getBio());
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setExpired(isExpired);
+        return dto;
+    }
 
+    // 新增转换方法
+    public static SubmissionResponseDTO toSubmissionResponseDTO(Submission submission) {
+        SubmissionResponseDTO dto = new SubmissionResponseDTO();
+        dto.setId(submission.getId());
+        dto.setStudent(submission.getStudent());
+        dto.setAssignment(submission.getAssignment());
 
+        dto.setSubmitTime(submission.getSubmitTime());
+        dto.setStatus(submission.getStatus());
+        if (submission.getGrade() != null) {
+            dto.setGrade(submission.getGrade());
+        }
+        if(submission.getAiGrading() != null) {
+            dto.setAiGrading(submission.getAiGrading());
+        }
+        dto.setContents(submission.getContents());
+        dto.setCodeExecutionResults(submission.getCodeExecutionResults());
+        return dto;
+    }
 
     // 通用集合转换方法
     public static List<CourseItemResponseDTO> toCourseItemResponseDTOList(List<Course> courses) {
@@ -113,9 +156,6 @@ public class ConvertDTO {
 
     public static List<CourseMaterialResponseDTO> ResourceToCourseMaterialResponseDTOList(List<Resource> resources) {
         return toDTOList(resources, ConvertDTO::ResourceToCourseMaterialResponseDTO);
-    }
-    public static List<CourseMaterialResponseDTO> AssignmentToCourseMaterialResponseDTOList(List<Assignment> assignments) {
-        return toDTOList(assignments, ConvertDTO::AssignmentToCourseMaterialResponseDTO);
     }
 
     public static List<GradeResponseDTO> toGradeResponseDTOList(List<Grade> grades) {
@@ -126,6 +166,9 @@ public class ConvertDTO {
 
 
     public static <T, R> List<R> toDTOList(List<T> entities, Function<T, R> converter) {
+        if (entities == null) {
+            return new ArrayList<>();
+        }
         return entities.stream()
                 .map(converter)
                 .collect(Collectors.toList());
@@ -135,6 +178,9 @@ public class ConvertDTO {
     }
     public static List<AttachmentResponseDTO> toAttachmentResponseDTOList(List<Attachment> attachments) {
         return toDTOList(attachments, ConvertDTO::toAttachmentResponseDTO);
+    }
+    public static List<SubmissionResponseDTO> toSubmissionResponseDTOList(List<Submission> submissions) {
+        return toDTOList(submissions, ConvertDTO::toSubmissionResponseDTO);
     }
 
 

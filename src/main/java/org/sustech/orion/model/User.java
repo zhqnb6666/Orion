@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
 
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,7 +56,12 @@ public class User implements UserDetails { // 实现 UserDetails 接口
         return this.passwordHash; // 返回密码哈希字段
     }
 
+    @Getter
     public enum Role {
-        ADMIN, TEACHER, STUDENT
+        ADMIN, TEACHER, STUDENT;
+        private final String value;
+        Role() {
+            this.value = this.name().toLowerCase();
+        }
     }
 }

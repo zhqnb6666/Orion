@@ -3,6 +3,7 @@ package org.sustech.orion.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.List;
 
 @Entity
 @Data
@@ -20,10 +21,14 @@ public class TestCase {
     private String expectedOutput;
 
     @Column(nullable = false)
-    private Double weight;
+    private Integer weight;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CodeExecutionResult> executionResults;
 }

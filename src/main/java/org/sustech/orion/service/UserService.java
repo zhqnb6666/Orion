@@ -14,4 +14,5 @@ public interface UserService {
     List<User> search(String keyword);
     User updateUser(User user);
 
+    User getReferenceById(Long userId);
 }

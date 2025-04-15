@@ -1,14 +1,8 @@
 package org.sustech.orion.service.impl;
 
 import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.Assignment;
-import org.sustech.orion.model.Course;
-import org.sustech.orion.model.Submission;
-import org.sustech.orion.model.SubmissionConfig;
-import org.sustech.orion.repository.AssignmentRepository;
-import org.sustech.orion.repository.CourseRepository;
-import org.sustech.orion.repository.SubmissionConfigRepository;
-import org.sustech.orion.repository.SubmissionRepository;
+import org.sustech.orion.model.*;
+import org.sustech.orion.repository.*;
 import org.sustech.orion.service.AssignmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,14 +17,17 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final CourseRepository courseRepository;
     private final SubmissionRepository submissionRepository;
     private final SubmissionConfigRepository submissionConfigRepository;
+    private final TestCaseRepository testCaseRepository;
 
 
-    public AssignmentServiceImpl(AssignmentRepository assignmentRepository,
+    public AssignmentServiceImpl(AssignmentRepository assignmentRepository, TestCaseRepository testCaseRepository,
                                  CourseRepository courseRepository, SubmissionRepository submissionRepository, SubmissionConfigRepository submissionConfigRepository) {
         this.assignmentRepository = assignmentRepository;
+        this.testCaseRepository = testCaseRepository;
         this.courseRepository = courseRepository;
         this.submissionRepository = submissionRepository;
         this.submissionConfigRepository = submissionConfigRepository;
+
     }
 
     @Override
@@ -38,7 +35,17 @@ public class AssignmentServiceImpl implements AssignmentService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException("Course not found", HttpStatus.NOT_FOUND));
         assignment.setCourse(course);
-        return assignmentRepository.save(assignment);
+        Assignment savedAssignment = assignmentRepository.save(assignment);
+
+        // 创建默认的提交配置
+        SubmissionConfig config = new SubmissionConfig();
+        config.setAssignment(savedAssignment);
+        config.setMaxFileSize(10L * 1024 * 1024); // 10MB
+        config.setAllowedFileTypes("*"); // 允许所有文件类型
+        config.setMaxSubmissionAttempts(114514); // 最大提交次数
+        submissionConfigRepository.save(config);
+
+        return savedAssignment;
     }
 
     @Override
@@ -125,6 +132,47 @@ public class AssignmentServiceImpl implements AssignmentService {
         //submissionService.deleteByAssignmentId(assignmentId);
         //gradeService.deleteByAssignmentId(assignmentId);
         assignmentRepository.deleteById(assignmentId);
+    }
+
+    @Override
+    public List<TestCase> getTestCasesByAssignmentId(Long assignmentId) {
+        return assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new ApiException("Assignment not found", HttpStatus.NOT_FOUND))
+                .getTestCases();
+    }
+
+    @Override
+    public TestCase getTestCaseById(Long testCaseId) {
+        return testCaseRepository.findById(testCaseId)
+                .orElseThrow(() -> new ApiException("Test case not found", HttpStatus.NOT_FOUND));
+    }
+
+    @Override
+    public TestCase updateTestcase(TestCase testcase) {
+        if (testcase == null || testcase.getId() == null) {
+            throw new ApiException("Invalid test case", HttpStatus.BAD_REQUEST);
+        }
+        testCaseRepository.findById(testcase.getId())
+                .orElseThrow(() -> new ApiException("Test case not found", HttpStatus.NOT_FOUND));
+        return testCaseRepository.save(testcase);
+    }
+
+    @Override
+    public TestCase addTestcase(TestCase testcase) {
+        if (testcase == null) {
+            throw new ApiException("Test case cannot be null", HttpStatus.BAD_REQUEST);
+        }
+        // Set id to null to ensure it creates a new test case
+        testcase.setId(null);
+        return testCaseRepository.save(testcase);
+    }
+
+    @Override
+    public void deleteTestcase(Long testcaseId) {
+        if (!testCaseRepository.existsById(testcaseId)) {
+            throw new ApiException("Test case not found", HttpStatus.NOT_FOUND);
+        }
+        testCaseRepository.deleteById(testcaseId);
     }
 
 

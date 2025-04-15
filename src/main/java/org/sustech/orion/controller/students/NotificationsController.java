@@ -80,7 +80,7 @@ public class NotificationsController {
 
         // 验证通知所有权
         if (!notification.getRecipient().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权操作该通知", HttpStatus.FORBIDDEN);
+            throw new ApiException("Have no right to act on this notification", HttpStatus.FORBIDDEN);
         }
 
         notificationService.markAsRead(notificationId);
@@ -92,9 +92,9 @@ public class NotificationsController {
     @Operation(summary = "删除通知",
             description = "删除指定通知",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "删除成功"),
-                    @ApiResponse(responseCode = "403", description = "无权操作该通知"),
-                    @ApiResponse(responseCode = "404", description = "通知不存在")
+                    @ApiResponse(responseCode = "204", description = "successfully delete"),
+                    @ApiResponse(responseCode = "403", description = "Have no right to act on this notification"),
+                    @ApiResponse(responseCode = "404", description = "Notification does not exist")
             })
     public ResponseEntity<Void> deleteNotification(
             @PathVariable Long notificationId,
@@ -104,7 +104,7 @@ public class NotificationsController {
 
         // 验证通知所有权
         if (!notification.getRecipient().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权操作该通知", HttpStatus.FORBIDDEN);
+            throw new ApiException("Have no right to act on this notification", HttpStatus.FORBIDDEN);
         }
 
         notificationService.deleteNotification(notificationId);

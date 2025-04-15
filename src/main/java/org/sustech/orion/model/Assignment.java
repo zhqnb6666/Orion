@@ -21,13 +21,16 @@ public class Assignment {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
     @Column(nullable = false)
     private String type;
+
+    @Column(nullable = false)
+    private Timestamp openDate; // new
 
     @Column(nullable = false)
     private Timestamp dueDate;
@@ -38,24 +41,42 @@ public class Assignment {
     @Column(columnDefinition = "TEXT")
     private String instructions;//new
 
-    @Column(nullable = false)
-    private String submissionUrl;//new
+//    @Column(nullable = false)
+//    private String submissionUrl;//new
 
-    @OneToMany
-    @JsonIgnore
-    @JoinColumn(name = "assignment_id", nullable = false)
+//    @OneToMany
+//    @JsonIgnore
+//    @JoinColumn(name = "assignment_id", nullable = false)
+
+    @ManyToMany(
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    @JoinTable(
+            name = "assignment_attachments",
+            joinColumns = @JoinColumn(name = "assignment_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
     private List<Attachment> attachments;
 
     @JsonIgnore
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Status status;
+    @JsonIgnore
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Submission> submissions;
 
-    public enum Status{
-        OPEN,CLOSED,UPCOMING
+    @JsonIgnore
+    @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private SubmissionConfig submissionConfig;
+    
+    @JsonIgnore
+    @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CodeAssignmentConfig codeAssignmentConfig;
+
+    @Override
+    public String toString() {
+        return "Assignment{id=" + id + ", title='" + title + "'}";
     }
 
 }

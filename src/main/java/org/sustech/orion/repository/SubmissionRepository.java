@@ -35,11 +35,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             Long studentId
     );
 
+    // 根据作业ID查询所有提交记录，按提交时间降序排序
+    List<Submission> findByAssignment_IdOrderBySubmitTimeDesc(Long assignmentId);
+
 
     //    @Query("SELECT s FROM Submission s " +
 //            "WHERE s.status = 'ACCEPTED' " +
 //            "AND s.assignment.course.instructor.userId = :teacherId")
 //    List<Submission> findByStatusAndAssignment_Course_Teacher_UserId(
 //            @Param("teacherId") Long teacherId);
-    List<Submission> findByStatusAndAssignment_Course_Instructor_UserId(String status, Long teacherId);
+    List<Submission> findByStatusAndAssignment_Course_Instructor_UserId(Submission.SubmissionStatus status, Long assignment_course_instructor_userId);
+
+
 }

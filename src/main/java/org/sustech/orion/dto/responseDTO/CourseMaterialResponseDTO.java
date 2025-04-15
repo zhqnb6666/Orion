@@ -9,7 +9,7 @@ import java.util.List;
 @Setter
 // 对应Resource模型
 public class CourseMaterialResponseDTO {
-    private String id;
+    private Long id;
     private String title;
     private String type;
     private String description;

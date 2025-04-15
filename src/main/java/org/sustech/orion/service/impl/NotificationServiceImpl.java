@@ -41,16 +41,21 @@ public class NotificationServiceImpl implements NotificationService {
         NotificationDTO dto = new NotificationDTO();
         dto.setId(notification.getId());
         dto.setTitle(notification.getTitle());
+        dto.setSenderUsername(notification.getSender().getUsername());
         dto.setContent(notification.getContent());
         dto.setRead(notification.isRead());
         dto.setCreatedAt(notification.getCreatedAt());
-        dto.setNotificationType(notification.getType().name());
+        dto.setPriority(switch (notification.getPriority()) {
+            case HIGH -> "High Priority";
+            case MEDIUM -> "Medium Priority";
+            case LOW -> "Low Priority";
+        });
         return dto;
     }
     @Override
     public Notification getNotificationById(Long notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ApiException("通知不存在", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("The complaint has been recorded", HttpStatus.NOT_FOUND));
     }
 
     @Transactional

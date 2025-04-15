@@ -2,12 +2,18 @@ package org.sustech.orion.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"assignment", "student", "contents", "grade", "aiGrading", "codeExecutionResults"})
 @Table(name = "submissions")
 public class Submission {
 
@@ -16,12 +22,12 @@ public class Submission {
     private Long id;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
@@ -32,22 +38,34 @@ public class Submission {
     @Column(nullable = false)
     private SubmissionStatus status;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SubmissionContent> contents;
+    private List<SubmissionContent> contents = new ArrayList<>();
 
-    @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Grade grade;
 
-    @Column(nullable = false)
-    private Integer attempts;
+    @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AIGrading aiGrading;
 
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CodeExecutionResult> codeExecutionResults;
+
+    @Getter
     public enum SubmissionStatus {
-        PENDING, ACCEPTED, REJECTED
+        PENDING, ACCEPTED, REJECTED, DRAFT;
+        private final String value;
+
+        SubmissionStatus() {
+            this.value = this.name().toLowerCase();
+        }
     }
 
-
-
-
+    @Override
+    public String toString() {
+        return "Submission{" +
+                "id=" + id +
+                ", submitTime=" + submitTime +
+                ", status=" + status +
+                '}';
+    }
 }

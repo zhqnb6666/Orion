@@ -27,12 +27,12 @@ public class Course {
     @Column(nullable = false)
     private String semester;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "instructor_id", nullable = false)
     private User instructor;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "course_students",
             joinColumns = @JoinColumn(name = "course_id"),
@@ -53,4 +53,9 @@ public class Course {
 
     @Column(nullable = false)
     private Boolean isActive;
+
+    @Override
+    public String toString() {
+        return "Course{id=" + id + ", courseName=" + courseName + "'}";
+    }
 }

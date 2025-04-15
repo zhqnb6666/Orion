@@ -3,6 +3,7 @@ package org.sustech.orion.service;
 import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.model.Resource;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ResourceService {
@@ -10,7 +11,7 @@ public interface ResourceService {
 
     void deleteResource(Long resourceId);
 
-    String uploadFile(MultipartFile file);
-
     Resource getResourceById(Long resourceId);
+
+    Resource saveResource(Resource resource);
 }

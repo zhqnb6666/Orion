@@ -3,6 +3,8 @@ package org.sustech.orion.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+
 import java.sql.Timestamp;
 
 @Entity
@@ -14,14 +16,14 @@ public class Grade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
-    @JoinColumn(name = "grader_id", nullable = false)
+    @JoinColumn(name = "grader_id")
     private User grader;
 
     @Column(nullable = false)
@@ -33,7 +35,7 @@ public class Grade {
     @Column(nullable = false)
     private Timestamp gradedTime; // 评分时间
 
-    @Column(nullable = false)
+    @Column()
     private Boolean isFinalized; // 是否最终评分
 
     @Column(columnDefinition = "TEXT")
@@ -45,8 +47,15 @@ public class Grade {
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPCOMING;
 
+    @Getter
     public enum Status
     {
-        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED
+        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED;
+
+        private final String value;
+
+        Status() {
+            this.value = this.name().toLowerCase();
+        }
     }
 }

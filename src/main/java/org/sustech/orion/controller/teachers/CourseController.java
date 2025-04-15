@@ -9,21 +9,22 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.CourseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseBasicInfoResponseDTO;
 import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
 import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.UserService;
 import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.SemesterUtil;
 
 import java.util.List;
 
 @RestController("teachersCourseController")
 @RequestMapping("/api/teachers/courses")
-@Tag(name = "Course API", description = "APIs for course management")
+@Tag(name = "Teacher Course API", description = "APIs for course management")
 public class CourseController {
 
     private final CourseService courseService;
@@ -44,17 +45,17 @@ public class CourseController {
         Course course = new Course();
         course.setCourseName(request.getCourseName());
         course.setCourseCode(request.getCourseCode());
-        course.setSemester(request.getSemester());
         course.setDescription(request.getDescription());
         course.setIsActive(request.getIsActive());
         course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.createCourse(course, currentUser)));
     }
 
     @GetMapping("/{courseId}")//ok
-    @Operation(summary = "Get course details", description = "Get course by ID")
-    public ResponseEntity<CourseItemResponseDTO> getCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.getCourseById(courseId)));
+    @Operation(summary = "Get course basic info", description = "Get course by ID")
+    public ResponseEntity<CourseBasicInfoResponseDTO> getCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(ConvertDTO.toCourseBasicInfoResponseDTO(courseService.getCourseById(courseId)));
     }
 
     /* useless */
@@ -90,13 +91,12 @@ public class CourseController {
 
         // 验证教师权限
         if (!existingCourse.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限修改该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to modify", HttpStatus.FORBIDDEN);
         }
 
         // 更新可修改字段
         existingCourse.setCourseName(request.getCourseName());
         existingCourse.setDescription(request.getDescription());
-        existingCourse.setSemester(request.getSemester());
         existingCourse.setIsActive(request.getIsActive());
 
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.updateCourse(existingCourse)));
@@ -117,7 +117,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限删除该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to delete the course", HttpStatus.FORBIDDEN);
         }
 
         courseService.deleteCourseWithDependencies(courseId);
@@ -138,7 +138,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限查看该课程学生", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to view the course for students", HttpStatus.FORBIDDEN);
         }
 
         return ResponseEntity.ok(course.getStudents());
@@ -161,7 +161,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to operate this course", HttpStatus.FORBIDDEN);
         }
 
         User student = userService.getUserById(studentId);
@@ -188,7 +188,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限操作该课程", HttpStatus.FORBIDDEN);
+            throw new ApiException("No permission to operate this course", HttpStatus.FORBIDDEN);
         }
 
         courseService.removeStudentFromCourse(courseId, studentId);
@@ -211,7 +211,7 @@ public class CourseController {
 
         // 验证教师权限
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
-            throw new ApiException("无权限查看该课程作业", HttpStatus.FORBIDDEN);
+            throw new ApiException("Do not have permission to view the course work", HttpStatus.FORBIDDEN);
         }
 
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));

@@ -36,8 +36,7 @@ public class JwtUtil {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        //return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));//实际运行用
-        return (username.equals(userDetails.getUsername()));//供测试使用
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     public String extractUsername(String token) {
@@ -63,7 +62,7 @@ public class JwtUtil {
         //return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody(); 实际运行用
     }
 
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 }

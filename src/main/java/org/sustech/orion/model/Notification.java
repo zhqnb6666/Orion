@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -24,20 +25,33 @@ public class Notification {
     @Column(nullable = true)
     private boolean isRead;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     @JsonIgnore
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "recipient_id")
     private User recipient;
+
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
+    @JsonIgnore
+    @JoinColumn(name = "sender_id")
+    private User sender; // new
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type;
+    private Priority priority;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 
-    public enum NotificationType {
-        A, B, C
+    @Getter
+    public enum Priority {
+        HIGH("High Priority"),
+        MEDIUM("Medium Priority"),
+        LOW("Low Priority");
+        private final String value;
+
+        Priority(String value) {
+            this.value = value;
+        }
     }
 
 }

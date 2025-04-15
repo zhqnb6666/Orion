@@ -1,12 +1,13 @@
 package org.sustech.orion.dto;
 
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 import org.sustech.orion.model.SubmissionContent;
 
 import java.util.List;
 
-@Getter
+@Getter @Setter
 public class SubmissionDTO {
-    private String newStatus;
-    private List<SubmissionContent> contents;
+    private String content;
 }
