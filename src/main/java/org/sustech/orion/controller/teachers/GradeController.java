@@ -9,7 +9,9 @@ import org.sustech.orion.dto.GradeDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.model.Grade;
 import org.sustech.orion.model.User;
+import org.sustech.orion.repository.UserRepository;
 import org.sustech.orion.service.GradeService;
+import org.sustech.orion.service.UserService;
 import org.sustech.orion.util.ConvertDTO;
 
 import java.util.List;
@@ -20,9 +22,11 @@ import java.util.List;
 public class GradeController {
 
     private final GradeService gradeService;
+    private final UserService userService;
 
-    public GradeController(GradeService gradeService) {
+    public GradeController(GradeService gradeService, UserService userService) {
         this.gradeService = gradeService;
+        this.userService= userService;
     }
     /* useful */
 
@@ -45,7 +49,7 @@ public class GradeController {
                         submissionId,
                         request.getScore(),
                         request.getFeedback(),
-                        grader
+                        userService.getReferenceById(grader.getUserId())
                 )
         ));
     }

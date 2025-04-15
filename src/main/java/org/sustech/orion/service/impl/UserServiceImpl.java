@@ -118,5 +118,10 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return userRepository.save(user);
     }
 
+    @Override
+    public User getReferenceById(Long userId) {
+        return userRepository.getReferenceById(userId);
+    }
+
 
 }
