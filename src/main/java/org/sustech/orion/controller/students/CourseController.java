@@ -10,12 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import org.sustech.orion.dto.CourseDTO;
 import org.sustech.orion.dto.responseDTO.CourseBasicInfoResponseDTO;
 import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
-import org.sustech.orion.dto.responseDTO.CourseMaterialResponseDTO;
+import org.sustech.orion.dto.responseDTO.ResourceResponseDTO;
 import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.Grade;
-import org.sustech.orion.model.Resource;
 import org.sustech.orion.model.User;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
@@ -115,7 +114,7 @@ public class CourseController {
                     @ApiResponse(responseCode = "403", description = "Not enrolled in the course"),
                     @ApiResponse(responseCode = "404", description = "Curriculum does not exist")
             })
-    public ResponseEntity<List<CourseMaterialResponseDTO>> getCourseResources(
+    public ResponseEntity<List<ResourceResponseDTO>> getCourseResources(
             @PathVariable Long courseId,
             @AuthenticationPrincipal User student) {
 
@@ -127,7 +126,7 @@ public class CourseController {
             throw new ApiException("Not enrolled in the course", HttpStatus.FORBIDDEN);
         }
 
-        return ResponseEntity.ok(ConvertDTO.ResourceToCourseMaterialResponseDTOList(resourceService.getCourseResources(courseId)));
+        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTOList(resourceService.getCourseResources(courseId)));
     }
     @PostMapping("/join")
     @Operation(summary = "通过课程代码加入课程",

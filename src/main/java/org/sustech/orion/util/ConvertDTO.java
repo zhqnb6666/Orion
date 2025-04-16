@@ -62,13 +62,14 @@ public class ConvertDTO {
         return dto;
     }
 
-    // Resource模型 转 CourseMaterialResponseDTO
-    public static CourseMaterialResponseDTO ResourceToCourseMaterialResponseDTO(Resource resource) {
-        CourseMaterialResponseDTO dto = new CourseMaterialResponseDTO();
+    // Resource模型 转 ResourceResponseDTO
+    public static ResourceResponseDTO toResourceResponseDTO(Resource resource) {
+        ResourceResponseDTO dto = new ResourceResponseDTO();
         dto.setId(resource.getId());
         dto.setTitle(resource.getName());
         dto.setType(resource.getType());
         dto.setDescription(resource.getDescription());
+        dto.setUploadTime(resource.getUploadTime());
         dto.setAttachments(toAttachmentResponseDTOList(resource.getAttachments()));
         return dto;
     }
@@ -154,8 +155,8 @@ public class ConvertDTO {
         return toDTOList(courses, ConvertDTO::toCourseItemResponseDTO);
     }
 
-    public static List<CourseMaterialResponseDTO> ResourceToCourseMaterialResponseDTOList(List<Resource> resources) {
-        return toDTOList(resources, ConvertDTO::ResourceToCourseMaterialResponseDTO);
+    public static List<ResourceResponseDTO> toResourceResponseDTOList(List<Resource> resources) {
+        return toDTOList(resources, ConvertDTO::toResourceResponseDTO);
     }
 
     public static List<GradeResponseDTO> toGradeResponseDTOList(List<Grade> grades) {

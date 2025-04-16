@@ -3,21 +3,15 @@ package org.sustech.orion.controller.students;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.core.io.Resource;
-import org.sustech.orion.dto.AssignmentDTO;
-import org.sustech.orion.dto.SubmissionDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
-import org.sustech.orion.dto.responseDTO.CourseMaterialResponseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
@@ -28,10 +22,7 @@ import org.sustech.orion.service.SubmissionService;
 import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.util.ConvertDTO;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.io.IOException;
 
 @RestController("studentsAssignmentController")
