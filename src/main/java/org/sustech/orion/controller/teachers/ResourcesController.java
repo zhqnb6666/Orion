@@ -164,8 +164,9 @@ public class ResourcesController {
     
     /**
      * 为资源添加附件
-     * @param resourceId 资源ID
-     * @param file 文件
+     *
+     * @param resourceId  资源ID
+     * @param files        文件
      * @param currentUser 当前用户
      * @return 附件信息
      */
@@ -177,9 +178,9 @@ public class ResourcesController {
                   @ApiResponse(responseCode = "403", description = "无权限操作该资源"),
                   @ApiResponse(responseCode = "404", description = "资源不存在")
               })
-    public ResponseEntity<AttachmentResponseDTO> addResourceAttachment(
+    public ResponseEntity<List<AttachmentResponseDTO>> addResourceAttachment(
             @PathVariable Long resourceId,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("files") MultipartFile[] files,
             @AuthenticationPrincipal User currentUser) {
         
         // 获取资源
@@ -192,19 +193,23 @@ public class ResourcesController {
         }
         
         // 上传附件
-        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
-        
-        // 添加附件到资源
+        List<Attachment> attachments = new ArrayList<>();
+        for (MultipartFile file : files) {
+            Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
+            attachments.add(attachment);
+        }
+
+        // Add attachments to resource
         if (resource.getAttachments() == null) {
             resource.setAttachments(new ArrayList<>());
         }
-        resource.getAttachments().add(attachment);
+        resource.getAttachments().addAll(attachments);
         
         // 保存资源
         resourceService.saveResource(resource);
         
         // 返回附件信息
-        return ResponseEntity.ok(ConvertDTO.toAttachmentResponseDTO(attachment));
+        return ResponseEntity.ok(ConvertDTO.toAttachmentResponseDTOList(attachments));
     }
     
     /**
@@ -235,9 +240,6 @@ public class ResourcesController {
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
             throw new ApiException("无权限操作该资源", HttpStatus.FORBIDDEN);
         }
-        
-        // 验证附件存在性
-        Attachment attachment = attachmentService.getAttachmentById(attachmentId);
         
         // 从资源中移除附件
         resource.getAttachments().removeIf(att -> att.getId().equals(attachmentId));
