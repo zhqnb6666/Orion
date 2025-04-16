@@ -135,6 +135,7 @@ public class ConvertDTO {
         SubmissionResponseDTO dto = new SubmissionResponseDTO();
         dto.setId(submission.getId());
         dto.setStudent(submission.getStudent());
+        dto.setStudentName(submission.getStudent().getUsername());
         dto.setAssignment(submission.getAssignment());
 
         dto.setSubmitTime(submission.getSubmitTime());

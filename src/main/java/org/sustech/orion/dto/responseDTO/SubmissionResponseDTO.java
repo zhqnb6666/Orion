@@ -19,6 +19,8 @@ public class SubmissionResponseDTO {
     @JsonIgnore
     private User student;
 
+    private String studentName;
+
     @JsonIgnore
     private Assignment assignment;
 

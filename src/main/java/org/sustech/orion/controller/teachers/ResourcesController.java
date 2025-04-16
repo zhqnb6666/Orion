@@ -324,5 +324,35 @@ public class ResourcesController {
         
         return ResponseEntity.ok(ConvertDTO.toResourceResponseDTOList(resources));
     }
+
+    /**
+     * 获取资源详情及附件列表
+     * @param resourceId 资源ID
+     * @param currentUser 当前用户
+     * @return 资源及其附件列表
+     */
+    @GetMapping("/{resourceId}")
+    @Operation(summary = "获取资源详情",
+            description = "获取特定资源的详细信息及其所有附件",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "获取成功"),
+                    @ApiResponse(responseCode = "403", description = "没有权限查看该资源"),
+                    @ApiResponse(responseCode = "404", description = "资源不存在")
+            })
+    public ResponseEntity<ResourceResponseDTO> getResourceDetails(
+            @PathVariable Long resourceId,
+            @AuthenticationPrincipal User currentUser) {
+
+        // 获取资源
+        Resource resource = resourceService.getResourceById(resourceId);
+
+        // 验证权限
+        if (!resource.getCourse().getInstructor().getUserId().equals(currentUser.getUserId())) {
+            throw new ApiException("没有权限查看该资源", HttpStatus.FORBIDDEN);
+        }
+
+        // 返回资源及附件信息
+        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTO(resource));
+    }
 }
 
