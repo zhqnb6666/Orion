@@ -52,7 +52,7 @@ public class ResourcesController {
      * @param currentUser 当前用户
      * @return 创建的资源信息
      */
-    @PostMapping("/{courseId}")
+    @PostMapping("/{courseId}/resources")
     @Operation(summary = "创建课程资源",
               description = "创建一个新的资源，不包括附件",
               responses = {
