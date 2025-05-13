@@ -12,7 +12,7 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-public class ocr {
+public class OCR {
     public static String OCR(String filePath) {
         // 请求url
         String url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic";
