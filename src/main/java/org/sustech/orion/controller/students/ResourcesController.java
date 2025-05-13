@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.sustech.orion.dto.responseDTO.ResourceAttachmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.ResourceResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.Attachment;
 import org.sustech.orion.model.Course;
@@ -19,6 +19,7 @@ import org.sustech.orion.model.User;
 import org.sustech.orion.service.AttachmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.util.ConvertDTO;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,7 +54,7 @@ public class ResourcesController {
                   @ApiResponse(responseCode = "403", description = "没有参加该课程"),
                   @ApiResponse(responseCode = "404", description = "课程不存在")
               })
-    public ResponseEntity<List<ResourceAttachmentResponseDTO>> getCourseResources(
+    public ResponseEntity<List<ResourceResponseDTO>> getCourseResources(
             @PathVariable Long courseId,
             @AuthenticationPrincipal User currentUser) {
         
@@ -68,12 +69,7 @@ public class ResourcesController {
         // 获取课程资源
         List<Resource> resources = resourceService.getCourseResources(courseId);
         
-        // 转换为DTO
-        List<ResourceAttachmentResponseDTO> responseDTOs = resources.stream()
-                .map(ResourceAttachmentResponseDTO::fromResource)
-                .collect(Collectors.toList());
-        
-        return ResponseEntity.ok(responseDTOs);
+        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTOList(resources));
     }
     
     /**
@@ -90,7 +86,7 @@ public class ResourcesController {
                   @ApiResponse(responseCode = "403", description = "没有权限查看该资源"),
                   @ApiResponse(responseCode = "404", description = "资源不存在")
               })
-    public ResponseEntity<ResourceAttachmentResponseDTO> getResourceDetails(
+    public ResponseEntity<ResourceResponseDTO> getResourceDetails(
             @PathVariable Long resourceId,
             @AuthenticationPrincipal User currentUser) {
         
@@ -103,7 +99,7 @@ public class ResourcesController {
         }
         
         // 返回资源及附件信息
-        return ResponseEntity.ok(ResourceAttachmentResponseDTO.fromResource(resource));
+        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTO(resource));
     }
     
     /**

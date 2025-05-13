@@ -129,7 +129,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public List<Submission> getPendingSubmissions(Long teacherId) {
         return submissionRepository.findByStatusAndAssignment_Course_Instructor_UserId(
-                Submission.SubmissionStatus.ACCEPTED,
+                Submission.SubmissionStatus.PENDING,
                 teacherId);
     }
 

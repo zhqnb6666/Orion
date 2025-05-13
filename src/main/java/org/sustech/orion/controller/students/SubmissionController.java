@@ -76,7 +76,7 @@ public class SubmissionController {
         submission.setStudent(student);
         submission.setAssignment(assignmentService.getAssignmentById(assignmentId));
         submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));
-        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
+        submission.setStatus(Submission.SubmissionStatus.GRADED);
         SubmissionContent content = new SubmissionContent();
         content.setType(SubmissionContent.ContentType.CODE);
         CodeSubmission codeSubmission = new CodeSubmission();
@@ -134,7 +134,7 @@ public class SubmissionController {
         submission.setStudent(student);
         submission.setAssignment(assignment);
         submission.setSubmitTime(now);
-        submission.setStatus(Submission.SubmissionStatus.ACCEPTED);
+        submission.setStatus(Submission.SubmissionStatus.PENDING);
         submission.setContents(new ArrayList<>());
 
         // 添加文本内容（如果有）

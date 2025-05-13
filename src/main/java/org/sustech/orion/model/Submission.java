@@ -52,7 +52,7 @@ public class Submission {
 
     @Getter
     public enum SubmissionStatus {
-        PENDING, ACCEPTED, REJECTED, DRAFT;
+        PENDING, GRADED, DRAFT;
         private final String value;
 
         SubmissionStatus() {

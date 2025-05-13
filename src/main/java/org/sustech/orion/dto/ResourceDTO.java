@@ -10,9 +10,10 @@ import java.util.List;
 @Data
 public class ResourceDTO {
     
-    private String name;
+    private String title;
     private String description;
     private String type;
     
     // 可以根据需要添加更多字段
+
 } 
