@@ -23,4 +23,6 @@ public interface GradeService {
     void submitGradeAppeal(Long gradeId, String appealReason);
 
     Grade createAutoGrade(Submission submission, Double score);
+
+    void deleteGradeBySubmissionId(Long submissionId);
 }

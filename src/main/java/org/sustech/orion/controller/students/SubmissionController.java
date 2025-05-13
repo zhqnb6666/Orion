@@ -207,7 +207,11 @@ public class SubmissionController {
             throw new ApiException("The submission has not yet been scored", HttpStatus.NOT_FOUND);
         }
 
-        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO(submission.getGrade()));
+        GradeResponseDTO gradeResponseDTO = ConvertDTO.toGradeResponseDTO(submission.getGrade());
+        // 添加作业的最高分信息，将Integer转换为Double
+        gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore().doubleValue());
+
+        return ResponseEntity.ok(gradeResponseDTO);
     }
 
     @PostMapping("/{submissionId}/appeal")

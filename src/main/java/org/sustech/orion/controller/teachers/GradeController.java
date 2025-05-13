@@ -37,13 +37,16 @@ public class GradeController {
         return ResponseEntity.noContent().build();
     }
 
-    /* useless */
     @PostMapping("/{submissionId}")
-    @Operation(summary = "Grade submission")
+    @Operation(summary = "Grade submission", description = "为提交评分，如果已存在评分则会更新原有评分")
     public ResponseEntity<GradeResponseDTO> gradeSubmission(
             @PathVariable Long submissionId,
             @RequestBody GradeDTO request,
             @AuthenticationPrincipal User grader) {
+        // 先删除旧的评分（如果存在）
+        gradeService.deleteGradeBySubmissionId(submissionId);
+        
+        // 创建新的评分
         return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO(
                 gradeService.gradeSubmission(
                         submissionId,

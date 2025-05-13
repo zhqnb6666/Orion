@@ -38,7 +38,13 @@ public class GradeServiceImpl implements GradeService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
 
-        Grade grade = new Grade();
+        // 检查是否已有评分
+        Grade grade = submission.getGrade();
+        if (grade == null) {
+            grade = new Grade();
+        }
+        
+        // 更新评分信息
         grade.setSubmission(submission);
         grade.setGrader(grader);
         grade.setScore(score);
@@ -50,7 +56,22 @@ public class GradeServiceImpl implements GradeService {
         submission.setGrade(grade);
         submission.setStatus(Submission.SubmissionStatus.GRADED);
 
-        return grade;
+        return gradeRepository.save(grade);
+    }
+
+    @Override
+    @Transactional
+    public void deleteGradeBySubmissionId(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ApiException("Submission not found", HttpStatus.NOT_FOUND));
+        
+        if (submission.getGrade() != null) {
+            Grade grade = submission.getGrade();
+            submission.setGrade(null);
+            submission.setStatus(Submission.SubmissionStatus.PENDING);
+            submissionRepository.save(submission);
+            gradeRepository.delete(grade);
+        }
     }
 
     @Override
