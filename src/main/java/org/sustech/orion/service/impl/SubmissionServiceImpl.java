@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.sustech.orion.dto.CodeSubmissionResult;
 import org.sustech.orion.dto.CodeSubmissionDTO;
+import org.springframework.context.ApplicationEventPublisher;
+// import org.sustech.orion.service.event.SubmissionCreatedEvent;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,15 +22,18 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final AssignmentRepository assignmentRepository;
     private final SubmissionConfigRepository submissionConfigRepository;
     private final CodeExecutionResultRepository codeExecutionResultRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionServiceImpl(SubmissionRepository submissionRepository, 
                                AssignmentRepository assignmentRepository, 
                                SubmissionConfigRepository submissionConfigRepository,
-                               CodeExecutionResultRepository codeExecutionResultRepository) {
+                               CodeExecutionResultRepository codeExecutionResultRepository,
+                               ApplicationEventPublisher eventPublisher) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.submissionConfigRepository = submissionConfigRepository;
         this.codeExecutionResultRepository = codeExecutionResultRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -84,7 +89,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         submission.setAssignment(assignment);
-        return submissionRepository.save(submission);
+        Submission savedSubmission = submissionRepository.save(submission);
+    
+        return savedSubmission;
     }
 
     @Override
@@ -124,6 +131,11 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public void saveSubmission(Submission submission) {
         submissionRepository.save(submission);
+        
+        // 不再自动触发AI评分事件
+        // if (submission.getId() != null && submission.getAiGrading() == null) {
+        //     eventPublisher.publishEvent(new SubmissionCreatedEvent(this, submission.getId()));
+        // }
     }
 
     @Override
@@ -206,5 +218,4 @@ public class SubmissionServiceImpl implements SubmissionService {
                         (existing, replacement) -> existing
                 ));
     }
-
 }

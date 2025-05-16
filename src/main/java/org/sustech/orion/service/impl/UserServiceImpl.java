@@ -11,6 +11,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.dto.ProfileUpdateDTO;
+import org.sustech.orion.model.Attachment;
+import org.sustech.orion.service.AttachmentService;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -25,12 +31,14 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     private final VerificationServiceImpl verificationService;
     private final EmailServiceImpl emailService;
+    private final AttachmentService attachmentService;
 
-    public UserServiceImpl(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, VerificationServiceImpl verificationService, EmailServiceImpl emailService) {
+    public UserServiceImpl(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, VerificationServiceImpl verificationService, EmailServiceImpl emailService, AttachmentService attachmentService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.verificationService = verificationService;
         this.emailService = emailService;
+        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -96,7 +104,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException("User NOT Found", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
     }
 
     @Override
@@ -123,5 +131,54 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return userRepository.getReferenceById(userId);
     }
 
+    @Override
+    @Transactional
+    public User updateProfile(Long userId, ProfileUpdateDTO profileUpdateDTO) {
+        User user = getUserById(userId);
 
+        // 更新邮箱
+        if (StringUtils.hasText(profileUpdateDTO.getEmail())) {
+            // 检查邮箱是否已被使用
+            if (userRepository.existsByEmailAndUserIdNot(profileUpdateDTO.getEmail(), userId)) {
+                throw new ApiException("Email already in use", HttpStatus.CONFLICT);
+            }
+            user.setEmail(profileUpdateDTO.getEmail());
+        }
+
+        // 更新个人简介
+        if (profileUpdateDTO.getBio() != null) {
+            user.setBio(profileUpdateDTO.getBio());
+        }
+
+        // 更新密码
+        if (StringUtils.hasText(profileUpdateDTO.getNewPassword())) {
+            if (!StringUtils.hasText(profileUpdateDTO.getOldPassword())) {
+                throw new ApiException("Old password is required", HttpStatus.BAD_REQUEST);
+            }
+
+            // 验证旧密码
+            if (!passwordEncoder.matches(profileUpdateDTO.getOldPassword(), user.getPassword())) {
+                throw new ApiException("Invalid old password", HttpStatus.BAD_REQUEST);
+            }
+
+            // 设置新密码
+            user.setPasswordHash(passwordEncoder.encode(profileUpdateDTO.getNewPassword()));
+        }
+
+        return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public User updateAvatar(Long userId, MultipartFile file) {
+        User user = getUserById(userId);
+
+        // 上传新头像
+        Attachment avatar = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
+        
+        // 更新用户头像URL
+        user.setAvatarUrl(avatar.getUrl());
+        
+        return userRepository.save(user);
+    }
 }

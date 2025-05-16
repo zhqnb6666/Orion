@@ -27,9 +27,9 @@ public class test {
 //
 //        text = FileReader.readDocx("D:\\desktop\\简历.docx");
 //        System.out.println(text);
-//
-//        // OCR示例代码
-//        String photo = "D:\\desktop\\微信截图_20250317143531.png";
-//        System.out.println(OCR.OCR(photo));
+
+        // OCR示例代码
+        String photo = "img.png";
+        System.out.println(OCR.OCR(photo));
     }
 }

@@ -1,23 +1,27 @@
 package org.sustech.orion.repository;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.sustech.orion.model.AIGrading;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import java.util.List;
+import org.sustech.orion.model.AIGrading;
+
+import java.util.Optional;
 
 @Repository
 public interface AIGradingRepository extends JpaRepository<AIGrading, Long> {
-
-    // 根据提交记录查询AI评分
-    AIGrading findBySubmission_Id(Long submissionId);
-
-    // 根据置信度筛选可信评分
-    List<AIGrading> findByConfidenceGreaterThan(Double minConfidence);
-
-    // 根据分数区间查询（例如查找AI评分在80-100之间的记录）
-    //@Query("SELECT a FROM AIGrading a WHERE a.aiScore BETWEEN :min AND :max")
-    //List<AIGrading> findByAiScoreRange(@Param("min") Double min, @Param("max") Double max);
-    List<AIGrading> findByAiScoreBetween(Double min, Double max);
+    
+    /**
+     * 根据提交ID查找AI评分记录
+     * 
+     * @param submissionId 提交ID
+     * @return AI评分记录
+     */
+    Optional<AIGrading> findBySubmissionId(Long submissionId);
+    
+    /**
+     * 根据置信度阈值查找高置信度的AI评分记录
+     * 
+     * @param confidenceThreshold 置信度阈值
+     * @return 高置信度的AI评分记录列表
+     */
+    java.util.List<AIGrading> findByConfidenceGreaterThanEqual(Double confidenceThreshold);
 }

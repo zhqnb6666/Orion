@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.aspectj.apache.bcel.classfile.Code;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
 import org.sustech.orion.service.*;
+import org.sustech.orion.service.event.SubmissionCreatedEvent;
 import org.sustech.orion.util.ConvertDTO;
 
 import java.sql.Timestamp;
@@ -41,15 +43,17 @@ public class SubmissionController {
     private final AssignmentService assignmentService;
     private final CodeService codeService;
     private final AttachmentService attachmentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionController(SubmissionService submissionService,
-                                ResourceService resourceService, GradeService gradeService, AssignmentService assignmentService, CodeService codeService, AttachmentService attachmentService) {
+                                ResourceService resourceService, GradeService gradeService, AssignmentService assignmentService, CodeService codeService, AttachmentService attachmentService, ApplicationEventPublisher eventPublisher) {
         this.submissionService = submissionService;
         this.resourceService = resourceService;
         this.gradeService = gradeService;
         this.assignmentService = assignmentService;
         this.codeService = codeService;
         this.attachmentService = attachmentService;
+        this.eventPublisher = eventPublisher;
     }
 
     /* useful */
@@ -87,9 +91,12 @@ public class SubmissionController {
         content.setSubmission(submission);
         submission.setContents(List.of(content));
         Submission savedSubmission = submissionService.createSubmission(assignmentId, submission);
+        
+        // 代码作业使用代码执行服务进行评测，不使用AI评分
         CompletableFuture.runAsync(() -> {
             codeService.executeAndEvaluateSubmission(savedSubmission.getId());
         });
+        
         return ResponseEntity.ok(savedSubmission);
     }
 
@@ -169,6 +176,14 @@ public class SubmissionController {
                     }
                 }
             }
+        }
+
+        // 非代码作业，触发AI评分
+        if (!"code".equalsIgnoreCase(assignment.getType())) {
+            // 异步触发AI评分，避免阻塞主线程
+            CompletableFuture.runAsync(() -> {
+                eventPublisher.publishEvent(new SubmissionCreatedEvent(this, submission.getId()));
+            });
         }
 
         return ResponseEntity.ok(submission);
