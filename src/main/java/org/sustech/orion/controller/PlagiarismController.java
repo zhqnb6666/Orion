@@ -21,11 +21,10 @@ public class PlagiarismController {
     @PostMapping("/check")
     public ResponseEntity<?> checkPlagiarism(
             @RequestParam Long submissionAId,
-            @RequestParam Long submissionBId,
-            @RequestParam(defaultValue = "qwq-32b") String modelName) {
-        
+            @RequestParam Long submissionBId
+            ) {
         try {
-            PlagiarismCheck result = plagiarismService.checkPlagiarism(submissionAId, submissionBId, modelName);
+            PlagiarismCheck result = plagiarismService.checkPlagiarism(submissionAId, submissionBId, "qwq-32b");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

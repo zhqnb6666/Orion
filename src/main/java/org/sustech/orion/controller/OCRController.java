@@ -14,24 +14,6 @@ public class OCRController {
 
     @Autowired
     private OCRService ocrService;
-
-    /**
-     * 处理上传的图片文件并进行OCR识别
-     */
-    @PostMapping("/recognize")
-    public ResponseEntity<?> recognizeText(@RequestParam("file") MultipartFile file) {
-        try {
-            String result = ocrService.recognizeText(file);
-            return ResponseEntity.ok().body(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (IOException e) {
-            return ResponseEntity.badRequest().body("文件处理失败: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("OCR识别失败: " + e.getMessage());
-        }
-    }
-
     /**
      * 对指定路径的图片文件进行OCR识别
      */
