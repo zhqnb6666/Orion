@@ -29,6 +29,7 @@ import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
 import org.sustech.orion.service.AttachmentService;
+import org.sustech.orion.service.CalendarService;
 import org.sustech.orion.util.ConvertDTO;
 
 import java.io.IOException;
@@ -47,16 +48,17 @@ public class AssignmentController {
     private final CourseService courseService;
     private final GradeService gradeService;
     private final AttachmentService attachmentService;
+    private final CalendarService calendarService;
 
-    public AssignmentController(AssignmentService assignmentService, CourseService courseService, GradeService gradeService, AttachmentService attachmentService) {
+    public AssignmentController(AssignmentService assignmentService, CourseService courseService, GradeService gradeService, AttachmentService attachmentService, CalendarService calendarService) {
         this.assignmentService = assignmentService;
         this.courseService = courseService;
         this.gradeService = gradeService;
         this.attachmentService = attachmentService;
+        this.calendarService = calendarService;
     }
 
-    /* useful */
-    @PostMapping("/{courseId}/assignments")//ok
+    @PostMapping("/{courseId}/assignments")
     @Operation(summary = "Create assignment")
     public ResponseEntity<AssignmentResponseDTO> createAssignment(
             @PathVariable Long courseId,
@@ -69,7 +71,23 @@ public class AssignmentController {
         assignment.setOpenDate(request.getOpenDate());
         assignment.setInstructions(request.getInstructions());
         assignment.setMaxScore(request.getMaxScore());
-        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignmentService.createAssignment(assignment, courseId)));
+        
+        Assignment savedAssignment = assignmentService.createAssignment(assignment, courseId);
+
+        // 为课程中的每个学生创建日历事件
+        Course course = courseService.getCourseById(courseId);
+        List<User> students = course.getStudents();
+        for (User student : students) {
+            calendarService.createAssignmentEvent(
+                courseId,
+                savedAssignment.getId(),
+                savedAssignment.getTitle(),
+                savedAssignment.getDescription(),
+                savedAssignment.getDueDate()
+            );
+        }
+
+        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(savedAssignment));
     }
 
     @PutMapping("/{assignmentId}/testcases/{testcaseId}")

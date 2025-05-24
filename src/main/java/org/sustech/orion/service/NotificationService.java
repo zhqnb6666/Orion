@@ -17,4 +17,9 @@ public interface NotificationService {
 
     @Transactional
     void deleteNotification(Long notificationId);
+
+    @Transactional
+    void saveNotification(Notification notification);
+
+    List<NotificationDTO> getSentNotifications(Long senderId);
 }

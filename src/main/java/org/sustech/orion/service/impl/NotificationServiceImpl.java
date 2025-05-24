@@ -55,7 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification getNotificationById(Long notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ApiException("The complaint has been recorded", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("The notification not found", HttpStatus.NOT_FOUND));
     }
 
     @Transactional
@@ -70,5 +70,18 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.deleteById(notificationId);
     }
 
+    @Transactional
+    @Override
+    public void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    public List<NotificationDTO> getSentNotifications(Long senderId) {
+        return notificationRepository.findBySender_UserId(senderId)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 }
 

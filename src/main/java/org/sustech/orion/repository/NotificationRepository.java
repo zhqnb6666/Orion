@@ -20,4 +20,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = :isRead WHERE n.id = :id")
     void updateReadStatus(@Param("id") Long id, @Param("isRead") boolean isRead);
+
+    // 获取用户发送的所有通知
+    List<Notification> findBySender_UserId(Long senderId);
 }
