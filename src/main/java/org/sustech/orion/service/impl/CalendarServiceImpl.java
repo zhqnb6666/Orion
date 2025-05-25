@@ -40,12 +40,18 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     @Override
-    public Calendar createAssignmentEvent(Long courseId, Long assignmentId, String title, 
+    public List<Calendar> getAllCalendarsByAssignmentId(Long assignmentId) {
+        return calendarRepository.findByAssignmentId(assignmentId);
+    }
+
+    @Override
+    public Calendar createAssignmentEvent(Long courseId, Long assignmentId, String title, User user,
                                         String description, Timestamp deadline) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException("Course not found", HttpStatus.NOT_FOUND));
 
         Calendar event = new Calendar();
+        event.setUser(user);
         event.setTitle(title);
         event.setDescription(description);
         event.setDeadline(deadline);

@@ -10,22 +10,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.sustech.orion.exception.ApiException;
 import org.sustech.orion.model.*;
 import org.sustech.orion.repository.*;
-import org.sustech.orion.service.CourseService;
-import org.sustech.orion.service.NotificationService;
+import org.sustech.orion.service.*;
 import org.sustech.orion.service.impl.UserServiceImpl;
-import org.sustech.orion.service.impl.CourseServiceImpl;
 import org.sustech.orion.util.FileSizeUtil;
 import org.sustech.orion.util.JwtUtil;
-import org.sustech.orion.service.ResourceService;
-import org.sustech.orion.service.AssignmentService;
-import org.sustech.orion.service.SubmissionConfigService;
-import org.sustech.orion.service.SubmissionService;
-import org.sustech.orion.service.GradeService;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,19 +30,14 @@ public class Initializer {
     private String ddlAuto;
 
     private final UserRepository userRepository;
-    private final CourseRepository courseRepository;
     private final NotificationRepository notificationRepository;
-    private final AssignmentRepository assignmentRepository;
-    private final ResourceRepository resourceRepository;
-    private final SubmissionRepository submissionRepository;
-    private final GradeRepository gradeRepository;
     private final AttachmentRepository attachmentRepository;
-    private final SubmissionConfigRepository submissionConfigRepository;
     private final PasswordEncoder passwordEncoder;
 
     private final UserServiceImpl userService;
     private final CourseService courseService;
     private final NotificationService notificationService;
+    private final CalendarService  calendarService;
 
     private final JwtUtil jwtUtil;
 
@@ -136,6 +123,11 @@ public class Initializer {
                 40 * 1024 * 1024L, "zip,txt", 1
         );
 
+
+        createCalendar(course, closedAssignment, users.get("student"));
+        createCalendar(course, openAssignment, users.get("student"));
+        createCalendar(course, upcomingAssignment, users.get("student"));
+
         SubmissionContent pdfContent = createSubmissionContent(SubmissionContent.ContentType.FILE, null,
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf", "application/pdf");
         SubmissionContent codeContent = createSubmissionContent(SubmissionContent.ContentType.FILE, null,
@@ -154,6 +146,17 @@ public class Initializer {
                 List.of(codeContent));
 
         createGrade(submission1, users.get("teacher"), 90.0, "good job"
+        );
+    }
+
+    private void createCalendar(Course course, Assignment closedAssignment, User student) {
+        calendarService.createAssignmentEvent(
+                course.getId(),
+                closedAssignment.getId(),
+                closedAssignment.getTitle(),
+                student,
+                closedAssignment.getDescription(),
+                closedAssignment.getDueDate()
         );
     }
 
@@ -257,7 +260,6 @@ public class Initializer {
         config.setAllowedFileTypes(allowedTypes);
         config.setMaxSubmissionAttempts(maxAttempts);
         submissionConfigService.saveSubmissionConfig(config);
-
         return assignment;
     }
 

@@ -10,4 +10,5 @@ import java.util.List;
 public interface CalendarRepository extends JpaRepository<Calendar, Long> {
     List<Calendar> findByUser_UserId(Long userId);
     List<Calendar> findByCourse_Id(Long courseId);
+    List<Calendar> findByAssignmentId(Long assignmentId);
 } 

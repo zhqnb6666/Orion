@@ -20,11 +20,7 @@ import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
 import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
 import org.sustech.orion.dto.responseDTO.TestCaseResponseDTO;
 import org.sustech.orion.exception.ApiException;
-import org.sustech.orion.model.Assignment;
-import org.sustech.orion.model.Course;
-import org.sustech.orion.model.TestCase;
-import org.sustech.orion.model.User;
-import org.sustech.orion.model.Attachment;
+import org.sustech.orion.model.*;
 import org.sustech.orion.service.AssignmentService;
 import org.sustech.orion.service.CourseService;
 import org.sustech.orion.service.GradeService;
@@ -82,6 +78,7 @@ public class AssignmentController {
                 courseId,
                 savedAssignment.getId(),
                 savedAssignment.getTitle(),
+                student,
                 savedAssignment.getDescription(),
                 savedAssignment.getDueDate()
             );
@@ -231,6 +228,14 @@ public class AssignmentController {
             throw new ApiException("No permission to modify this job", HttpStatus.FORBIDDEN);
         }
 
+        // 更新calendar
+        if (!request.getDueDate().equals(existing.getDueDate())) {
+            List<Calendar> calendars = calendarService.getAllCalendarsByAssignmentId(assignmentId);
+            for (Calendar calendar : calendars) {
+                calendar.setDeadline(request.getDueDate());
+            }
+        }
+
         // 更新可修改字段
         existing.setTitle(request.getTitle());
         existing.setDescription(request.getDescription());
@@ -260,7 +265,10 @@ public class AssignmentController {
         if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {
             throw new ApiException("No permission to delete this job", HttpStatus.FORBIDDEN);
         }
-
+        List<Calendar> calendars = calendarService.getAllCalendarsByAssignmentId(assignmentId);
+        for (Calendar calendar : calendars) {
+            calendarService.deleteEvent(calendar.getId());
+        }
         assignmentService.deleteAssignmentWithDependencies(assignmentId);
         return ResponseEntity.noContent().build();
     }
@@ -430,7 +438,8 @@ public class AssignmentController {
 
 
     @GetMapping("/course/{courseId}")
-    @Operation(summary = "Get assignments")
+    @Operation(summary = "Get assignments",
+            description = "获取指定课程所有作业")
     public ResponseEntity<List<AssignmentResponseDTO>> getAssignments(@PathVariable Long courseId,
                                                                       @AuthenticationPrincipal User currentUser) {
         Course course = courseService.getCourseById(courseId);
