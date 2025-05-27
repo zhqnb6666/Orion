@@ -12,6 +12,6 @@ public class AssignmentDTO {
     private Timestamp dueDate;
     private String instructions;
 //    private String status="UPCOMING";
-    private Integer maxScore=100;
+    private Integer maxScore;
 
 }

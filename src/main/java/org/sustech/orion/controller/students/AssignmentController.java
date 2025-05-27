@@ -101,6 +101,7 @@ public class AssignmentController {
         int remaining = maxAttempts - usedAttempts;
         return ResponseEntity.ok(Math.max(remaining, 0));
     }
+
     @GetMapping("/{assignmentId}/details")
     @Operation(summary = "获取作业详细信息",
             description = "获取与指定作业相关的详细信息",

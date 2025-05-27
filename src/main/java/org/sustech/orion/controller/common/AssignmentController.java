@@ -46,7 +46,6 @@ public class AssignmentController {
             description = "获取与指定作业相关的详细信息")
     public ResponseEntity<AssignmentResponseDTO> getAssignmentDetails(
             @PathVariable Long assignmentId) {
-
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
         return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignment));
     }
