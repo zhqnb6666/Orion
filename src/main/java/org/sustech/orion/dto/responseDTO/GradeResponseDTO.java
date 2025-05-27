@@ -13,7 +13,7 @@ public class GradeResponseDTO {
     private String title;
     private String type;
     private Double score;    // 允许为null
-    private Double maxScore;
+    private Integer maxScore;
     private Timestamp dueDate;
     private Timestamp submittedDate;
     private Timestamp gradedDate;

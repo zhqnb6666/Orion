@@ -28,7 +28,8 @@ public class SubmissionResponseDTO {
 
     private SubmissionStatus status;
 
-    private Grade grade;
+    private GradeResponseDTO grade;
+
     private AIGrading aiGrading;
 
 

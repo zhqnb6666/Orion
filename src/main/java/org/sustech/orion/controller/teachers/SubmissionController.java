@@ -38,6 +38,7 @@ public class SubmissionController {
     @Operation(summary = "获取提交详情",
             description = "获取指定ID的提交详细信息")
     public ResponseEntity<SubmissionResponseDTO> getSubmission(@PathVariable Long submissionId) {
+
         return ResponseEntity.ok(ConvertDTO.toSubmissionResponseDTO(submissionService.getSubmissionOrThrow(submissionId)));
     }
 

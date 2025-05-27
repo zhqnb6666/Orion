@@ -224,7 +224,7 @@ public class SubmissionController {
 
         GradeResponseDTO gradeResponseDTO = ConvertDTO.toGradeResponseDTO(submission.getGrade());
         // 添加作业的最高分信息，将Integer转换为Double
-        gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore().doubleValue());
+        gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore());
 
         return ResponseEntity.ok(gradeResponseDTO);
     }

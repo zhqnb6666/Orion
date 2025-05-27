@@ -81,7 +81,7 @@ public class ConvertDTO {
         dto.setTitle(grade.getSubmission().getAssignment().getTitle());
         dto.setType(grade.getSubmission().getAssignment().getType());
         dto.setScore(grade.getScore());
-        dto.setMaxScore(Double.valueOf(grade.getSubmission().getAssignment().getMaxScore()));
+        dto.setMaxScore(grade.getSubmission().getAssignment().getMaxScore());
         dto.setDueDate(grade.getSubmission().getAssignment().getDueDate());
         dto.setSubmittedDate(grade.getSubmission().getSubmitTime());
         dto.setGradedDate(grade.getGradedTime());
@@ -141,7 +141,12 @@ public class ConvertDTO {
         dto.setSubmitTime(submission.getSubmitTime());
         dto.setStatus(submission.getStatus());
         if (submission.getGrade() != null) {
-            dto.setGrade(submission.getGrade());
+            dto.setGrade(toGradeResponseDTO(submission.getGrade()));
+        } else {
+            GradeResponseDTO gradeResponseDTO = new GradeResponseDTO();
+            gradeResponseDTO.setScore(0d);
+            gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore());
+            dto.setGrade(gradeResponseDTO);
         }
         if(submission.getAiGrading() != null) {
             dto.setAiGrading(submission.getAiGrading());
