@@ -14,4 +14,8 @@ public class TaskResponseDTO {
     private boolean completed;
     private String courseId;
     private String courseName;
+    private String courseCode;
+    private String type;//作业类型
+
+
 }

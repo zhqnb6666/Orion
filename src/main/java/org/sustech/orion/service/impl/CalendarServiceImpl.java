@@ -3,9 +3,11 @@ package org.sustech.orion.service.impl;
 import org.springframework.stereotype.Service;
 import org.sustech.orion.dto.CalendarDTO;
 import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Assignment;
 import org.sustech.orion.model.Calendar;
 import org.sustech.orion.model.Course;
 import org.sustech.orion.model.User;
+import org.sustech.orion.repository.AssignmentRepository;
 import org.sustech.orion.repository.CalendarRepository;
 import org.sustech.orion.repository.CourseRepository;
 import org.sustech.orion.repository.UserRepository;
@@ -22,13 +24,15 @@ public class CalendarServiceImpl implements CalendarService {
     private final CalendarRepository calendarRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final AssignmentRepository assignmentRepository;
 
     public CalendarServiceImpl(CalendarRepository calendarRepository,
                              CourseRepository courseRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository, AssignmentRepository assignmentRepository) {
         this.calendarRepository = calendarRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
+        this.assignmentRepository = assignmentRepository;
     }
 
     @Override
@@ -97,6 +101,20 @@ public class CalendarServiceImpl implements CalendarService {
         dto.setAssignmentId(calendar.getAssignmentId());
         dto.setDescription(calendar.getDescription());
         dto.setEventType(calendar.getEventType().name());
+
+        // 新增课程编号处理
+        if (calendar.getCourse() != null) {
+            dto.setCourseCode(calendar.getCourse().getCourseCode());
+        }
+
+        // 新增作业类型处理
+        if (calendar.getAssignmentId() != null) {
+            Assignment assignment = assignmentRepository.findById(calendar.getAssignmentId())
+                    .orElse(null);
+            if (assignment != null) {
+                dto.setAssignmentType(assignment.getType());
+            }
+        }
         return dto;
     }
 } 

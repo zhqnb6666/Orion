@@ -13,4 +13,7 @@ public class CalendarDTO {
     private Long assignmentId;
     private String description;
     private String eventType;
+    private String courseCode; // 新增课程编号
+    private String assignmentType; // 新增作业类型
+
 } 
