@@ -34,6 +34,10 @@ public class ConvertDTO {
         }
 
         dto.setInstructions(assignment.getInstructions());
+
+        dto.setTestCases(
+                TestCaseResponseDTO.fromTestCases(assignment.getTestCases())
+        );
 //        dto.setSubmissionUrl(assignment.getSubmissionUrl());
 
         return dto;

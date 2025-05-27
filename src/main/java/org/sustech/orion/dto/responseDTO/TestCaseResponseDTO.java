@@ -21,7 +21,7 @@ public class TestCaseResponseDTO {
         this.assignmentId = testCase.getAssignment().getId();
     }
 
-    public List<TestCaseResponseDTO> fromTestCases(List<TestCase> testCases) {
+    public static List<TestCaseResponseDTO> fromTestCases(List<TestCase> testCases) {
         return testCases.stream()
                 .map(TestCaseResponseDTO::new)
                 .toList();
