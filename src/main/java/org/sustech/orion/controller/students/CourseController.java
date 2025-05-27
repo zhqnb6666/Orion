@@ -86,7 +86,7 @@ public class CourseController {
         return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCurrentSemesterCourses(currentUser.getUserId())));
     }
 
-    @GetMapping("/courses/{courseId}")
+    @GetMapping("/{courseId}/grade")
     @Operation(summary = "获取课程成绩",
             description = "获取当前学生在指定课程中的所有成绩",
             responses = {
@@ -102,7 +102,7 @@ public class CourseController {
             throw new ApiException("You are not enrolled in the course", HttpStatus.FORBIDDEN);
         }
 
-        List<Grade> grades = gradeService.getGradesByStudentAndCourse(student.getUserId(), courseId);
+        List<Grade> grades = gradeService.getLatestGradesByStudentAndCourse(student.getUserId(), courseId);
         return ResponseEntity.ok(ConvertDTO.toGradeResponseDTOList(grades));
     }
 

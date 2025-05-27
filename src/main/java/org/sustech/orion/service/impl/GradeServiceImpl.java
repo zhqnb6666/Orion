@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Map;
@@ -87,8 +86,8 @@ public class GradeServiceImpl implements GradeService {
         gradeRepository.save(grade);
     }
     @Override
-    public List<Grade> getGradesByStudentAndCourse(Long studentId, Long courseId) {
-        return gradeRepository.findBySubmission_Student_UserIdAndSubmission_Assignment_Course_Id(studentId, courseId);
+    public List<Grade> getLatestGradesByStudentAndCourse(Long studentId, Long courseId) {
+        return gradeRepository.findLatestGradesByStudentAndCourse(studentId, courseId);
     }
     @Override
     public List<Grade> getFeedbackForAssignment(Long assignmentId, Long studentId) {

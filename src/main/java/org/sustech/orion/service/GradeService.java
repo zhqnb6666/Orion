@@ -14,7 +14,7 @@ public interface GradeService {
 
     void finalizeGrade(Long gradeId);
 
-    List<Grade> getGradesByStudentAndCourse(Long studentId, Long courseId);
+    List<Grade> getLatestGradesByStudentAndCourse(Long studentId, Long courseId);
 
     List<Grade> getFeedbackForAssignment(Long assignmentId, Long studentId);
 
