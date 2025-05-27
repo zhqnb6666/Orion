@@ -22,6 +22,9 @@ public class TestCaseResponseDTO {
     }
 
     public static List<TestCaseResponseDTO> fromTestCases(List<TestCase> testCases) {
+        if (testCases == null) {
+            return null;
+        }
         return testCases.stream()
                 .map(TestCaseResponseDTO::new)
                 .toList();
