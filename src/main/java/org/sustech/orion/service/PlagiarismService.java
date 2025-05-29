@@ -47,10 +47,21 @@ public class PlagiarismService {
         }
 
         // 获取提交内容
-        String contentA = extractSubmissionContent(submissionA);
-        String contentB = extractSubmissionContent(submissionB);
+        String contentA = extractSubmissionContent(submissionA).trim();
+        String contentB = extractSubmissionContent(submissionB).trim();
+
+        // cut off
+        System.out.println("提交A长度: " + contentA.length());
+        System.out.println("提交B长度: " + contentB.length());
+        if (contentA.length() > 2048){
+            contentA = contentA.substring(0, 2048);
+        }
+        if (contentB.length() > 2048){
+            contentB = contentB.substring(0, 2048);
+        }
 
         // 调用AI模型进行查重
+        System.out.println("plagiarism check sent");
         String result = Model.llm_plagiarism_check(contentA, contentB, modelName);
 
         // 解析查重结果，这里假设AI模型返回的结果包含相似度分数
@@ -152,16 +163,16 @@ public class PlagiarismService {
         // 这里需要根据AI模型返回的格式进行解析
         // 假设AI模型返回的结果中包含类似"相似度: 85.5%"这样的文本
         try {
-            // 简单实现，实际使用时需要根据AI返回格式调整
-            if (aiResult.contains("相似度:")) {
-                String[] parts = aiResult.split("相似度:");
-                if (parts.length > 1) {
-                    String scoreStr = parts[1].trim().replace("%", "");
-                    return Double.parseDouble(scoreStr.substring(0, Math.min(scoreStr.length(), 5)));
+            if (aiResult.contains("\\boxed{")) {
+                int start = aiResult.indexOf("\\boxed{") + "\\boxed{".length();
+                int end = aiResult.indexOf("}", start);
+                if (start >= 0 && end > start) {
+                    String scoreStr = aiResult.substring(start, end).trim();
+                    return Double.parseDouble(scoreStr);
                 }
             }
-            // 默认返回一个估计值
-            return 50.0;
+            // 默认返回一个中间值
+            return 60.0;
         } catch (Exception e) {
             // 解析失败时返回默认值
             return 50.0;
