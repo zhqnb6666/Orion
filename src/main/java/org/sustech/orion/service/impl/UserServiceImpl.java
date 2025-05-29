@@ -175,9 +175,11 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
         // 上传新头像
         Attachment avatar = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);
-        
+
+        String[] parts = avatar.getUrl().split("/");
+
         // 更新用户头像URL
-        user.setAvatarUrl(avatar.getUrl());
+        user.setAvatarUrl("localhost:8080/" + parts[parts.length - 1]);
         
         return userRepository.save(user);
     }

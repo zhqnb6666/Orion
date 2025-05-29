@@ -16,3 +16,8 @@ spring:
       hibernate:
         temp:
           use_jdbc_metadata_defaults: true
+  mvc:
+    static-path-pattern: /**
+file:
+  upload:
+    dir: ./src/main/resources/static

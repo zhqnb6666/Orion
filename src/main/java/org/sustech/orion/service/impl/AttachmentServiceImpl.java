@@ -22,7 +22,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     
-    @Value("${file.upload.dir:uploads/attachments}")
+    @Value("${file.upload.dir}")
     private String uploadDir;
 
     public AttachmentServiceImpl(AttachmentRepository attachmentRepository) {
@@ -37,7 +37,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         
         try {
             // 创建上传目录
-            String dirPath = uploadDir + "/" + attachmentType.name().toLowerCase();
+            String dirPath = uploadDir;
             Path directory = Paths.get(dirPath);
             Files.createDirectories(directory);
             
