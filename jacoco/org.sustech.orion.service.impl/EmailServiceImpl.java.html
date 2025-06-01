@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">EmailServiceImpl.java</span></div><h1>EmailServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.service.EmailService;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.mail.MailException;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailServiceImpl implements EmailService {
+    private final JavaMailSender mailSender;
+
+    @Autowired
+<span class="fc" id="L19">    public EmailServiceImpl(JavaMailSender mailSender) {</span>
+<span class="fc" id="L20">        this.mailSender = mailSender;</span>
+<span class="fc" id="L21">    }</span>
+
+    @Override
+    public void sendVerificationEmail(String to, String verificationCode) throws ApiException {
+<span class="nc" id="L25">        sendEmail(to,</span>
+                &quot;AIbot Verification Code&quot;,
+                &quot;Your verification code is: &quot; + verificationCode);
+<span class="nc" id="L28">    }</span>
+
+    @Override
+    public void sendEmail(String to, String subject, String text) throws ApiException {
+        try {
+<span class="nc" id="L33">            MimeMessage message = mailSender.createMimeMessage();</span>
+<span class="nc" id="L34">            MimeMessageHelper helper = new MimeMessageHelper(message, true, &quot;UTF-8&quot;);</span>
+
+<span class="nc" id="L36">            helper.setFrom(&quot; Support &lt;12211205@mail.sustech.edu.cn&gt;&quot;);</span>
+<span class="nc" id="L37">            helper.setTo(to);</span>
+<span class="nc" id="L38">            helper.setSubject(subject);</span>
+<span class="nc" id="L39">            helper.setText(text, true);</span>
+<span class="nc" id="L40">            mailSender.send(message);</span>
+<span class="nc" id="L41">            System.out.println(&quot;Email sent successfully&quot;);</span>
+<span class="nc" id="L42">        } catch (MailException e) {</span>
+<span class="nc" id="L43">            throw new ApiException(&quot;Failed to send verification email: &quot; + e.getMessage(),</span>
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+<span class="nc" id="L45">        } catch (MessagingException e) {</span>
+<span class="nc" id="L46">            throw new ApiException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L47">        }</span>
+<span class="nc" id="L48">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OCRController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller</a> &gt; <span class="el_source">OCRController.java</span></div><h1>OCRController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.service.OCRService;
+
+import java.io.IOException;
+
+@RestController
+@RequestMapping(&quot;/api/ocr&quot;)
+<span class="fc" id="L13">public class OCRController {</span>
+
+    @Autowired
+    private OCRService ocrService;
+    /**
+     * 对指定路径的图片文件进行OCR识别
+     */
+    @PostMapping(&quot;/recognize-path&quot;)
+    public ResponseEntity&lt;?&gt; recognizeTextFromPath(@RequestParam(&quot;filePath&quot;) String filePath) {
+        try {
+<span class="nc" id="L23">            String result = ocrService.recognizeTextFromPath(filePath);</span>
+<span class="nc" id="L24">            return ResponseEntity.ok().body(result);</span>
+<span class="nc" id="L25">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L26">            return ResponseEntity.badRequest().body(e.getMessage());</span>
+<span class="nc" id="L27">        } catch (Exception e) {</span>
+<span class="nc" id="L28">            return ResponseEntity.internalServerError().body(&quot;OCR识别失败: &quot; + e.getMessage());</span>
+        }
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

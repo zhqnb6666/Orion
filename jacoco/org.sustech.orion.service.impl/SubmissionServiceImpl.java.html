@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubmissionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">SubmissionServiceImpl.java</span></div><h1>SubmissionServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.*;
+import org.sustech.orion.repository.*;
+import org.sustech.orion.service.SubmissionService;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.sustech.orion.dto.CodeSubmissionResult;
+import org.sustech.orion.dto.CodeSubmissionDTO;
+import org.springframework.context.ApplicationEventPublisher;
+// import org.sustech.orion.service.event.SubmissionCreatedEvent;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
+
+@Service
+public class SubmissionServiceImpl implements SubmissionService {
+
+    private final SubmissionRepository submissionRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final SubmissionConfigRepository submissionConfigRepository;
+    private final CodeExecutionResultRepository codeExecutionResultRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public SubmissionServiceImpl(SubmissionRepository submissionRepository, 
+                               AssignmentRepository assignmentRepository, 
+                               SubmissionConfigRepository submissionConfigRepository,
+                               CodeExecutionResultRepository codeExecutionResultRepository,
+<span class="fc" id="L31">                               ApplicationEventPublisher eventPublisher) {</span>
+<span class="fc" id="L32">        this.submissionRepository = submissionRepository;</span>
+<span class="fc" id="L33">        this.assignmentRepository = assignmentRepository;</span>
+<span class="fc" id="L34">        this.submissionConfigRepository = submissionConfigRepository;</span>
+<span class="fc" id="L35">        this.codeExecutionResultRepository = codeExecutionResultRepository;</span>
+<span class="fc" id="L36">        this.eventPublisher = eventPublisher;</span>
+<span class="fc" id="L37">    }</span>
+
+    @Override
+    public Submission getSubmission(Long assignmentId, Long studentId) {
+<span class="nc" id="L41">        return submissionRepository.findByAssignment_IdAndStudent_UserId(assignmentId, studentId)</span>
+<span class="nc" id="L42">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+
+    @Override
+    public List&lt;Submission&gt; getSubmissionsByStatus(String status) {
+<span class="nc" id="L47">        return submissionRepository.findByStatus(status);</span>
+    }
+
+    @Override
+    public void updateSubmissionStatus(Long submissionId, String newStatus) {
+<span class="nc" id="L52">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L53">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+        // 验证状态有效性
+        try {
+<span class="nc" id="L57">            Submission.SubmissionStatus status =</span>
+<span class="nc" id="L58">                    Submission.SubmissionStatus.valueOf(newStatus.toUpperCase());</span>
+<span class="nc" id="L59">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L60">            throw new ApiException(&quot;Invalid status: &quot; + newStatus, HttpStatus.BAD_REQUEST);</span>
+<span class="nc" id="L61">        }</span>
+
+<span class="nc" id="L63">        submission.setStatus(Submission.SubmissionStatus.valueOf(newStatus));</span>
+<span class="nc" id="L64">        submissionRepository.save(submission);</span>
+<span class="nc" id="L65">    }</span>
+
+    @Override
+    public Integer getSubmissionAttempts(Long studentId, Long assignmentId) {
+<span class="fc" id="L69">        List&lt;Submission&gt; submissions = submissionRepository.findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(assignmentId, studentId);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        return submissions.isEmpty() ? 0 : submissions.size();</span>
+    }
+
+    @Override
+    public Submission getSubmissionOrThrow(Long submissionId) {
+<span class="fc" id="L75">        return submissionRepository.findById(submissionId)</span>
+<span class="pc" id="L76">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+
+    @Override
+    public Submission createSubmission(Long assignmentId, Submission submission) {
+
+<span class="fc" id="L82">        Assignment assignment = assignmentRepository.findById(assignmentId)</span>
+<span class="pc" id="L83">                .orElseThrow(() -&gt; new ApiException(&quot;Assignment not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+        // 检查剩余提交次数
+<span class="fc" id="L86">        int attempts = getSubmissionAttempts(submission.getStudent().getUserId(), assignmentId);</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (attempts &gt;= submissionConfigRepository.findByAssignmentId(assignmentId).getMaxSubmissionAttempts()) {</span>
+<span class="nc" id="L88">            throw new ApiException(&quot;Exceeded maximum submission attempts&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L91">        submission.setAssignment(assignment);</span>
+<span class="fc" id="L92">        Submission savedSubmission = submissionRepository.save(submission);</span>
+    
+<span class="fc" id="L94">        return savedSubmission;</span>
+    }
+
+    @Override
+    public List&lt;Submission&gt; getSubmissionsByAssignmentAndStudent(Long assignmentId, Long studentId) {
+<span class="nc" id="L99">        return submissionRepository.findByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(assignmentId, studentId);</span>
+    }
+
+    @Override
+    public void deleteStudentSubmission(Long submissionId, Long studentId) {
+<span class="nc" id="L104">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L105">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (!submission.getStudent().getUserId().equals(studentId)) {</span>
+<span class="nc" id="L108">            throw new ApiException(&quot;Unauthorized to delete this submission&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // todo: submission.getStatus()不存在DRAFT状态
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (!Submission.SubmissionStatus.DRAFT.equals(submission.getStatus())) {</span>
+<span class="nc" id="L113">            throw new ApiException(&quot;Only DRAFT submissions can be deleted&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+<span class="nc" id="L116">        submissionRepository.delete(submission);</span>
+<span class="nc" id="L117">    }</span>
+
+    @Override
+    public String getSubmissionStatus(Long submissionId, Long studentId) {
+<span class="nc" id="L121">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L122">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (!submission.getStudent().getUserId().equals(studentId)) {</span>
+<span class="nc" id="L125">            throw new ApiException(&quot;Unauthorized to view this submission&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L128">        return submission.getStatus().getValue().toString();</span>
+    }
+
+    @Override
+    public void saveSubmission(Submission submission) {
+<span class="nc" id="L133">        submissionRepository.save(submission);</span>
+        
+        // 不再自动触发AI评分事件
+        // if (submission.getId() != null &amp;&amp; submission.getAiGrading() == null) {
+        //     eventPublisher.publishEvent(new SubmissionCreatedEvent(this, submission.getId()));
+        // }
+<span class="nc" id="L139">    }</span>
+
+    @Override
+    public List&lt;Submission&gt; getPendingSubmissions(Long teacherId) {
+<span class="nc" id="L143">        return submissionRepository.findByStatusAndAssignment_Course_Instructor_UserId(</span>
+                Submission.SubmissionStatus.PENDING,
+                teacherId);
+    }
+
+    @Override
+    public SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId) {
+<span class="nc" id="L150">        return submissionConfigRepository.findByAssignmentId(assignmentId);</span>
+    }
+
+    @Override
+    public CodeSubmissionResult getCodeSubmissionResult(Long submissionId) {
+<span class="nc" id="L155">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L156">                .orElseThrow(() -&gt; new ApiException(&quot;Submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="nc" id="L158">        CodeSubmissionResult result = new CodeSubmissionResult();</span>
+<span class="nc" id="L159">        result.setSubmissionId(submissionId);</span>
+        
+        // 获取代码提交内容
+<span class="nc" id="L162">        CodeSubmission codeSubmission = submission.getContents().stream()</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">                .filter(content -&gt; content.getType() == SubmissionContent.ContentType.CODE)</span>
+<span class="nc" id="L164">                .findFirst()</span>
+<span class="nc" id="L165">                .map(SubmissionContent::getCodeSubmission)</span>
+<span class="nc" id="L166">                .orElseThrow(() -&gt; new ApiException(&quot;Code submission not found&quot;, HttpStatus.NOT_FOUND));</span>
+        
+<span class="nc" id="L168">        result.setScript(codeSubmission.getScript());</span>
+<span class="nc" id="L169">        result.setLanguage(codeSubmission.getLanguage());</span>
+<span class="nc" id="L170">        result.setVersionIndex(codeSubmission.getVersionIndex());</span>
+<span class="nc" id="L171">        result.setStatus(submission.getStatus().getValue());</span>
+        
+        // 获取成绩和反馈
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        if (submission.getGrade() != null) {</span>
+<span class="nc" id="L175">            result.setScore(submission.getGrade().getScore());</span>
+<span class="nc" id="L176">            result.setFeedback(submission.getGrade().getFeedback());</span>
+        }
+        
+        // 获取测试用例执行结果
+<span class="nc" id="L180">        List&lt;CodeExecutionResult&gt; executionResults = codeExecutionResultRepository.findBySubmission_Id(submissionId);</span>
+<span class="nc" id="L181">        List&lt;CodeSubmissionResult.TestCaseResult&gt; testCaseResults = executionResults.stream()</span>
+<span class="nc" id="L182">                .map(executionResult -&gt; {</span>
+<span class="nc" id="L183">                    CodeSubmissionResult.TestCaseResult testCaseResult = new CodeSubmissionResult.TestCaseResult();</span>
+<span class="nc" id="L184">                    TestCase testCase = executionResult.getTestCase();</span>
+                    
+<span class="nc" id="L186">                    testCaseResult.setTestCaseId(testCase.getId());</span>
+<span class="nc" id="L187">                    testCaseResult.setInput(testCase.getInput());</span>
+<span class="nc" id="L188">                    testCaseResult.setExpectedOutput(testCase.getExpectedOutput());</span>
+<span class="nc" id="L189">                    testCaseResult.setActualOutput(executionResult.getOutput());</span>
+<span class="nc" id="L190">                    testCaseResult.setError(executionResult.getError());</span>
+<span class="nc" id="L191">                    testCaseResult.setStatusCode(executionResult.getStatusCode());</span>
+<span class="nc" id="L192">                    testCaseResult.setMemory(executionResult.getMemory());</span>
+<span class="nc" id="L193">                    testCaseResult.setCpuTime(executionResult.getCpuTime());</span>
+<span class="nc" id="L194">                    testCaseResult.setCompilationStatus(executionResult.getCompilationStatus());</span>
+<span class="nc" id="L195">                    testCaseResult.setExecutionSuccess(executionResult.isExecutionSuccess());</span>
+<span class="nc" id="L196">                    testCaseResult.setCompiled(executionResult.isCompiled());</span>
+<span class="nc" id="L197">                    testCaseResult.setWeight(testCase.getWeight());</span>
+                    
+                    // 判断测试用例是否通过
+<span class="nc bnc" id="L200" title="All 2 branches missed.">                    testCaseResult.setPassed(executionResult.isExecutionSuccess() &amp;&amp; </span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">                            executionResult.getOutput().trim().equals(testCase.getExpectedOutput().trim()));</span>
+                    
+<span class="nc" id="L203">                    return testCaseResult;</span>
+                })
+<span class="nc" id="L205">                .collect(Collectors.toList());</span>
+        
+<span class="nc" id="L207">        result.setTestCaseResults(testCaseResults);</span>
+<span class="nc" id="L208">        return result;</span>
+    }
+
+    @Override
+    public Map&lt;Long, Submission&gt; getLatestSubmissionsByAssignment(Long assignmentId) {
+<span class="nc" id="L213">        List&lt;Submission&gt; submissions = submissionRepository.findByAssignment_IdOrderBySubmitTimeDesc(assignmentId);</span>
+<span class="nc" id="L214">        return submissions.stream()</span>
+<span class="nc" id="L215">                .collect(Collectors.toMap(</span>
+<span class="nc" id="L216">                        s -&gt; s.getStudent().getUserId(),</span>
+<span class="nc" id="L217">                        s -&gt; s,</span>
+<span class="nc" id="L218">                        (existing, replacement) -&gt; existing</span>
+                ));
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

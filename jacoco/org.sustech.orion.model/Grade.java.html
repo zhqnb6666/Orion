@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Grade.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.model</a> &gt; <span class="el_source">Grade.java</span></div><h1>Grade.java</h1><pre class="source lang-java linenums">package org.sustech.orion.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.Getter;
+
+import java.sql.Timestamp;
+
+@Entity
+@Data
+@Table(name = &quot;grades&quot;)
+public class Grade {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
+    @JsonIgnore
+    @JoinColumn(name = &quot;submission_id&quot;, nullable = false)
+    private Submission submission;
+
+    @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.MERGE})
+    @JsonIgnore
+    @JoinColumn(name = &quot;grader_id&quot;)
+    private User grader;
+
+    @Column(nullable = false)
+    private Double score; // 分数
+
+    @Column(columnDefinition = &quot;TEXT&quot;)
+    private String feedback; // 反馈意见
+
+    @Column(nullable = false)
+    private Timestamp gradedTime; // 评分时间
+
+    @Column()
+    private Boolean isFinalized; // 是否最终评分
+
+    @Column(columnDefinition = &quot;TEXT&quot;)
+    private String appealReason;//新增 申诉理由
+
+    @Column
+    private Timestamp appealTime;//新增 申诉时间
+
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.UPCOMING;
+
+<span class="fc" id="L50">    @Getter</span>
+    public enum Status
+    {
+<span class="fc" id="L53">        GRADED, UPCOMING, SUBMITTED, MISSING, APPEALING, APPEALED;</span>
+
+        private final String value;
+
+<span class="fc" id="L57">        Status() {</span>
+<span class="fc" id="L58">            this.value = this.name().toLowerCase();</span>
+<span class="fc" id="L59">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

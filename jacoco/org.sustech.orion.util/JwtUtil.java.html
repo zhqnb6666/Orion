@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.util</a> &gt; <span class="el_source">JwtUtil.java</span></div><h1>JwtUtil.java</h1><pre class="source lang-java linenums">package org.sustech.orion.util;
+
+import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Component
+<span class="fc" id="L14">public class JwtUtil {</span>
+
+    @Value(&quot;${jwt.secret}&quot;)
+    private String secret;
+
+    @Value(&quot;${jwt.expiration}&quot;)
+    private Long expiration;
+
+    public String generateToken(UserDetails userDetails) {
+<span class="fc" id="L23">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L24">        return createToken(claims, userDetails.getUsername());</span>
+    }
+
+    private String createToken(Map&lt;String, Object&gt; claims, String subject) {
+<span class="fc" id="L28">        return Jwts.builder()</span>
+<span class="fc" id="L29">                .setClaims(claims)</span>
+<span class="fc" id="L30">                .setSubject(subject)</span>
+<span class="fc" id="L31">                .setIssuedAt(new Date(System.currentTimeMillis()))</span>
+<span class="fc" id="L32">                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))</span>
+<span class="fc" id="L33">                .signWith(SignatureAlgorithm.HS256, secret)</span>
+<span class="fc" id="L34">                .compact();</span>
+    }
+
+    public Boolean validateToken(String token, UserDetails userDetails) {
+<span class="nc" id="L38">        final String username = extractUsername(token);</span>
+<span class="nc bnc" id="L39" title="All 4 branches missed.">        return (username.equals(userDetails.getUsername()) &amp;&amp; !isTokenExpired(token));</span>
+    }
+
+    public String extractUsername(String token) {
+<span class="nc" id="L43">        return extractClaim(token, Claims::getSubject);</span>
+    }
+
+    public Date extractExpiration(String token) {
+<span class="nc" id="L47">        return extractClaim(token, Claims::getExpiration);</span>
+    }
+
+    public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
+<span class="nc" id="L51">        final Claims claims = extractAllClaims(token);</span>
+<span class="nc" id="L52">        return claimsResolver.apply(claims);</span>
+    }
+
+    //测试用
+    private Claims extractAllClaims(String token) {
+        try {
+<span class="nc" id="L58">            return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();</span>
+<span class="nc" id="L59">        } catch (ExpiredJwtException e) {</span>
+<span class="nc" id="L60">            return e.getClaims();</span>
+        }
+        //return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody(); 实际运行用
+    }
+
+    public Boolean isTokenExpired(String token) {
+<span class="nc" id="L66">        return extractExpiration(token).before(new Date());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

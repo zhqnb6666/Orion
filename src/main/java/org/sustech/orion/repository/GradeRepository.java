@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.sustech.orion.model.Grade;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GradeRepository extends JpaRepository<Grade, Long> {
@@ -43,4 +44,8 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
     List<Grade> findBySubmission_Assignment_IdAndSubmission_Student_UserId(Long assignmentId, Long studentId);
 
     List<Grade> findBySubmission_Student_UserId(Long studentId);
+
+    boolean existsBySubmissionId(Long id);
+
+    Optional<Object> findBySubmissionId(Long id);
 }

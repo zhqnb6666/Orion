@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.students</a> &gt; <span class="el_source">NotificationsController.java</span></div><h1>NotificationsController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.students;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.NotificationDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Notification;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.NotificationService;
+import org.sustech.orion.service.UserService;
+
+import java.util.List;
+
+@RestController(&quot;studentsNotificationsController&quot;)
+@RequestMapping(&quot;/api/students/notifications&quot;)
+@Tag(name = &quot;Notifications API&quot;, description = &quot;APIs for notifications management&quot;)
+public class NotificationsController {
+
+    private final UserService userService;
+    // 假设有NotificationService处理通知逻辑
+    private final NotificationService notificationService;
+
+    public NotificationsController(UserService userService,
+<span class="fc" id="L30">                                   NotificationService notificationService) {</span>
+<span class="fc" id="L31">        this.userService = userService;</span>
+<span class="fc" id="L32">        this.notificationService = notificationService;</span>
+<span class="fc" id="L33">    }</span>
+
+    // 获取所有通知
+    @GetMapping
+    @Operation(summary = &quot;获取用户通知列表&quot;,
+            description = &quot;获取当前用户的所有通知（包含已读/未读）&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取通知列表&quot;)
+            })
+    public ResponseEntity&lt;List&lt;NotificationDTO&gt;&gt; getAllNotifications(
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="fc" id="L45">        List&lt;NotificationDTO&gt; notifications = notificationService</span>
+<span class="fc" id="L46">                .getAllNotifications(currentUser.getUserId());</span>
+<span class="fc" id="L47">        return ResponseEntity.ok(notifications);</span>
+    }
+
+    // 获取未读通知
+    @GetMapping(&quot;/unread&quot;)
+    @Operation(summary = &quot;获取未读通知&quot;,
+            description = &quot;获取当前用户的未读通知列表&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取未读通知&quot;)
+            })
+    public ResponseEntity&lt;List&lt;NotificationDTO&gt;&gt; getUnreadNotifications(
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="fc" id="L60">        List&lt;NotificationDTO&gt; unreadNotifications = notificationService</span>
+<span class="fc" id="L61">                .getUnreadNotifications(currentUser.getUserId());</span>
+<span class="fc" id="L62">        return ResponseEntity.ok(unreadNotifications);</span>
+    }
+    // 在NotificationsController.java中添加以下方法
+
+    // 标记通知为已读
+    @PutMapping(&quot;/{notificationId}/read&quot;)
+    @Operation(summary = &quot;标记通知为已读&quot;,
+            description = &quot;将指定通知标记为已读状态&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;标记成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权操作该通知&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;通知不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; markNotificationAsRead(
+            @PathVariable Long notificationId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="fc" id="L79">        Notification notification = notificationService.getNotificationById(notificationId);</span>
+
+        // 验证通知所有权
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (!notification.getRecipient().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L83">            throw new ApiException(&quot;Have no right to act on this notification&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L86">        notificationService.markAsRead(notificationId);</span>
+<span class="fc" id="L87">        return ResponseEntity.ok().build();</span>
+    }
+
+    // 删除通知
+    @DeleteMapping(&quot;/{notificationId}&quot;)
+    @Operation(summary = &quot;删除通知&quot;,
+            description = &quot;删除指定通知&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;204&quot;, description = &quot;successfully delete&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Have no right to act on this notification&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Notification does not exist&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; deleteNotification(
+            @PathVariable Long notificationId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="fc" id="L103">        Notification notification = notificationService.getNotificationById(notificationId);</span>
+
+        // 验证通知所有权
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (!notification.getRecipient().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="fc" id="L107">            throw new ApiException(&quot;Have no right to act on this notification&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L110">        notificationService.deleteNotification(notificationId);</span>
+<span class="fc" id="L111">        return ResponseEntity.noContent().build();</span>
+    }
+
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

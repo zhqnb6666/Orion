@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubmissionConfigController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.teachers</a> &gt; <span class="el_source">SubmissionConfigController.java</span></div><h1>SubmissionConfigController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.teachers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.model.SubmissionConfig;
+import org.sustech.orion.service.SubmissionConfigService;
+
+@RestController
+@RequestMapping(&quot;/api/teachers/submission-configs&quot;)
+@Tag(name = &quot;Submission Config API&quot;, description = &quot;APIs for managing submission configurations&quot;)
+public class SubmissionConfigController {
+
+    private final SubmissionConfigService submissionConfigService;
+
+<span class="fc" id="L17">    public SubmissionConfigController(SubmissionConfigService submissionConfigService) {</span>
+<span class="fc" id="L18">        this.submissionConfigService = submissionConfigService;</span>
+<span class="fc" id="L19">    }</span>
+
+    @GetMapping(&quot;/assignments/{assignmentId}&quot;)
+    @Operation(summary = &quot;获取作业的提交配置&quot;)
+    public ResponseEntity&lt;SubmissionConfig&gt; getConfig(@PathVariable Long assignmentId) {
+<span class="nc" id="L24">        return ResponseEntity.ok(submissionConfigService.getSubmissionConfigByAssignmentId(assignmentId));</span>
+    }
+
+    @PostMapping(&quot;/assignments/{assignmentId}&quot;)//默认无需调用该API
+    @Operation(summary = &quot;创建作业的默认提交配置&quot;)
+    public ResponseEntity&lt;SubmissionConfig&gt; createDefaultConfig(@PathVariable Long assignmentId) {
+<span class="nc" id="L30">        return ResponseEntity.ok(submissionConfigService.createDefaultConfig(assignmentId));</span>
+    }
+
+    @PutMapping(&quot;/{configId}&quot;)
+    @Operation(summary = &quot;更新提交配置&quot;)
+    public ResponseEntity&lt;SubmissionConfig&gt; updateConfig(
+            @PathVariable Long configId,
+            @RequestBody SubmissionConfig config) {
+<span class="nc" id="L38">        config.setId(configId);</span>
+<span class="nc" id="L39">        return ResponseEntity.ok(submissionConfigService.saveSubmissionConfig(config));</span>
+    }
+
+    @DeleteMapping(&quot;/{configId}&quot;)//默认无需调用该API
+    @Operation(summary = &quot;删除提交配置&quot;)
+    public ResponseEntity&lt;Void&gt; deleteConfig(@PathVariable Long configId) {
+<span class="nc" id="L45">        submissionConfigService.deleteSubmissionConfig(configId);</span>
+<span class="nc" id="L46">        return ResponseEntity.noContent().build();</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

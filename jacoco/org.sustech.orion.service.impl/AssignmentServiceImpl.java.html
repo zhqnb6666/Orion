@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">AssignmentServiceImpl.java</span></div><h1>AssignmentServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.*;
+import org.sustech.orion.repository.*;
+import org.sustech.orion.service.AssignmentService;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class AssignmentServiceImpl implements AssignmentService {
+
+    private final AssignmentRepository assignmentRepository;
+    private final CourseRepository courseRepository;
+    private final SubmissionRepository submissionRepository;
+    private final SubmissionConfigRepository submissionConfigRepository;
+    private final TestCaseRepository testCaseRepository;
+
+
+    public AssignmentServiceImpl(AssignmentRepository assignmentRepository, TestCaseRepository testCaseRepository,
+<span class="fc" id="L24">                                 CourseRepository courseRepository, SubmissionRepository submissionRepository, SubmissionConfigRepository submissionConfigRepository) {</span>
+<span class="fc" id="L25">        this.assignmentRepository = assignmentRepository;</span>
+<span class="fc" id="L26">        this.testCaseRepository = testCaseRepository;</span>
+<span class="fc" id="L27">        this.courseRepository = courseRepository;</span>
+<span class="fc" id="L28">        this.submissionRepository = submissionRepository;</span>
+<span class="fc" id="L29">        this.submissionConfigRepository = submissionConfigRepository;</span>
+
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public Assignment createAssignment(Assignment assignment, Long courseId) {
+<span class="fc" id="L35">        Course course = courseRepository.findById(courseId)</span>
+<span class="pc" id="L36">                .orElseThrow(() -&gt; new ApiException(&quot;Course not found&quot;, HttpStatus.NOT_FOUND));</span>
+<span class="fc" id="L37">        assignment.setCourse(course);</span>
+<span class="fc" id="L38">        Assignment savedAssignment = assignmentRepository.save(assignment);</span>
+
+        // 创建默认的提交配置
+<span class="fc" id="L41">        SubmissionConfig config = new SubmissionConfig();</span>
+<span class="fc" id="L42">        config.setAssignment(savedAssignment);</span>
+<span class="fc" id="L43">        config.setMaxFileSize(10L * 1024 * 1024); // 10MB</span>
+<span class="fc" id="L44">        config.setAllowedFileTypes(&quot;*&quot;); // 允许所有文件类型</span>
+<span class="fc" id="L45">        config.setMaxSubmissionAttempts(114514); // 最大提交次数</span>
+<span class="fc" id="L46">        submissionConfigRepository.save(config);</span>
+
+<span class="fc" id="L48">        return savedAssignment;</span>
+    }
+
+    @Override
+    public List&lt;Assignment&gt; getActiveAssignments(Long courseId) {
+<span class="nc" id="L53">        return assignmentRepository.findByCourse_IdAndDueDateAfter(</span>
+<span class="nc" id="L54">                courseId, new Timestamp(System.currentTimeMillis()));</span>
+    }
+
+    @Override
+    public List&lt;Assignment&gt; getAssignmentsByType(Long courseId, String type) {
+<span class="nc" id="L59">        return assignmentRepository.findByCourse_IdAndType(courseId, type);</span>
+    }
+
+    @Override
+    public void extendDueDate(Long assignmentId, Timestamp newDueDate) {
+<span class="nc" id="L64">        Assignment assignment = assignmentRepository.findById(assignmentId)</span>
+<span class="nc" id="L65">                .orElseThrow(() -&gt; new ApiException(&quot;Assignment not found&quot;, HttpStatus.NOT_FOUND));</span>
+<span class="nc" id="L66">        assignment.setDueDate(newDueDate);</span>
+<span class="nc" id="L67">        assignmentRepository.save(assignment);</span>
+<span class="nc" id="L68">    }</span>
+
+    @Override
+    public List&lt;Assignment&gt; getPendingAssignments(Long studentId) {
+        // 获取未提交且未过期的作业
+<span class="nc" id="L73">        return assignmentRepository.findPendingAssignments(studentId);</span>
+    }
+
+    @Override
+    public List&lt;Assignment&gt; getUpcomingAssignments(Long studentId, int days) {
+<span class="nc" id="L78">        Timestamp now = new Timestamp(System.currentTimeMillis());</span>
+<span class="nc" id="L79">        Timestamp deadline = new Timestamp(now.getTime() + (days * 86400000L)); // days转毫秒</span>
+<span class="nc" id="L80">        return assignmentRepository.findUpcomingAssignments(studentId, now, deadline);</span>
+    }
+
+    @Override
+    public Submission createSubmission(Long assignmentId, Submission submission) {
+<span class="nc" id="L85">        Assignment assignment = assignmentRepository.findById(assignmentId)</span>
+<span class="nc" id="L86">                .orElseThrow(() -&gt; new ApiException(&quot;Assignment not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="nc" id="L88">        submission.setAssignment(assignment);</span>
+
+<span class="nc" id="L90">        return submissionRepository.save(submission);</span>
+    }
+
+
+
+    @Override
+    public List&lt;Submission&gt; getSubmissionsByAssignmentAndStudent(Long assignmentId, Long studentId) {
+<span class="nc" id="L97">        return submissionRepository.findAllByAssignment_IdAndStudent_UserIdOrderBySubmitTimeDesc(assignmentId, studentId);</span>
+    }
+
+    @Override
+    public SubmissionConfig getSubmissionConfigByAssignmentId(Long assignmentId) {
+<span class="fc" id="L102">        return submissionConfigRepository.findByAssignmentId(assignmentId);</span>
+
+    }
+
+    @Override
+    public Assignment getAssignmentById(Long assignmentId) {
+<span class="fc" id="L108">        return assignmentRepository.findById(assignmentId)</span>
+<span class="pc" id="L109">                .orElseThrow(() -&gt; new ApiException(&quot;Assignment not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+    public List&lt;Assignment&gt; getUpcomingAssignmentsForTeacher(Long teacherId, int days) {
+<span class="nc" id="L112">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc" id="L113">        return assignmentRepository.findByTeacherAndDueDateBetween(</span>
+                teacherId,
+                now,
+<span class="nc" id="L116">                now.plusDays(days)</span>
+        );
+    }
+
+    @Override
+    public List&lt;Assignment&gt; getAssignmentsByCourseId(Long courseId) {
+<span class="nc" id="L122">        return assignmentRepository.findByCourse_Id(courseId);</span>
+    }
+    @Override
+    public Assignment updateAssignment(Assignment assignment) {
+<span class="nc" id="L126">        return assignmentRepository.save(assignment);</span>
+    }
+
+    @Override
+    public void deleteAssignmentWithDependencies(Long assignmentId) {
+        // 删除关联的提交记录、成绩等
+        //submissionService.deleteByAssignmentId(assignmentId);
+        //gradeService.deleteByAssignmentId(assignmentId);
+<span class="nc" id="L134">        assignmentRepository.deleteById(assignmentId);</span>
+<span class="nc" id="L135">    }</span>
+
+    @Override
+    public List&lt;TestCase&gt; getTestCasesByAssignmentId(Long assignmentId) {
+<span class="nc" id="L139">        return assignmentRepository.findById(assignmentId)</span>
+<span class="nc" id="L140">                .orElseThrow(() -&gt; new ApiException(&quot;Assignment not found&quot;, HttpStatus.NOT_FOUND))</span>
+<span class="nc" id="L141">                .getTestCases();</span>
+    }
+
+    @Override
+    public TestCase getTestCaseById(Long testCaseId) {
+<span class="nc" id="L146">        return testCaseRepository.findById(testCaseId)</span>
+<span class="nc" id="L147">                .orElseThrow(() -&gt; new ApiException(&quot;Test case not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+
+    @Override
+    public TestCase updateTestcase(TestCase testcase) {
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (testcase == null || testcase.getId() == null) {</span>
+<span class="nc" id="L153">            throw new ApiException(&quot;Invalid test case&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="nc" id="L155">        testCaseRepository.findById(testcase.getId())</span>
+<span class="nc" id="L156">                .orElseThrow(() -&gt; new ApiException(&quot;Test case not found&quot;, HttpStatus.NOT_FOUND));</span>
+<span class="nc" id="L157">        return testCaseRepository.save(testcase);</span>
+    }
+
+    @Override
+    public TestCase addTestcase(TestCase testcase) {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (testcase == null) {</span>
+<span class="nc" id="L163">            throw new ApiException(&quot;Test case cannot be null&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+        // Set id to null to ensure it creates a new test case
+<span class="nc" id="L166">        testcase.setId(null);</span>
+<span class="nc" id="L167">        return testCaseRepository.save(testcase);</span>
+    }
+
+    @Override
+    public void deleteTestcase(Long testcaseId) {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (!testCaseRepository.existsById(testcaseId)) {</span>
+<span class="nc" id="L173">            throw new ApiException(&quot;Test case not found&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+<span class="nc" id="L175">        testCaseRepository.deleteById(testcaseId);</span>
+<span class="nc" id="L176">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

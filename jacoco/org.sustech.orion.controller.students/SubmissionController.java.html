@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubmissionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.students</a> &gt; <span class="el_source">SubmissionController.java</span></div><h1>SubmissionController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.students;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.dto.CodeSubmissionDTO;
+import org.sustech.orion.dto.CodeSubmissionResult;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.*;
+import org.sustech.orion.service.*;
+import org.sustech.orion.service.event.SubmissionCreatedEvent;
+import org.sustech.orion.util.ConvertDTO;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+@RestController(&quot;studentsSubmissionController&quot;)
+@RequestMapping(&quot;/api/students/submissions&quot;)
+@Tag(name = &quot;Submission API&quot;, description = &quot;APIs for assignment submissions&quot;)
+public class SubmissionController {
+
+
+    private final ResourceService resourceService;
+    private final SubmissionService submissionService;
+    private final GradeService gradeService;
+    private final AssignmentService assignmentService;
+    private final CodeService codeService;
+    private final AttachmentService attachmentService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public SubmissionController(SubmissionService submissionService,
+<span class="fc" id="L42">                                ResourceService resourceService, GradeService gradeService, AssignmentService assignmentService, CodeService codeService, AttachmentService attachmentService, ApplicationEventPublisher eventPublisher) {</span>
+<span class="fc" id="L43">        this.submissionService = submissionService;</span>
+<span class="fc" id="L44">        this.resourceService = resourceService;</span>
+<span class="fc" id="L45">        this.gradeService = gradeService;</span>
+<span class="fc" id="L46">        this.assignmentService = assignmentService;</span>
+<span class="fc" id="L47">        this.codeService = codeService;</span>
+<span class="fc" id="L48">        this.attachmentService = attachmentService;</span>
+<span class="fc" id="L49">        this.eventPublisher = eventPublisher;</span>
+<span class="fc" id="L50">    }</span>
+
+    /* useful */
+    @GetMapping(&quot;/{submissionId}&quot;)
+    @Operation(summary = &quot;Get submission details&quot;)
+    public ResponseEntity&lt;Submission&gt; getSubmission(@PathVariable Long submissionId) {
+<span class="fc" id="L56">        return ResponseEntity.ok(submissionService.getSubmissionOrThrow(submissionId));</span>
+    }
+
+    @GetMapping(&quot;/status/{status}&quot;)
+    @Operation(summary = &quot;List submissions by status&quot;)
+    public ResponseEntity&lt;List&lt;Submission&gt;&gt; getSubmissionsByStatus(@PathVariable String status) {
+<span class="nc" id="L62">        return ResponseEntity.ok(submissionService.getSubmissionsByStatus(status));</span>
+    }
+
+    //提交代码作业并且异步运行
+    @PostMapping(&quot;/assignments/{assignmentId}/submissions/code&quot;)
+    @Operation(summary = &quot;Create a new code submission&quot;)
+    public ResponseEntity&lt;Submission&gt; createCodeSubmission(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student,
+            @RequestBody CodeSubmissionDTO codeSubmissionDTO) {
+<span class="nc" id="L72">        Submission submission = new Submission();</span>
+<span class="nc" id="L73">        submission.setStudent(student);</span>
+<span class="nc" id="L74">        submission.setAssignment(assignmentService.getAssignmentById(assignmentId));</span>
+<span class="nc" id="L75">        submission.setSubmitTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="nc" id="L76">        submission.setStatus(Submission.SubmissionStatus.GRADED);</span>
+<span class="nc" id="L77">        SubmissionContent content = new SubmissionContent();</span>
+<span class="nc" id="L78">        content.setType(SubmissionContent.ContentType.CODE);</span>
+<span class="nc" id="L79">        CodeSubmission codeSubmission = new CodeSubmission();</span>
+<span class="nc" id="L80">        codeSubmission.setScript(codeSubmissionDTO.getScript());</span>
+<span class="nc" id="L81">        codeSubmission.setLanguage(codeSubmissionDTO.getLanguage());</span>
+<span class="nc" id="L82">        codeSubmission.setVersionIndex(codeSubmissionDTO.getVersionIndex());</span>
+<span class="nc" id="L83">        content.setCodeSubmission(codeSubmission);</span>
+<span class="nc" id="L84">        content.setSubmission(submission);</span>
+<span class="nc" id="L85">        submission.setContents(List.of(content));</span>
+<span class="nc" id="L86">        Submission savedSubmission = submissionService.createSubmission(assignmentId, submission);</span>
+        
+        // 代码作业使用代码执行服务进行评测，不使用AI评分
+<span class="nc" id="L89">        CompletableFuture.runAsync(() -&gt; {</span>
+<span class="nc" id="L90">            codeService.executeAndEvaluateSubmission(savedSubmission.getId());</span>
+<span class="nc" id="L91">        });</span>
+        
+<span class="nc" id="L93">        return ResponseEntity.ok(savedSubmission);</span>
+    }
+
+    //获得代码作业的运行结果
+    @GetMapping(&quot;/assignments/submissions/code/{submissionId}&quot;)
+    @Operation(summary = &quot;Get code submission result&quot;)
+    public ResponseEntity&lt;CodeSubmissionResult&gt; getCodeSubmissionResult(
+            @PathVariable Long submissionId) {
+<span class="nc" id="L101">        return ResponseEntity.ok(submissionService.getCodeSubmissionResult(submissionId));</span>
+    }
+
+    @PostMapping(value = &quot;/{assignmentId}/submissions&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = &quot;创建新提交（支持文件上传）&quot;)
+    public ResponseEntity&lt;Submission&gt; createSubmission(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student,
+            @RequestParam(required = false) String content,
+            @RequestPart(value = &quot;files&quot;, required = false) List&lt;MultipartFile&gt; files) {
+
+        // 获取作业
+<span class="nc" id="L113">        Assignment assignment = assignmentService.getAssignmentById(assignmentId);</span>
+
+        // 检查截止日期
+<span class="nc" id="L116">        Timestamp now = new Timestamp(System.currentTimeMillis());</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (now.after(assignment.getDueDate())) {</span>
+<span class="nc" id="L118">            throw new ApiException(&quot;作业已截止提交&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+        // 获取提交配置
+<span class="nc" id="L122">        SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);</span>
+
+        // 检查剩余提交次数
+<span class="nc" id="L125">        Integer maxAttempts = config.getMaxSubmissionAttempts();</span>
+<span class="nc" id="L126">        Integer usedAttempts = submissionService.getSubmissionAttempts(student.getUserId(), assignmentId);</span>
+
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (usedAttempts &gt;= maxAttempts) {</span>
+<span class="nc" id="L129">            throw new ApiException(&quot;已达到最大提交次数&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+        // 创建提交
+<span class="nc" id="L133">        Submission submission = new Submission();</span>
+<span class="nc" id="L134">        submission.setStudent(student);</span>
+<span class="nc" id="L135">        submission.setAssignment(assignment);</span>
+<span class="nc" id="L136">        submission.setSubmitTime(now);</span>
+<span class="nc" id="L137">        submission.setStatus(Submission.SubmissionStatus.PENDING);</span>
+<span class="nc" id="L138">        submission.setContents(new ArrayList&lt;&gt;());</span>
+
+        // 添加文本内容（如果有）
+<span class="nc bnc" id="L141" title="All 4 branches missed.">        if (content != null &amp;&amp; !content.trim().isEmpty()) {</span>
+<span class="nc" id="L142">            SubmissionContent textContent = new SubmissionContent();</span>
+<span class="nc" id="L143">            textContent.setType(SubmissionContent.ContentType.TEXT);</span>
+<span class="nc" id="L144">            textContent.setContent(content);</span>
+<span class="nc" id="L145">            textContent.setSubmission(submission);</span>
+<span class="nc" id="L146">            submission.getContents().add(textContent);</span>
+<span class="nc" id="L147">            submissionService.saveSubmission(submission);</span>
+        }
+
+        // 处理文件附件（如果有）
+<span class="nc bnc" id="L151" title="All 4 branches missed.">        if (files != null &amp;&amp; !files.isEmpty()) {</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            for (MultipartFile file : files) {</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                if (!file.isEmpty()) {</span>
+                    try {
+                        // 上传附件
+<span class="nc" id="L156">                        Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Submission);</span>
+
+                        // 创建提交内容，将附件信息存储在file字段中
+<span class="nc" id="L159">                        SubmissionContent fileContent = new SubmissionContent();</span>
+<span class="nc" id="L160">                        fileContent.setType(SubmissionContent.ContentType.FILE);</span>
+<span class="nc" id="L161">                        fileContent.setFile(attachment); // 直接设置file字段</span>
+<span class="nc" id="L162">                        fileContent.setSubmission(submission);</span>
+
+                        // 更新提交
+<span class="nc" id="L165">                        submission.getContents().add(fileContent);</span>
+<span class="nc" id="L166">                        submissionService.saveSubmission(submission);</span>
+<span class="nc" id="L167">                    } catch (Exception e) {</span>
+<span class="nc" id="L168">                        throw new ApiException(&quot;文件上传失败: &quot; + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L169">                    }</span>
+                }
+<span class="nc" id="L171">            }</span>
+        }
+
+        // 非代码作业，触发AI评分
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (!&quot;code&quot;.equalsIgnoreCase(assignment.getType())) {</span>
+            // 异步触发AI评分，避免阻塞主线程
+<span class="nc" id="L177">            CompletableFuture.runAsync(() -&gt; {</span>
+<span class="nc" id="L178">                eventPublisher.publishEvent(new SubmissionCreatedEvent(this, submission.getId()));</span>
+<span class="nc" id="L179">            });</span>
+        }
+
+<span class="nc" id="L182">        return ResponseEntity.ok(submission);</span>
+    }
+
+    // 获取作业提交历史（需补充到AssignmentController.java）
+    @GetMapping(&quot;/assignments/{assignmentId}/submissions&quot;)
+    @Operation(summary = &quot;Get submission history&quot;)
+    public ResponseEntity&lt;List&lt;Submission&gt;&gt; getSubmissionHistory(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student) {
+<span class="nc" id="L191">        return ResponseEntity.ok(submissionService.getSubmissionsByAssignmentAndStudent(assignmentId, student.getUserId()));</span>
+    }
+
+    // src/main/java/org/sustech/orion/controller/students/SubmissionController.java
+    @GetMapping(&quot;/{submissionId}/grade&quot;)
+    @Operation(summary = &quot;获取提交评分详情&quot;,
+            description = &quot;获取指定提交的评分和评语&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Scoring information is obtained successfully&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Do not have access to the submission&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission or rating does not exist&quot;)
+            })
+    public ResponseEntity&lt;GradeResponseDTO&gt; getSubmissionGrade(
+            @PathVariable Long submissionId,
+            @AuthenticationPrincipal User student) {
+
+<span class="fc" id="L207">        Submission submission = submissionService.getSubmissionOrThrow(submissionId);</span>
+
+        // 权限校验
+<span class="pc bpc" id="L210" title="1 of 2 branches missed.">        if (!submission.getStudent().getUserId().equals(student.getUserId())) {</span>
+<span class="nc" id="L211">            throw new ApiException(&quot;You have no right to view the submission score&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="pc bpc" id="L214" title="1 of 2 branches missed.">        if (submission.getGrade() == null) {</span>
+<span class="nc" id="L215">            throw new ApiException(&quot;The submission has not yet been scored&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+
+<span class="fc" id="L218">        GradeResponseDTO gradeResponseDTO = ConvertDTO.toGradeResponseDTO(submission.getGrade());</span>
+        // 添加作业的最高分信息，将Integer转换为Double
+<span class="fc" id="L220">        gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore());</span>
+
+<span class="fc" id="L222">        return ResponseEntity.ok(gradeResponseDTO);</span>
+    }
+
+    @PostMapping(&quot;/{submissionId}/appeal&quot;)
+    @Operation(summary = &quot;提交成绩申诉&quot;,
+            description = &quot;对已评分的提交提出申诉&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Complaint filed&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;No right to operate&quot;),
+                    @ApiResponse(responseCode = &quot;409&quot;, description = &quot;Complaint exists&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; submitAppeal(
+            @PathVariable Long submissionId,
+            @AuthenticationPrincipal User student,
+            @RequestBody String appealReason) {
+
+<span class="nc" id="L238">        Submission submission = submissionService.getSubmissionOrThrow(submissionId);</span>
+
+        // 权限校验
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (!submission.getStudent().getUserId().equals(student.getUserId())) {</span>
+<span class="nc" id="L242">            throw new ApiException(&quot;The commit is not authorized to operate&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // 检查评分状态
+<span class="nc bnc" id="L246" title="All 4 branches missed.">        if (submission.getGrade() == null || !submission.getGrade().getIsFinalized()) {</span>
+<span class="nc" id="L247">            throw new ApiException(&quot;Grades have not been confirmed&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+<span class="nc" id="L250">        gradeService.submitGradeAppeal(submission.getGrade().getId(), appealReason);</span>
+<span class="nc" id="L251">        return ResponseEntity.status(HttpStatus.CREATED).build();</span>
+    }
+
+    /* useless */
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

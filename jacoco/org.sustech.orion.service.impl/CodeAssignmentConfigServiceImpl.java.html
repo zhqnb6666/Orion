@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CodeAssignmentConfigServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">CodeAssignmentConfigServiceImpl.java</span></div><h1>CodeAssignmentConfigServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.sustech.orion.dto.CodeAssignmentConfigDTO;
+import org.sustech.orion.model.Assignment;
+import org.sustech.orion.model.CodeAssignmentConfig;
+import org.sustech.orion.repository.AssignmentRepository;
+import org.sustech.orion.repository.CodeAssignmentConfigRepository;
+import org.sustech.orion.service.CodeAssignmentConfigService;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L16">@Slf4j</span>
+public class CodeAssignmentConfigServiceImpl implements CodeAssignmentConfigService {
+
+    private final CodeAssignmentConfigRepository codeAssignmentConfigRepository;
+    private final AssignmentRepository assignmentRepository;
+
+    @Override
+    public CodeAssignmentConfig getByAssignmentId(Long assignmentId) {
+<span class="nc" id="L24">        return codeAssignmentConfigRepository.findByAssignmentId(assignmentId)</span>
+<span class="nc" id="L25">                .orElse(null);</span>
+    }
+
+    @Override
+    @Transactional
+    public CodeAssignmentConfig createOrUpdate(CodeAssignmentConfigDTO configDTO) {
+<span class="nc" id="L31">        Assignment assignment = assignmentRepository.findById(configDTO.getAssignmentId())</span>
+<span class="nc" id="L32">                .orElseThrow(() -&gt; new RuntimeException(&quot;作业不存在: &quot; + configDTO.getAssignmentId()));</span>
+
+        CodeAssignmentConfig config;
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (configDTO.getId() != null) {</span>
+<span class="nc" id="L36">            config = codeAssignmentConfigRepository.findById(configDTO.getId())</span>
+<span class="nc" id="L37">                    .orElseThrow(() -&gt; new RuntimeException(&quot;代码配置不存在: &quot; + configDTO.getId()));</span>
+        } else {
+<span class="nc" id="L39">            config = new CodeAssignmentConfig();</span>
+<span class="nc" id="L40">            config.setAssignment(assignment);</span>
+        }
+
+        // 设置配置属性
+<span class="nc" id="L44">        config.setAllowedLanguages(configDTO.getAllowedLanguages());</span>
+<span class="nc" id="L45">        config.setMemoryLimitEnabled(configDTO.getMemoryLimitEnabled());</span>
+<span class="nc" id="L46">        config.setMemoryLimitMB(configDTO.getMemoryLimitMB());</span>
+<span class="nc" id="L47">        config.setTimeLimitEnabled(configDTO.getTimeLimitEnabled());</span>
+<span class="nc" id="L48">        config.setTimeLimitSeconds(configDTO.getTimeLimitSeconds());</span>
+<span class="nc" id="L49">        return codeAssignmentConfigRepository.save(config);</span>
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long configId) {
+<span class="nc" id="L55">        codeAssignmentConfigRepository.deleteById(configId);</span>
+<span class="nc" id="L56">    }</span>
+
+    @Override
+    public CodeAssignmentConfigDTO toDTO(CodeAssignmentConfig config) {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (config == null) {</span>
+<span class="nc" id="L61">            return null;</span>
+        }
+<span class="nc" id="L63">        CodeAssignmentConfigDTO dto = new CodeAssignmentConfigDTO();</span>
+<span class="nc" id="L64">        dto.setId(config.getId());</span>
+<span class="nc" id="L65">        dto.setAllowedLanguages(config.getAllowedLanguages());</span>
+<span class="nc" id="L66">        dto.setMemoryLimitEnabled(config.getMemoryLimitEnabled());</span>
+<span class="nc" id="L67">        dto.setMemoryLimitMB(config.getMemoryLimitMB());</span>
+<span class="nc" id="L68">        dto.setTimeLimitEnabled(config.getTimeLimitEnabled());</span>
+<span class="nc" id="L69">        dto.setTimeLimitSeconds(config.getTimeLimitSeconds());</span>
+<span class="nc" id="L70">        dto.setAssignmentId(config.getAssignment().getId());</span>
+<span class="nc" id="L71">        return dto;</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

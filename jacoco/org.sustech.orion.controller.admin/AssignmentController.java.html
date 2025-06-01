@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.admin</a> &gt; <span class="el_source">AssignmentController.java</span></div><h1>AssignmentController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.admin;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.AssignmentDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.model.Assignment;
+import org.sustech.orion.service.AssignmentService;
+import org.sustech.orion.util.ConvertDTO;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+@RestController(&quot;adminAssignmentController&quot;)
+@RequestMapping(&quot;/api/admin/assignments&quot;)
+@Tag(name = &quot;Assignment API&quot;, description = &quot;APIs for assignment management&quot;)
+public class AssignmentController {
+
+    private final AssignmentService assignmentService;
+
+<span class="fc" id="L24">    public AssignmentController(AssignmentService assignmentService) {</span>
+<span class="fc" id="L25">        this.assignmentService = assignmentService;</span>
+<span class="fc" id="L26">    }</span>
+    /* useful */
+    @PostMapping(&quot;/{courseId}&quot;)
+    @Operation(summary = &quot;Create assignment&quot;)
+    public ResponseEntity&lt;AssignmentResponseDTO&gt; createAssignment(
+            @PathVariable Long courseId,
+            @RequestBody AssignmentDTO request) {
+<span class="nc" id="L33">        Assignment assignment = new Assignment();</span>
+<span class="nc" id="L34">        assignment.setTitle(request.getTitle());</span>
+<span class="nc" id="L35">        assignment.setDescription(request.getDescription());</span>
+<span class="nc" id="L36">        assignment.setType(request.getType());</span>
+<span class="nc" id="L37">        assignment.setDueDate(request.getDueDate());</span>
+<span class="nc" id="L38">        assignment.setOpenDate(request.getOpenDate());</span>
+<span class="nc" id="L39">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO( assignmentService.createAssignment(assignment, courseId)));</span>
+    }
+
+    @GetMapping(&quot;/course/{courseId}/active&quot;)
+    @Operation(summary = &quot;Get active assignments&quot;)
+    public ResponseEntity&lt;List&lt;AssignmentResponseDTO&gt;&gt; getActiveAssignments(@PathVariable Long courseId) {
+<span class="nc" id="L45">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList( assignmentService.getActiveAssignments(courseId)));</span>
+    }
+
+    @PatchMapping(&quot;/{assignmentId}/due-date&quot;)
+    @Operation(summary = &quot;Extend due date&quot;)
+    public ResponseEntity&lt;Void&gt; extendDueDate(
+            @PathVariable Long assignmentId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp newDueDate) {
+<span class="nc" id="L53">        assignmentService.extendDueDate(assignmentId, newDueDate);</span>
+<span class="nc" id="L54">        return ResponseEntity.noContent().build();</span>
+    }
+    /* useless */
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OCR.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.AI</a> &gt; <span class="el_source">OCR.java</span></div><h1>OCR.java</h1><pre class="source lang-java linenums">package org.sustech.orion.AI;
+
+import org.sustech.orion.AI.ocr_utils.Base64Util;
+import org.sustech.orion.AI.ocr_utils.FileUtil;
+import org.sustech.orion.AI.ocr_utils.HttpUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Iterator;
+import java.io.*;
+
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+<span class="nc" id="L15">public class OCR {</span>
+    public static String OCR(String filePath) {
+        // 请求url
+<span class="nc" id="L18">        String url = &quot;https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic&quot;;</span>
+        try {
+            // 本地文件路径
+
+<span class="nc" id="L22">            byte[] imgData = FileUtil.readFileByBytes(filePath);</span>
+<span class="nc" id="L23">            String imgStr = Base64Util.encode(imgData);</span>
+<span class="nc" id="L24">            String imgParam = URLEncoder.encode(imgStr, StandardCharsets.UTF_8);</span>
+
+<span class="nc" id="L26">            String param = &quot;image=&quot; + imgParam;</span>
+
+            // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+<span class="nc" id="L29">            String accessToken = &quot;24.b6240fadae7ba26a3b355da75d0237e4.2592000.1744786944.282335-115858441&quot;;</span>
+
+<span class="nc" id="L31">            String result = HttpUtil.post(url, accessToken, param);</span>
+<span class="nc" id="L32">            return extractText(result);</span>
+<span class="nc" id="L33">        } catch (Exception e) {</span>
+<span class="nc" id="L34">            e.printStackTrace();</span>
+        }
+<span class="nc" id="L36">        return null;</span>
+    }
+
+    public static String extractText(String json) {
+<span class="nc" id="L40">        StringBuilder result = new StringBuilder();</span>
+<span class="nc" id="L41">        ObjectMapper objectMapper = new ObjectMapper();</span>
+        try {
+<span class="nc" id="L43">            JsonNode rootNode = objectMapper.readTree(json);</span>
+<span class="nc" id="L44">            JsonNode wordsResultNode = rootNode.path(&quot;words_result&quot;);</span>
+
+<span class="nc" id="L46">            Iterator&lt;JsonNode&gt; elements = wordsResultNode.elements();</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            while (elements.hasNext()) {</span>
+<span class="nc" id="L48">                JsonNode wordNode = elements.next();</span>
+<span class="nc" id="L49">                String word = wordNode.path(&quot;words&quot;).asText();</span>
+<span class="nc" id="L50">                result.append(word).append(&quot;\n&quot;);</span>
+<span class="nc" id="L51">            }</span>
+<span class="nc" id="L52">            return result.toString();</span>
+<span class="nc" id="L53">        } catch (Exception e) {</span>
+<span class="nc" id="L54">            e.printStackTrace();</span>
+        }
+<span class="nc" id="L56">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
