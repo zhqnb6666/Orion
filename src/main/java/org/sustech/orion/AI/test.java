@@ -6,12 +6,12 @@ public class test {
 //        //available models: qwq-32b qwen3-32b deepseek-r1-distill-qwen-32b qwen3-235b-a22b
 //        System.out.println(Model.chat(input, "qwen3-235b-a22b"));
 //
-//        // 大模型查重示例代码
-//        String a = "值传递：传递的是变量的副本，修改不会影响原始变量。\n" +
-//                  "引用传递：传递的是对象的引用副本，修改对象内容会影响原始对象，但不能改变引用本身。 Java 中没有真正的引用传递，所有传递的都是值（包括对象引用的值）。";
-//        String b = "值传递：传递的是变量的副本，修改不会影响原始变量。\n" +
-//                  "传递引用或者指针：传递的是对象的引用副本，修改对象内容会影响原始对象，但不能改变引用本身。 Java 中没有真正的引用传递，所有传递的都是值（包括对象引用的值）。";
-//        System.out.println(Model.llm_plagiarism_check(a,b,"qwen3-32b"));
+        // 大模型查重示例代码
+        String a = "值传递：传递的是变量的副本，修改不会影响原始变量。\n" +
+                  "引用传递：传递的是对象的引用副本，修改对象内容会影响原始对象，但不能改变引用本身。 Java 中没有真正的引用传递，所有传递的都是值（包括对象引用的值）。";
+        String b = "值传递：传递的是变量的副本，修改不会影响原始变量。\n" +
+                  "传递引用或者指针：传递的是对象的引用副本，修改对象内容会影响原始对象，但不能改变引用本身。 Java 中没有真正的引用传递，所有传递的都是值（包括对象引用的值）。";
+        System.out.println(Model.llm_plagiarism_check(a,b,"qwen3-32b"));
 //
 //        // 大模型评分示例代码
 //        String Question = "请简要介绍一下Java中的异常处理机制";
@@ -29,7 +29,7 @@ public class test {
 //        System.out.println(text);
 
         // OCR示例代码
-        String photo = "img.png";
-        System.out.println(OCR.OCR(photo));
+//        String photo = "img.png";
+//        System.out.println(OCR.OCR(photo));
     }
 }

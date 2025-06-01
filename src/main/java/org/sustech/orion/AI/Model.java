@@ -1,65 +1,84 @@
 package org.sustech.orion.AI;
 
-import com.baidubce.qianfan.Qianfan;
-import com.baidubce.qianfan.QianfanV2;
-import com.baidubce.qianfan.model.chat.v2.request.RequestV2;
-import com.baidubce.qianfan.model.chat.v2.response.ResponseV2;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.output.Response;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.sustech.orion.AI.PromptBuilder.build_grading_prompt;
 import static org.sustech.orion.AI.PromptBuilder.build_plagiarism_prompt;
 
 public class Model {
-    private static final QianfanV2 client = new Qianfan("bce-v3/ALTAK-rN1GJbJxabN8c2V0twWb5/acf494b1376487f599c2aa78c80f1fe8c06462f9").v2();
-    private static final List<String> availableModels = List.of("qwq-32b", "qwen3-32b", "deepseek-r1-distill-qwen-32b", "qwen3-235b-a22b");
-    private static final String defaultModel = "qwq-32b";
+    private static final String API_KEY = "sk-Jl53h2087p93OXhlD97c7qQZal36QGxQTGMGOOZgUCx8un0z";
+    private static final String BASE_URL = "https://xiaoai.plus/v1";
 
-    public static String chat(String input, String model) {
-        String System = "你是一个智能的AI助手，你可以回答任何问题";
-        if (!availableModels.contains(model)) {
-            model = defaultModel;
-        }
-        RequestV2 request = client.chatCompletion()
-                .model(model)
-                .addMessage("system" , System)
-                .addMessage("user", input)
+    private static final List<String> availableModels = List.of("gpt-4o", "gpt-4o-mini");
+    private static final String defaultModel = "gpt-4o";
+
+    private static ChatLanguageModel createChatModel(String modelName) {
+        return OpenAiChatModel.builder()
+                .apiKey(API_KEY)
+                .baseUrl(BASE_URL)
+                .modelName(modelName)
                 .temperature(0.6)
                 .build();
-        ResponseV2 response = client.chatCompletion(request);
-        return response.getChoices().get(0).getMessage().getContent();
     }
 
-    public static String llm_plagiarism_check(String subbmissionA, String submissionB, String model) {
-        String System = "你是一个智能的AI助手，你可以回答任何问题";
+    public static String chat(String input, String model) {
+        String systemPrompt = "你是一个智能的AI助手，你可以回答任何问题";
+
         if (!availableModels.contains(model)) {
             model = defaultModel;
         }
-        String input = build_plagiarism_prompt(subbmissionA,submissionB);
-        RequestV2 request = client.chatCompletion()
-                .model(model)
-                .addMessage("system" , System)
-                .addMessage("user", input)
-                .temperature(0.6)
-                .build();
-        ResponseV2 response = client.chatCompletion(request);
-        return response.getChoices().get(0).getMessage().getContent();
+
+        ChatLanguageModel chatModel = createChatModel(model);
+
+        Response<AiMessage> response = chatModel.generate(
+                SystemMessage.from(systemPrompt),
+                UserMessage.from(input)
+        );
+
+        return response.content().text();
+    }
+
+    public static String llm_plagiarism_check(String submissionA, String submissionB, String model) {
+        String systemPrompt = "你是一个智能的AI助手，你可以回答任何问题";
+
+        if (!availableModels.contains(model)) {
+            model = defaultModel;
+        }
+
+        String input = build_plagiarism_prompt(submissionA, submissionB);
+        ChatLanguageModel chatModel = createChatModel(model);
+
+        Response<AiMessage> response = chatModel.generate(
+                SystemMessage.from(systemPrompt),
+                UserMessage.from(input)
+        );
+
+        return response.content().text();
     }
 
     public static String llm_grading(String Question, String Answer, String model) {
-        String System = "你是一个智能的AI助手，你可以回答任何问题";
+        String systemPrompt = "你是一个智能的AI助手，你可以回答任何问题";
+
         if (!availableModels.contains(model)) {
             model = defaultModel;
         }
+
         String input = build_grading_prompt(Question, Answer);
-        RequestV2 request = client.chatCompletion()
-                .model(model)
-                .addMessage("system" , System)
-                .addMessage("user", input)
-                .temperature(0.6)
-                .build();
-        ResponseV2 response = client.chatCompletion(request);
-        return response.getChoices().get(0).getMessage().getContent();
+        ChatLanguageModel chatModel = createChatModel(model);
+
+        Response<AiMessage> response = chatModel.generate(
+                SystemMessage.from(systemPrompt),
+                UserMessage.from(input)
+        );
+
+        return response.content().text();
     }
 }
-
