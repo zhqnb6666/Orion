@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.model</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package org.sustech.orion.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Collections;
+
+import lombok.Getter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+@Entity
+@Data
+@Table(name = &quot;users&quot;)
+public class User implements UserDetails { // 实现 UserDetails 接口
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userId;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
+
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
+
+    @Column(nullable = false, length = 255)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.STUDENT;
+
+    @Column(nullable = false)
+    private Timestamp createdAt;
+
+    @Column(nullable = false)
+    private Timestamp updatedAt;
+
+    @Column(nullable = false)
+    private String avatarUrl = &quot;default_avatar.png&quot;;
+
+    @Column(nullable = false, columnDefinition = &quot;TEXT&quot;)
+    private String bio = &quot;&quot;;
+
+    // 实现 UserDetails 接口方法
+    @Override
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+        // 将角色转换为权限（例如：STUDENT -&gt; ROLE_STUDENT）
+<span class="fc" id="L52">        return Collections.singletonList(new SimpleGrantedAuthority(&quot;ROLE_&quot; + role.name()));</span>
+    }
+    @Override
+    public String getPassword() {
+<span class="fc" id="L56">        return this.passwordHash; // 返回密码哈希字段</span>
+    }
+
+<span class="fc" id="L59">    @Getter</span>
+    public enum Role {
+<span class="fc" id="L61">        ADMIN, TEACHER, STUDENT;</span>
+        private final String value;
+<span class="fc" id="L63">        Role() {</span>
+<span class="fc" id="L64">            this.value = this.name().toLowerCase();</span>
+<span class="fc" id="L65">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

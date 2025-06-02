@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConvertDTO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.util</a> &gt; <span class="el_source">ConvertDTO.java</span></div><h1>ConvertDTO.java</h1><pre class="source lang-java linenums">package org.sustech.orion.util;
+
+import org.sustech.orion.dto.authDTO.LoginInfoDTO;
+import org.sustech.orion.dto.responseDTO.*;
+import org.sustech.orion.model.*;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+<span class="nc" id="L14">public class ConvertDTO {</span>
+    public static AssignmentResponseDTO toAssignmentResponseDTO(Assignment assignment) {
+<span class="fc" id="L16">        AssignmentResponseDTO dto = new AssignmentResponseDTO();</span>
+
+<span class="fc" id="L18">        dto.setId(assignment.getId());</span>
+<span class="fc" id="L19">        dto.setTitle(assignment.getTitle());</span>
+<span class="fc" id="L20">        dto.setType(assignment.getType());</span>
+<span class="fc" id="L21">        dto.setDescription(assignment.getDescription());</span>
+<span class="fc" id="L22">        dto.setAttachments(toAttachmentResponseDTOList(assignment.getAttachments()));</span>
+<span class="fc" id="L23">        dto.setOpenDate(assignment.getOpenDate());</span>
+<span class="fc" id="L24">        dto.setDueDate(assignment.getDueDate());</span>
+<span class="fc" id="L25">        dto.setMaxScore(assignment.getMaxScore());</span>
+
+        // new
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if (assignment.getOpenDate().after(Timestamp.from(Instant.now()))) {</span>
+<span class="nc" id="L29">            dto.setStatus(&quot;upcoming&quot;);</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        } else if (assignment.getDueDate().before(Timestamp.from(Instant.now()))) {</span>
+<span class="fc" id="L31">            dto.setStatus(&quot;closed&quot;);</span>
+        } else {
+<span class="nc" id="L33">            dto.setStatus(&quot;open&quot;);</span>
+        }
+
+<span class="fc" id="L36">        dto.setInstructions(assignment.getInstructions());</span>
+
+<span class="fc" id="L38">        dto.setTestCases(</span>
+<span class="fc" id="L39">                TestCaseResponseDTO.fromTestCases(assignment.getTestCases())</span>
+        );
+//        dto.setSubmissionUrl(assignment.getSubmissionUrl());
+
+<span class="fc" id="L43">        return dto;</span>
+    }
+
+    public static AttachmentResponseDTO toAttachmentResponseDTO(Attachment attachment) {
+<span class="fc" id="L47">        AttachmentResponseDTO dto = new AttachmentResponseDTO();</span>
+
+<span class="fc" id="L49">        dto.setId(attachment.getId());</span>
+<span class="fc" id="L50">        dto.setName(attachment.getName());</span>
+<span class="fc" id="L51">        dto.setSize(FileSizeUtil.formatFileSize(attachment.getSize()));</span>
+<span class="fc" id="L52">        dto.setUrl(attachment.getUrl());</span>
+
+<span class="fc" id="L54">        return dto;</span>
+    }
+    // Course模型 转 CourseItemResponseDTO
+    public static CourseItemResponseDTO toCourseItemResponseDTO(Course course) {
+<span class="fc" id="L58">        CourseItemResponseDTO dto = new CourseItemResponseDTO();</span>
+<span class="fc" id="L59">        dto.setId(course.getId());</span>
+<span class="fc" id="L60">        dto.setCourseCode(course.getCourseCode());</span>
+<span class="fc" id="L61">        dto.setCourseName(course.getCourseName());</span>
+<span class="fc" id="L62">        dto.setSemester(course.getSemester());</span>
+<span class="fc" id="L63">        dto.setDescription(course.getDescription());</span>
+<span class="fc" id="L64">        dto.setIsActive(course.getIsActive());</span>
+<span class="fc" id="L65">        dto.setCreatedAt(course.getCreatedTime());</span>
+<span class="fc" id="L66">        return dto;</span>
+    }
+
+    // Resource模型 转 ResourceResponseDTO
+    public static ResourceResponseDTO toResourceResponseDTO(Resource resource) {
+<span class="fc" id="L71">        ResourceResponseDTO dto = new ResourceResponseDTO();</span>
+<span class="fc" id="L72">        dto.setId(resource.getId());</span>
+<span class="fc" id="L73">        dto.setTitle(resource.getName());</span>
+<span class="fc" id="L74">        dto.setType(resource.getType());</span>
+<span class="fc" id="L75">        dto.setDescription(resource.getDescription());</span>
+<span class="fc" id="L76">        dto.setUploadTime(resource.getUploadTime());</span>
+<span class="fc" id="L77">        dto.setAttachments(toAttachmentResponseDTOList(resource.getAttachments()));</span>
+<span class="fc" id="L78">        return dto;</span>
+    }
+
+    // Grade模型 转 GradeResponseDTO
+    public static GradeResponseDTO toGradeResponseDTO(Grade grade) {
+<span class="fc" id="L83">        GradeResponseDTO dto = new GradeResponseDTO();</span>
+<span class="fc" id="L84">        dto.setId(grade.getId());</span>
+<span class="fc" id="L85">        dto.setTitle(grade.getSubmission().getAssignment().getTitle());</span>
+<span class="fc" id="L86">        dto.setType(grade.getSubmission().getAssignment().getType());</span>
+<span class="fc" id="L87">        dto.setScore(grade.getScore());</span>
+<span class="fc" id="L88">        dto.setMaxScore(grade.getSubmission().getAssignment().getMaxScore());</span>
+<span class="fc" id="L89">        dto.setDueDate(grade.getSubmission().getAssignment().getDueDate());</span>
+<span class="fc" id="L90">        dto.setSubmittedDate(grade.getSubmission().getSubmitTime());</span>
+<span class="fc" id="L91">        dto.setGradedDate(grade.getGradedTime());</span>
+<span class="fc" id="L92">        dto.setFeedback(grade.getFeedback());</span>
+<span class="fc" id="L93">        dto.setAppealReason(grade.getAppealReason());</span>
+<span class="fc" id="L94">        dto.setAppealTime(grade.getAppealTime());</span>
+<span class="fc" id="L95">        dto.setStatus(grade.getStatus().getValue());</span>
+
+        // 添加 AI 评分和作业ID
+<span class="fc" id="L98">        AIGrading aiGrading = grade.getSubmission().getAiGrading();</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (aiGrading != null) {</span>
+<span class="nc" id="L100">            dto.setAiGrading(aiGrading);</span>
+        }
+<span class="fc" id="L102">        dto.setAssignmentId(grade.getSubmission().getAssignment().getId());</span>
+
+
+<span class="fc" id="L105">        return dto;</span>
+    }
+    // Course模型 转 CourseBasicInfoResponseDTO
+    public static CourseBasicInfoResponseDTO toCourseBasicInfoResponseDTO(Course course) {
+<span class="fc" id="L109">        CourseBasicInfoResponseDTO dto = new CourseBasicInfoResponseDTO();</span>
+<span class="fc" id="L110">        dto.setCourseName(course.getCourseName());</span>
+<span class="fc" id="L111">        dto.setTeacher(course.getInstructor().getUsername());</span>
+<span class="fc" id="L112">        dto.setEmail(course.getInstructor().getEmail());</span>
+<span class="fc" id="L113">        dto.setCourseDescription(course.getDescription());</span>
+<span class="fc" id="L114">        return dto;</span>
+    }
+
+    // 集合转换方法
+    public static List&lt;CourseBasicInfoResponseDTO&gt; toCourseBasicInfoResponseDTOList(List&lt;Course&gt; courses) {
+<span class="nc" id="L119">        return toDTOList(courses, ConvertDTO::toCourseBasicInfoResponseDTO);</span>
+    }
+
+    //转loginInfoDTO
+    public static LoginInfoDTO toLoginInfoDTO(User user, boolean isExpired) {
+<span class="nc" id="L124">        LoginInfoDTO dto = new LoginInfoDTO();</span>
+<span class="nc" id="L125">        dto.setUserId(user.getUserId());</span>
+<span class="nc" id="L126">        dto.setUsername(user.getUsername());</span>
+<span class="nc" id="L127">        dto.setEmail(user.getEmail());</span>
+<span class="nc" id="L128">        dto.setRole(user.getRole().name());</span>
+<span class="nc" id="L129">        dto.setCreatedAt(user.getCreatedAt());</span>
+<span class="nc" id="L130">        dto.setUpdatedAt(user.getUpdatedAt());</span>
+<span class="nc" id="L131">        dto.setBio(user.getBio());</span>
+<span class="nc" id="L132">        dto.setAvatarUrl(user.getAvatarUrl());</span>
+<span class="nc" id="L133">        dto.setExpired(isExpired);</span>
+<span class="nc" id="L134">        return dto;</span>
+    }
+
+    // 新增转换方法
+    public static SubmissionResponseDTO toSubmissionResponseDTO(Submission submission) {
+<span class="nc" id="L139">        SubmissionResponseDTO dto = new SubmissionResponseDTO();</span>
+<span class="nc" id="L140">        dto.setId(submission.getId());</span>
+<span class="nc" id="L141">        dto.setStudent(submission.getStudent());</span>
+<span class="nc" id="L142">        dto.setStudentName(submission.getStudent().getUsername());</span>
+<span class="nc" id="L143">        dto.setAssignment(submission.getAssignment());</span>
+
+<span class="nc" id="L145">        dto.setSubmitTime(submission.getSubmitTime());</span>
+<span class="nc" id="L146">        dto.setStatus(submission.getStatus());</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (submission.getGrade() != null) {</span>
+<span class="nc" id="L148">            dto.setGrade(toGradeResponseDTO(submission.getGrade()));</span>
+        } else {
+<span class="nc" id="L150">            GradeResponseDTO gradeResponseDTO = new GradeResponseDTO();</span>
+<span class="nc" id="L151">            gradeResponseDTO.setScore(0d);</span>
+<span class="nc" id="L152">            gradeResponseDTO.setMaxScore(submission.getAssignment().getMaxScore());</span>
+<span class="nc" id="L153">            dto.setGrade(gradeResponseDTO);</span>
+        }
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if(submission.getAiGrading() != null) {</span>
+<span class="nc" id="L156">            dto.setAiGrading(submission.getAiGrading());</span>
+        }
+<span class="nc" id="L158">        dto.setContents(submission.getContents());</span>
+<span class="nc" id="L159">        dto.setCodeExecutionResults(submission.getCodeExecutionResults());</span>
+<span class="nc" id="L160">        return dto;</span>
+    }
+
+    // 通用集合转换方法
+    public static List&lt;CourseItemResponseDTO&gt; toCourseItemResponseDTOList(List&lt;Course&gt; courses) {
+<span class="fc" id="L165">        return toDTOList(courses, ConvertDTO::toCourseItemResponseDTO);</span>
+    }
+
+    public static List&lt;ResourceResponseDTO&gt; toResourceResponseDTOList(List&lt;Resource&gt; resources) {
+<span class="fc" id="L169">        return toDTOList(resources, ConvertDTO::toResourceResponseDTO);</span>
+    }
+
+    public static List&lt;GradeResponseDTO&gt; toGradeResponseDTOList(List&lt;Grade&gt; grades) {
+<span class="nc" id="L173">        return toDTOList(grades, ConvertDTO::toGradeResponseDTO);</span>
+    }
+
+
+
+
+    public static &lt;T, R&gt; List&lt;R&gt; toDTOList(List&lt;T&gt; entities, Function&lt;T, R&gt; converter) {
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">        if (entities == null) {</span>
+<span class="nc" id="L181">            return new ArrayList&lt;&gt;();</span>
+        }
+<span class="fc" id="L183">        return entities.stream()</span>
+<span class="fc" id="L184">                .map(converter)</span>
+<span class="fc" id="L185">                .collect(Collectors.toList());</span>
+    }
+    public static List&lt;AssignmentResponseDTO&gt; toAssignmentResponseDTOList(List&lt;Assignment&gt; assignments) {
+<span class="nc" id="L188">        return toDTOList(assignments, ConvertDTO::toAssignmentResponseDTO);</span>
+    }
+    public static List&lt;AttachmentResponseDTO&gt; toAttachmentResponseDTOList(List&lt;Attachment&gt; attachments) {
+<span class="fc" id="L191">        return toDTOList(attachments, ConvertDTO::toAttachmentResponseDTO);</span>
+    }
+    public static List&lt;SubmissionResponseDTO&gt; toSubmissionResponseDTOList(List&lt;Submission&gt; submissions) {
+<span class="nc" id="L194">        return toDTOList(submissions, ConvertDTO::toSubmissionResponseDTO);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

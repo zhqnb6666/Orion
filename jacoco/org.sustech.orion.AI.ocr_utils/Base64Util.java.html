@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Base64Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.AI.ocr_utils</a> &gt; <span class="el_source">Base64Util.java</span></div><h1>Base64Util.java</h1><pre class="source lang-java linenums">package org.sustech.orion.AI.ocr_utils;
+
+/**
+ * Base64 工具类
+ */
+public class Base64Util {
+<span class="nc" id="L7">    private static final char last2byte = (char) Integer.parseInt(&quot;00000011&quot;, 2);</span>
+<span class="nc" id="L8">    private static final char last4byte = (char) Integer.parseInt(&quot;00001111&quot;, 2);</span>
+<span class="nc" id="L9">    private static final char last6byte = (char) Integer.parseInt(&quot;00111111&quot;, 2);</span>
+<span class="nc" id="L10">    private static final char lead6byte = (char) Integer.parseInt(&quot;11111100&quot;, 2);</span>
+<span class="nc" id="L11">    private static final char lead4byte = (char) Integer.parseInt(&quot;11110000&quot;, 2);</span>
+<span class="nc" id="L12">    private static final char lead2byte = (char) Integer.parseInt(&quot;11000000&quot;, 2);</span>
+<span class="nc" id="L13">    private static final char[] encodeTable = new char[]{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};</span>
+
+<span class="nc" id="L15">    public Base64Util() {</span>
+<span class="nc" id="L16">    }</span>
+
+    public static String encode(byte[] from) {
+<span class="nc" id="L19">        StringBuilder to = new StringBuilder((int) ((double) from.length * 1.34D) + 3);</span>
+<span class="nc" id="L20">        int num = 0;</span>
+<span class="nc" id="L21">        char currentByte = 0;</span>
+
+        int i;
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        for (i = 0; i &lt; from.length; ++i) {</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">            for (num %= 8; num &lt; 8; num += 6) {</span>
+<span class="nc bnc" id="L26" title="All 5 branches missed.">                switch (num) {</span>
+                    case 0:
+<span class="nc" id="L28">                        currentByte = (char) (from[i] &amp; lead6byte);</span>
+<span class="nc" id="L29">                        currentByte = (char) (currentByte &gt;&gt;&gt; 2);</span>
+                    case 1:
+                    case 3:
+                    case 5:
+                    default:
+<span class="nc" id="L34">                        break;</span>
+                    case 2:
+<span class="nc" id="L36">                        currentByte = (char) (from[i] &amp; last6byte);</span>
+<span class="nc" id="L37">                        break;</span>
+                    case 4:
+<span class="nc" id="L39">                        currentByte = (char) (from[i] &amp; last4byte);</span>
+<span class="nc" id="L40">                        currentByte = (char) (currentByte &lt;&lt; 2);</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">                        if (i + 1 &lt; from.length) {</span>
+<span class="nc" id="L42">                            currentByte = (char) (currentByte | (from[i + 1] &amp; lead2byte) &gt;&gt;&gt; 6);</span>
+                        }
+                        break;
+                    case 6:
+<span class="nc" id="L46">                        currentByte = (char) (from[i] &amp; last2byte);</span>
+<span class="nc" id="L47">                        currentByte = (char) (currentByte &lt;&lt; 4);</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">                        if (i + 1 &lt; from.length) {</span>
+<span class="nc" id="L49">                            currentByte = (char) (currentByte | (from[i + 1] &amp; lead4byte) &gt;&gt;&gt; 4);</span>
+                        }
+                }
+
+<span class="nc" id="L53">                to.append(encodeTable[currentByte]);</span>
+            }
+        }
+
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (to.length() % 4 != 0) {</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">            for (i = 4 - to.length() % 4; i &gt; 0; --i) {</span>
+<span class="nc" id="L59">                to.append(&quot;=&quot;);</span>
+            }
+        }
+
+<span class="nc" id="L63">        return to.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

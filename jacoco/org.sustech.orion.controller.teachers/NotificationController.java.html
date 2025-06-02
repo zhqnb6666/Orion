@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.teachers</a> &gt; <span class="el_source">NotificationController.java</span></div><h1>NotificationController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.teachers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.model.Course;
+import org.sustech.orion.model.Notification;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.NotificationService;
+import org.sustech.orion.dto.NotificationDTO;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+
+@RestController(&quot;teachersNotificationController&quot;)
+@RequestMapping(&quot;/api/teachers/notifications&quot;)
+@Tag(name = &quot;Teachers Notification API&quot;, description = &quot;APIs for teachers to manage notifications&quot;)
+public class NotificationController {
+
+    private final NotificationService notificationService;
+    private final CourseService courseService;
+
+<span class="fc" id="L28">    public NotificationController(NotificationService notificationService, CourseService courseService) {</span>
+<span class="fc" id="L29">        this.notificationService = notificationService;</span>
+<span class="fc" id="L30">        this.courseService = courseService;</span>
+<span class="fc" id="L31">    }</span>
+
+    @PostMapping(&quot;/course/{courseId}&quot;)
+    @Operation(summary = &quot;发送通知给课程所有学生&quot;,
+            description = &quot;教师给指定课程的所有学生发送通知&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;通知发送成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限发送通知&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; sendNotificationToCourse(
+            @PathVariable Long courseId,
+            @RequestParam String title,
+            @RequestParam String content,
+            @RequestParam(defaultValue = &quot;MEDIUM&quot;) Notification.Priority priority,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L48">        Course course = courseService.getCourseById(courseId);</span>
+        
+        // 验证当前用户是否为课程教师
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L52">            return ResponseEntity.status(403).build();</span>
+        }
+
+        // 获取课程所有学生并发送通知
+<span class="nc" id="L56">        List&lt;User&gt; students = course.getStudents();</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        for (User student : students) {</span>
+<span class="nc" id="L58">            Notification notification = new Notification();</span>
+<span class="nc" id="L59">            notification.setSender(currentUser);</span>
+<span class="nc" id="L60">            notification.setRecipient(student);</span>
+<span class="nc" id="L61">            notification.setTitle(title);</span>
+<span class="nc" id="L62">            notification.setContent(content);</span>
+<span class="nc" id="L63">            notification.setPriority(priority);</span>
+<span class="nc" id="L64">            notification.setCreatedAt(Timestamp.from(Instant.now()));</span>
+<span class="nc" id="L65">            notification.setRead(false);</span>
+<span class="nc" id="L66">            notificationService.saveNotification(notification);</span>
+<span class="nc" id="L67">        }</span>
+
+<span class="nc" id="L69">        return ResponseEntity.ok().build();</span>
+    }
+
+    @GetMapping(&quot;/sent&quot;)
+    @Operation(summary = &quot;获取已发送的通知&quot;,
+            description = &quot;获取当前教师发送的所有通知&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取通知列表&quot;)
+            })
+    public ResponseEntity&lt;List&lt;NotificationDTO&gt;&gt; getSentNotifications(
+            @AuthenticationPrincipal User currentUser) {
+<span class="nc" id="L80">        return ResponseEntity.ok(notificationService.getSentNotifications(currentUser.getUserId()));</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

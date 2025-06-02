@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CalendarServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">CalendarServiceImpl.java</span></div><h1>CalendarServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import org.springframework.stereotype.Service;
+import org.sustech.orion.dto.CalendarDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Assignment;
+import org.sustech.orion.model.Calendar;
+import org.sustech.orion.model.Course;
+import org.sustech.orion.model.User;
+import org.sustech.orion.repository.AssignmentRepository;
+import org.sustech.orion.repository.CalendarRepository;
+import org.sustech.orion.repository.CourseRepository;
+import org.sustech.orion.repository.UserRepository;
+import org.sustech.orion.service.CalendarService;
+import org.springframework.http.HttpStatus;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class CalendarServiceImpl implements CalendarService {
+
+    private final CalendarRepository calendarRepository;
+    private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
+    private final AssignmentRepository assignmentRepository;
+
+    public CalendarServiceImpl(CalendarRepository calendarRepository,
+                             CourseRepository courseRepository,
+<span class="fc" id="L31">                             UserRepository userRepository, AssignmentRepository assignmentRepository) {</span>
+<span class="fc" id="L32">        this.calendarRepository = calendarRepository;</span>
+<span class="fc" id="L33">        this.courseRepository = courseRepository;</span>
+<span class="fc" id="L34">        this.userRepository = userRepository;</span>
+<span class="fc" id="L35">        this.assignmentRepository = assignmentRepository;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Override
+    public List&lt;CalendarDTO&gt; getUserCalendarEvents(Long userId) {
+<span class="fc" id="L40">        return calendarRepository.findByUser_UserId(userId)</span>
+<span class="fc" id="L41">                .stream()</span>
+<span class="fc" id="L42">                .map(this::convertToDTO)</span>
+<span class="fc" id="L43">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public List&lt;Calendar&gt; getAllCalendarsByAssignmentId(Long assignmentId) {
+<span class="nc" id="L48">        return calendarRepository.findByAssignmentId(assignmentId);</span>
+    }
+
+    @Override
+    public Calendar createAssignmentEvent(Long courseId, Long assignmentId, String title, User user,
+                                        String description, Timestamp deadline) {
+<span class="fc" id="L54">        Course course = courseRepository.findById(courseId)</span>
+<span class="pc" id="L55">                .orElseThrow(() -&gt; new ApiException(&quot;Course not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="fc" id="L57">        Calendar event = new Calendar();</span>
+<span class="fc" id="L58">        event.setUser(user);</span>
+<span class="fc" id="L59">        event.setTitle(title);</span>
+<span class="fc" id="L60">        event.setDescription(description);</span>
+<span class="fc" id="L61">        event.setDeadline(deadline);</span>
+<span class="fc" id="L62">        event.setCourse(course);</span>
+<span class="fc" id="L63">        event.setAssignmentId(assignmentId);</span>
+<span class="fc" id="L64">        event.setEventType(Calendar.EventType.ASSIGNMENT);</span>
+
+<span class="fc" id="L66">        return calendarRepository.save(event);</span>
+    }
+
+    @Override
+    public Calendar createCustomEvent(Long userId, String title, String description, Timestamp deadline) {
+<span class="fc" id="L71">        User user = userRepository.findById(userId)</span>
+<span class="pc" id="L72">                .orElseThrow(() -&gt; new ApiException(&quot;User not found&quot;, HttpStatus.NOT_FOUND));</span>
+
+<span class="fc" id="L74">        Calendar event = new Calendar();</span>
+<span class="fc" id="L75">        event.setTitle(title);</span>
+<span class="fc" id="L76">        event.setDescription(description);</span>
+<span class="fc" id="L77">        event.setDeadline(deadline);</span>
+<span class="fc" id="L78">        event.setUser(user);</span>
+<span class="fc" id="L79">        event.setEventType(Calendar.EventType.CUSTOM);</span>
+
+<span class="fc" id="L81">        return calendarRepository.save(event);</span>
+    }
+
+    @Override
+    public void deleteEvent(Long eventId) {
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if (!calendarRepository.existsById(eventId)) {</span>
+<span class="nc" id="L87">            throw new ApiException(&quot;Calendar event not found&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+<span class="fc" id="L89">        calendarRepository.deleteById(eventId);</span>
+<span class="fc" id="L90">    }</span>
+
+    private CalendarDTO convertToDTO(Calendar calendar) {
+<span class="fc" id="L93">        CalendarDTO dto = new CalendarDTO();</span>
+<span class="fc" id="L94">        dto.setId(calendar.getId());</span>
+<span class="fc" id="L95">        dto.setTitle(calendar.getTitle());</span>
+<span class="fc" id="L96">        dto.setDeadline(calendar.getDeadline());</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (calendar.getCourse() != null) {</span>
+<span class="fc" id="L98">            dto.setCourseName(calendar.getCourse().getCourseName());</span>
+<span class="fc" id="L99">            dto.setCourseId(calendar.getCourse().getId());</span>
+        }
+<span class="fc" id="L101">        dto.setAssignmentId(calendar.getAssignmentId());</span>
+<span class="fc" id="L102">        dto.setDescription(calendar.getDescription());</span>
+<span class="fc" id="L103">        dto.setEventType(calendar.getEventType().name());</span>
+
+        // 新增课程编号处理
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (calendar.getCourse() != null) {</span>
+<span class="fc" id="L107">            dto.setCourseCode(calendar.getCourse().getCourseCode());</span>
+        }
+
+        // 新增作业类型处理
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (calendar.getAssignmentId() != null) {</span>
+<span class="fc" id="L112">            Assignment assignment = assignmentRepository.findById(calendar.getAssignmentId())</span>
+<span class="fc" id="L113">                    .orElse(null);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            if (assignment != null) {</span>
+<span class="fc" id="L115">                dto.setAssignmentType(assignment.getType());</span>
+            }
+        }
+<span class="fc" id="L118">        return dto;</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

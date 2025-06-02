@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.common</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.common;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.authDTO.AuthResponse;
+import org.sustech.orion.dto.authDTO.LoginRequest;
+import org.sustech.orion.dto.authDTO.PasswordResetRequest;
+import org.sustech.orion.dto.authDTO.RegisterRequest;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.impl.UserServiceImpl;
+import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.JwtUtil;
+
+
+@RestController
+@RequestMapping(&quot;/api/auth&quot;)
+@Tag(name = &quot;Authentication API&quot;, description = &quot;APIs for login, register, password reset and email verification&quot;)
+public class AuthController {
+
+    private final UserServiceImpl userService;
+
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtUtil jwtUtil;
+
+<span class="fc" id="L36">    public AuthController(UserServiceImpl userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {</span>
+<span class="fc" id="L37">        this.userService = userService;</span>
+<span class="fc" id="L38">        this.authenticationManager = authenticationManager;</span>
+<span class="fc" id="L39">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L40">    }</span>
+
+    @PostMapping(&quot;/login&quot;)
+    @Operation(summary = &quot;Login user&quot;, description = &quot;Login user with username or email and password&quot;)
+    public ResponseEntity&lt;?&gt; login(@RequestBody LoginRequest loginRequest) {
+        try {
+<span class="nc" id="L46">            authenticationManager.authenticate(</span>
+<span class="nc" id="L47">                    new UsernamePasswordAuthenticationToken(loginRequest.getUsernameOrEmail(), loginRequest.getPassword())</span>
+            );
+<span class="nc" id="L49">        } catch (BadCredentialsException e) {</span>
+<span class="nc" id="L50">            return ResponseEntity.badRequest().body(&quot;Incorrect username or password&quot;);</span>
+<span class="nc" id="L51">        }</span>
+
+<span class="nc" id="L53">        final UserDetails userDetails = userService.loadUserByUsername(loginRequest.getUsernameOrEmail());</span>
+<span class="nc" id="L54">        final String jwt = jwtUtil.generateToken(userDetails);</span>
+
+<span class="nc" id="L56">        return ResponseEntity.ok(new AuthResponse(jwt));</span>
+    }
+
+    @PostMapping(&quot;/register&quot;)
+    @Operation(summary = &quot;Register user&quot;, description = &quot;Register new user with username, email, password and verification code&quot;)
+    public ResponseEntity&lt;?&gt; registerUser(@RequestBody RegisterRequest registerRequest) {
+        try {
+<span class="nc" id="L63">            User user = new User();</span>
+<span class="nc" id="L64">            user.setUsername(registerRequest.getUsername());</span>
+<span class="nc" id="L65">            user.setEmail(registerRequest.getEmail());</span>
+<span class="nc" id="L66">            user.setPasswordHash(registerRequest.getPassword());</span>
+<span class="nc" id="L67">            user.setRole(User.Role.valueOf(registerRequest.getRole()));</span>
+<span class="nc" id="L68">            userService.registerNewUser(user, registerRequest.getVerificationCode());</span>
+<span class="nc" id="L69">            return ResponseEntity.ok(&quot;User registered successfully&quot;);</span>
+<span class="nc" id="L70">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L71">            return ResponseEntity.badRequest().body(e.getMessage());</span>
+        }
+    }
+
+    @PostMapping(&quot;/send-verification/{email}&quot;)
+    @Operation(summary = &quot;Send verification code&quot;, description = &quot;Send verification code to email&quot;)
+    public ResponseEntity&lt;?&gt; sendVerificationCode(@PathVariable String email) {
+        try {
+<span class="nc" id="L79">            userService.sendVerificationCode(email);</span>
+<span class="nc" id="L80">            return ResponseEntity.ok().body(&quot;Verification code sent successfully&quot;);</span>
+<span class="nc" id="L81">        } catch (ApiException e) {</span>
+<span class="nc" id="L82">            return ResponseEntity.status(e.getStatus()).body(e.getMessage());</span>
+        }
+    }
+
+    @PostMapping(&quot;/reset-password&quot;)
+    @Operation(summary = &quot;Reset password&quot;, description = &quot;Reset password with email, verification code and new password&quot;)
+    public ResponseEntity&lt;?&gt; resetPassword(@RequestBody PasswordResetRequest request) {
+        try {
+<span class="nc" id="L90">            userService.resetPassword(request.getEmail(), request.getVerificationCode(), request.getNewPassword());</span>
+<span class="nc" id="L91">            return ResponseEntity.ok(&quot;Password reset successfully&quot;);</span>
+<span class="nc" id="L92">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L93">            return ResponseEntity.badRequest().body(e.getMessage());</span>
+<span class="nc" id="L94">        } catch (UsernameNotFoundException e) {</span>
+<span class="nc" id="L95">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());</span>
+        }
+    }
+
+    @PostMapping(&quot;/user&quot;)
+    @Operation(summary = &quot;Get basic information of user&quot;,description = &quot;verify with jwt token&quot;)
+    public ResponseEntity&lt;?&gt; getUser(
+            @Parameter(hidden = true) @RequestHeader(&quot;Authorization&quot;) String jwt
+    ) {
+        try {
+<span class="nc bnc" id="L105" title="All 4 branches missed.">            if(jwt == null || !jwt.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="nc" id="L106">                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(&quot;Invalid token&quot;);</span>
+            }
+<span class="nc" id="L108">            String jwtToken = jwt.substring(7);</span>
+<span class="nc" id="L109">            User user = userService.getUserByName(jwtUtil.extractUsername(jwtToken));</span>
+<span class="nc" id="L110">            boolean isExpired = jwtUtil.isTokenExpired(jwtToken);</span>
+<span class="nc" id="L111">            return ResponseEntity.ok(ConvertDTO.toLoginInfoDTO(user, isExpired));</span>
+<span class="nc" id="L112">        } catch (UsernameNotFoundException e) {</span>
+<span class="nc" id="L113">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

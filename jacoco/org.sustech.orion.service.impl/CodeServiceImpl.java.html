@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CodeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">CodeServiceImpl.java</span></div><h1>CodeServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.sustech.orion.model.*;
+import org.sustech.orion.repository.CodeExecutionResultRepository;
+import org.sustech.orion.repository.SubmissionRepository;
+import org.sustech.orion.service.CodeAssignmentConfigService;
+import org.sustech.orion.service.CodeService;
+import org.sustech.orion.service.GradeService;
+import org.sustech.orion.util.CodeRunnerUtil;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L22">@Slf4j</span>
+public class CodeServiceImpl implements CodeService {
+
+    private final SubmissionRepository submissionRepository;
+    private final CodeExecutionResultRepository codeExecutionResultRepository;
+    private final CodeRunnerUtil codeRunnerUtil;
+    private final ObjectMapper objectMapper;
+    private final GradeService gradeService;
+    private final CodeAssignmentConfigService codeAssignmentConfigService;
+
+    @Override
+    @Transactional
+    public void executeAndEvaluateSubmission(Long submissionId) {
+<span class="nc" id="L35">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L36">                .orElseThrow(() -&gt; new RuntimeException(&quot;提交记录不存在: &quot; + submissionId));</span>
+<span class="nc" id="L37">        CodeSubmission codeSubmission = submission.getContents().get(0).getCodeSubmission();</span>
+
+        // 验证提交的代码是否符合配置要求
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (!validateSubmissionAgainstConfig(submissionId)) {</span>
+            // 创建执行结果，标记为验证失败
+<span class="nc" id="L42">            CodeExecutionResult failedResult = new CodeExecutionResult();</span>
+<span class="nc" id="L43">            failedResult.setSubmission(submission);</span>
+<span class="nc" id="L44">            failedResult.setOutput(&quot;&quot;);</span>
+<span class="nc" id="L45">            failedResult.setError(&quot;代码提交不符合作业配置要求&quot;);</span>
+<span class="nc" id="L46">            failedResult.setStatusCode(-1);</span>
+<span class="nc" id="L47">            failedResult.setMemory(&quot;0&quot;);</span>
+<span class="nc" id="L48">            failedResult.setCpuTime(&quot;0&quot;);</span>
+<span class="nc" id="L49">            failedResult.setCompilationStatus(&quot;VALIDATION_FAILED&quot;);</span>
+<span class="nc" id="L50">            failedResult.setExecutionSuccess(false);</span>
+<span class="nc" id="L51">            failedResult.setCompiled(false);</span>
+            
+<span class="nc" id="L53">            codeExecutionResultRepository.save(failedResult);</span>
+<span class="nc" id="L54">            return;</span>
+        }
+
+<span class="nc" id="L57">        String script = codeSubmission.getScript();</span>
+<span class="nc" id="L58">        String language = codeSubmission.getLanguage();</span>
+<span class="nc" id="L59">        Integer versionIndex = codeSubmission.getVersionIndex();</span>
+<span class="nc" id="L60">        List&lt;TestCase&gt; testCases = submission.getAssignment().getTestCases();</span>
+<span class="nc" id="L61">        double totalScore = 0.0;</span>
+<span class="nc" id="L62">        double totalWeight = 0.0;</span>
+
+        // 获取代码作业配置
+<span class="nc" id="L65">        CodeAssignmentConfig config = submission.getAssignment().getCodeAssignmentConfig();</span>
+        
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        for (TestCase testCase : testCases) {</span>
+            try {
+                // 执行代码
+<span class="nc" id="L70">                String rawResponse = codeRunnerUtil.executeCode(</span>
+                        script,
+                        language,
+<span class="nc" id="L73">                        String.valueOf(versionIndex),</span>
+<span class="nc" id="L74">                        testCase.getInput()</span>
+                );
+
+                // 解析执行结果
+<span class="nc" id="L78">                com.fasterxml.jackson.databind.JsonNode jsonNode = objectMapper.readTree(rawResponse);</span>
+
+                // 创建执行结果对象
+<span class="nc" id="L81">                CodeExecutionResult result = new CodeExecutionResult();</span>
+<span class="nc" id="L82">                result.setTestCase(testCase);</span>
+<span class="nc" id="L83">                result.setSubmission(submission);</span>
+<span class="nc" id="L84">                result.setOutput(jsonNode.path(&quot;output&quot;).asText());</span>
+<span class="nc" id="L85">                result.setError(jsonNode.path(&quot;error&quot;).asText());</span>
+<span class="nc" id="L86">                result.setStatusCode(jsonNode.path(&quot;statusCode&quot;).asInt());</span>
+<span class="nc" id="L87">                result.setMemory(jsonNode.path(&quot;memory&quot;).asText());</span>
+<span class="nc" id="L88">                result.setCpuTime(jsonNode.path(&quot;cpuTime&quot;).asText());</span>
+<span class="nc" id="L89">                result.setCompilationStatus(jsonNode.path(&quot;compilationStatus&quot;).asText());</span>
+<span class="nc" id="L90">                result.setExecutionSuccess(jsonNode.path(&quot;isExecutionSuccess&quot;).asBoolean());</span>
+<span class="nc" id="L91">                result.setCompiled(jsonNode.path(&quot;isCompiled&quot;).asBoolean());</span>
+
+                // 检查资源限制是否超出
+<span class="nc" id="L94">                boolean resourceLimitExceeded = false;</span>
+<span class="nc" id="L95">                String limitExceededReason = &quot;&quot;;</span>
+                
+<span class="nc bnc" id="L97" title="All 2 branches missed.">                if (config != null) {</span>
+                    // 检查内存限制
+<span class="nc bnc" id="L99" title="All 4 branches missed.">                    if (config.getMemoryLimitEnabled() &amp;&amp; config.getMemoryLimitMB() != null) {</span>
+                        try {
+                            // 假设内存使用格式为 &quot;123 KB&quot; 或 &quot;1.2 MB&quot;
+<span class="nc" id="L102">                            String memoryStr = result.getMemory().toLowerCase();</span>
+                            double memoryUsed;
+                            
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                            if (memoryStr.contains(&quot;kb&quot;)) {</span>
+<span class="nc" id="L106">                                memoryUsed = Double.parseDouble(memoryStr.split(&quot;\\s+&quot;)[0]) / 1024.0; // 转换为MB</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                            } else if (memoryStr.contains(&quot;mb&quot;)) {</span>
+<span class="nc" id="L108">                                memoryUsed = Double.parseDouble(memoryStr.split(&quot;\\s+&quot;)[0]);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                            } else if (memoryStr.contains(&quot;gb&quot;)) {</span>
+<span class="nc" id="L110">                                memoryUsed = Double.parseDouble(memoryStr.split(&quot;\\s+&quot;)[0]) * 1024.0; // 转换为MB</span>
+                            } else {
+<span class="nc" id="L112">                                memoryUsed = 0;</span>
+                            }
+                            
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                            if (memoryUsed &gt; config.getMemoryLimitMB()) {</span>
+<span class="nc" id="L116">                                resourceLimitExceeded = true;</span>
+<span class="nc" id="L117">                                limitExceededReason = &quot;内存超限: &quot; + memoryUsed + &quot; MB &gt; &quot; + config.getMemoryLimitMB() + &quot; MB&quot;;</span>
+                            }
+<span class="nc" id="L119">                        } catch (Exception e) {</span>
+<span class="nc" id="L120">                            log.warn(&quot;解析内存使用值时出错: {}&quot;, result.getMemory(), e);</span>
+<span class="nc" id="L121">                        }</span>
+                    }
+                    
+                    // 检查时间限制
+<span class="nc bnc" id="L125" title="All 4 branches missed.">                    if (config.getTimeLimitEnabled() &amp;&amp; config.getTimeLimitSeconds() != null) {</span>
+                        try {
+                            // 假设CPU时间格式为 &quot;0.123 秒&quot; 或 &quot;123 ms&quot; 或 &quot;0.123s&quot;
+<span class="nc" id="L128">                            String cpuTimeStr = result.getCpuTime().toLowerCase();</span>
+                            double cpuTimeSeconds;
+                            
+<span class="nc bnc" id="L131" title="All 2 branches missed.">                            if (cpuTimeStr.contains(&quot;ms&quot;)) {</span>
+<span class="nc" id="L132">                                cpuTimeSeconds = Double.parseDouble(cpuTimeStr.split(&quot;\\s+&quot;)[0]) / 1000.0; // 转换为秒</span>
+<span class="nc bnc" id="L133" title="All 4 branches missed.">                            } else if (cpuTimeStr.contains(&quot;s&quot;) || cpuTimeStr.contains(&quot;秒&quot;)) {</span>
+<span class="nc" id="L134">                                cpuTimeSeconds = Double.parseDouble(cpuTimeStr.split(&quot;\\s+&quot;)[0]);</span>
+                            } else {
+<span class="nc" id="L136">                                cpuTimeSeconds = 0;</span>
+                            }
+                            
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                            if (cpuTimeSeconds &gt; config.getTimeLimitSeconds()) {</span>
+<span class="nc" id="L140">                                resourceLimitExceeded = true;</span>
+<span class="nc" id="L141">                                limitExceededReason = &quot;时间超限: &quot; + cpuTimeSeconds + &quot; 秒 &gt; &quot; + config.getTimeLimitSeconds() + &quot; 秒&quot;;</span>
+                            }
+<span class="nc" id="L143">                        } catch (Exception e) {</span>
+<span class="nc" id="L144">                            log.warn(&quot;解析CPU时间值时出错: {}&quot;, result.getCpuTime(), e);</span>
+<span class="nc" id="L145">                        }</span>
+                    }
+                }
+                
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                if (resourceLimitExceeded) {</span>
+<span class="nc" id="L150">                    result.setExecutionSuccess(false);</span>
+<span class="nc" id="L151">                    result.setError(limitExceededReason);</span>
+                }
+
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                boolean passed = result.isExecutionSuccess() &amp;&amp;</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                        result.getOutput().trim().equals(testCase.getExpectedOutput().trim());</span>
+<span class="nc" id="L156">                int weight = testCase.getWeight();</span>
+<span class="nc" id="L157">                totalWeight += weight;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">                if (passed) {</span>
+<span class="nc" id="L159">                    totalScore += weight;</span>
+                }
+<span class="nc" id="L161">                codeExecutionResultRepository.save(result);</span>
+
+<span class="nc" id="L163">            } catch (IOException e) {</span>
+<span class="nc" id="L164">                log.error(&quot;执行代码时发生错误&quot;, e);</span>
+<span class="nc" id="L165">                CodeExecutionResult result = new CodeExecutionResult();</span>
+<span class="nc" id="L166">                result.setTestCase(testCase);</span>
+<span class="nc" id="L167">                result.setSubmission(submission);</span>
+<span class="nc" id="L168">                result.setOutput(&quot;&quot;);</span>
+<span class="nc" id="L169">                result.setError(&quot;执行代码时发生错误: &quot; + e.getMessage());</span>
+<span class="nc" id="L170">                result.setStatusCode(-1);</span>
+<span class="nc" id="L171">                result.setMemory(&quot;0&quot;);</span>
+<span class="nc" id="L172">                result.setCpuTime(&quot;0&quot;);</span>
+<span class="nc" id="L173">                result.setCompilationStatus(&quot;FAILED&quot;);</span>
+<span class="nc" id="L174">                result.setExecutionSuccess(false);</span>
+<span class="nc" id="L175">                result.setCompiled(false);</span>
+
+<span class="nc" id="L177">                codeExecutionResultRepository.save(result);</span>
+<span class="nc" id="L178">            }</span>
+<span class="nc" id="L179">        }</span>
+
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        double finalScore = totalWeight &gt; 0 ? (totalScore / totalWeight) * 100 : 0;</span>
+<span class="nc" id="L182">        submissionRepository.save(submission);</span>
+<span class="nc" id="L183">        gradeService.createAutoGrade(submission, finalScore);</span>
+<span class="nc" id="L184">    }</span>
+    
+    @Override
+    public boolean validateSubmissionAgainstConfig(Long submissionId) {
+<span class="nc" id="L188">        Submission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L189">                .orElseThrow(() -&gt; new RuntimeException(&quot;提交记录不存在: &quot; + submissionId));</span>
+        
+<span class="nc" id="L191">        CodeSubmission codeSubmission = submission.getContents().get(0).getCodeSubmission();</span>
+<span class="nc" id="L192">        CodeAssignmentConfig config = submission.getAssignment().getCodeAssignmentConfig();</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (config == null) {</span>
+<span class="nc" id="L195">            return true;</span>
+        }
+
+<span class="nc bnc" id="L198" title="All 4 branches missed.">        if (config.getAllowedLanguages() != null &amp;&amp; !config.getAllowedLanguages().isEmpty()) {</span>
+<span class="nc" id="L199">            List&lt;String&gt; allowedLanguages = Arrays.asList(config.getAllowedLanguages().split(&quot;,&quot;));</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">            if (!allowedLanguages.contains(codeSubmission.getLanguage())) {</span>
+<span class="nc" id="L201">                log.warn(&quot;不支持的编程语言: {}, 允许的语言: {}&quot;, </span>
+<span class="nc" id="L202">                        codeSubmission.getLanguage(), config.getAllowedLanguages());</span>
+<span class="nc" id="L203">                return false;</span>
+            }
+        }
+        
+<span class="nc" id="L207">        return true;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

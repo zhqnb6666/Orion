@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CourseController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.students</a> &gt; <span class="el_source">CourseController.java</span></div><h1>CourseController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.students;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.CourseDTO;
+import org.sustech.orion.dto.responseDTO.CourseBasicInfoResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
+import org.sustech.orion.dto.responseDTO.ResourceResponseDTO;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Course;
+import org.sustech.orion.model.Grade;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.GradeService;
+import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.SemesterUtil;
+
+import java.util.List;
+
+@RestController(&quot;studentsCourseController&quot;)
+@RequestMapping(&quot;/api/students/courses&quot;)
+@Tag(name = &quot;Student Course API&quot;, description = &quot;APIs for course management&quot;)
+public class CourseController {
+
+    private final CourseService courseService;
+    private final GradeService gradeService;
+    private final ResourceService resourceService;
+
+<span class="fc" id="L36">    public CourseController(CourseService courseService, GradeService gradeService, ResourceService resourceService) {</span>
+<span class="fc" id="L37">        this.courseService = courseService;</span>
+<span class="fc" id="L38">        this.gradeService = gradeService;</span>
+<span class="fc" id="L39">        this.resourceService = resourceService;</span>
+<span class="fc" id="L40">    }</span>
+
+    /* useful */
+    @PostMapping
+    @Operation(summary = &quot;Create course&quot;, description = &quot;Create a new course&quot;)//tested
+    public ResponseEntity&lt;CourseItemResponseDTO&gt; createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
+        //system.out.println(currentUser.getUsername());
+<span class="nc" id="L47">        Course course = new Course();</span>
+<span class="nc" id="L48">        course.setCourseName(request.getCourseName());</span>
+<span class="nc" id="L49">        course.setCourseCode(request.getCourseCode());</span>
+<span class="nc" id="L50">        course.setDescription(request.getDescription());</span>
+<span class="nc" id="L51">        course.setIsActive(request.getIsActive());</span>
+<span class="nc" id="L52">        course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));</span>
+<span class="nc" id="L53">        course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));</span>
+<span class="nc" id="L54">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO( courseService.createCourse(course, currentUser)));</span>
+    }
+
+    @GetMapping(&quot;/{courseId}&quot;)//ok
+    @Operation(summary = &quot;Get course basic info&quot;, description = &quot;Get course by ID&quot;)
+    public ResponseEntity&lt;CourseBasicInfoResponseDTO&gt; getCourse(@PathVariable Long courseId) {
+<span class="fc" id="L60">        return ResponseEntity.ok(ConvertDTO.toCourseBasicInfoResponseDTO(courseService.getCourseById(courseId)));</span>
+    }
+
+    @GetMapping(&quot;/courseItem/{courseId}&quot;)//ok
+    @Operation(summary = &quot;Get courseItem info&quot;, description = &quot;Get course by ID&quot;)
+    public ResponseEntity&lt;CourseItemResponseDTO&gt; getCourseItem(@PathVariable Long courseId) {
+<span class="nc" id="L66">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.getCourseById(courseId)));</span>
+    }
+
+
+    /* useless */
+    @GetMapping(&quot;/semester/{semester}&quot;)//ok
+    @Operation(summary = &quot;List courses by semester&quot;)
+    public ResponseEntity&lt;List&lt;CourseItemResponseDTO&gt;&gt; getCoursesBySemester(@PathVariable String semester) {
+<span class="nc" id="L74">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCoursesBySemester(semester)));</span>
+    }
+
+    @GetMapping
+    @Operation(summary = &quot;获取学生所有课程&quot;)
+    public ResponseEntity&lt;List&lt;CourseItemResponseDTO&gt;&gt; getStudentCourses(@AuthenticationPrincipal User currentUser) {
+<span class="fc" id="L80">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCoursesByStudentId(currentUser.getUserId())));</span>
+    }
+
+    @GetMapping(&quot;/current&quot;)
+    @Operation(summary = &quot;获取当前学期课程&quot;)
+    public ResponseEntity&lt;List&lt;CourseItemResponseDTO&gt;&gt; getCurrentCourses(@AuthenticationPrincipal User currentUser) {
+<span class="nc" id="L86">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCurrentSemesterCourses(currentUser.getUserId())));</span>
+    }
+
+    @GetMapping(&quot;/{courseId}/grade&quot;)
+    @Operation(summary = &quot;获取课程成绩&quot;,
+            description = &quot;获取当前学生在指定课程中的所有成绩&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully obtain the score list&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;You are not enrolled in the course&quot;)
+            })
+    public ResponseEntity&lt;List&lt;GradeResponseDTO&gt;&gt; getCourseGrades(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User student) {
+
+        // 验证学生是否属于该课程
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (!courseService.isStudentInCourse(courseId, student.getUserId())) {</span>
+<span class="nc" id="L102">            throw new ApiException(&quot;You are not enrolled in the course&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L105">        List&lt;Grade&gt; grades = gradeService.getLatestGradesByStudentAndCourse(student.getUserId(), courseId);</span>
+<span class="nc" id="L106">        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTOList(grades));</span>
+    }
+
+    @GetMapping(&quot;/{courseId}/resources&quot;)
+    @Operation(summary = &quot;获取课程资源&quot;,
+            description = &quot;获取指定课程的所有学习资源&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;The resource list is successfully obtained. Procedure&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Not enrolled in the course&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Curriculum does not exist&quot;)
+            })
+    public ResponseEntity&lt;List&lt;ResourceResponseDTO&gt;&gt; getCourseResources(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User student) {
+
+        // 验证课程存在性
+<span class="nc" id="L122">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证学生权限
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (!courseService.isStudentInCourse(courseId, student.getUserId())) {</span>
+<span class="nc" id="L126">            throw new ApiException(&quot;Not enrolled in the course&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L129">        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTOList(resourceService.getCourseResources(courseId)));</span>
+    }
+    @PostMapping(&quot;/join&quot;)
+    @Operation(summary = &quot;通过课程代码加入课程&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;加入成功&quot;),
+                    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;已加入课程&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;CourseItemResponseDTO&gt; joinCourseByCode(
+            @RequestParam String courseCode,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L142">        Course course = courseService.joinCourseByCode(courseCode, currentUser);</span>
+<span class="nc" id="L143">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(course));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CalendarController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.common</a> &gt; <span class="el_source">CalendarController.java</span></div><h1>CalendarController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.common;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.CalendarDTO;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.CalendarService;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/calendar&quot;)
+@Tag(name = &quot;Calendar API&quot;, description = &quot;APIs for calendar management&quot;)
+public class CalendarController {
+
+    private final CalendarService calendarService;
+
+<span class="fc" id="L23">    public CalendarController(CalendarService calendarService) {</span>
+<span class="fc" id="L24">        this.calendarService = calendarService;</span>
+<span class="fc" id="L25">    }</span>
+
+    @GetMapping(&quot;/events&quot;)
+    @Operation(summary = &quot;获取用户的日历事件&quot;,
+            description = &quot;获取当前用户的所有日历事件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取日历事件&quot;)
+            })
+    public ResponseEntity&lt;List&lt;CalendarDTO&gt;&gt; getUserEvents(
+            @AuthenticationPrincipal User currentUser) {
+<span class="fc" id="L35">        return ResponseEntity.ok(calendarService.getUserCalendarEvents(currentUser.getUserId()));</span>
+    }
+
+    @PostMapping(&quot;/events/custom&quot;)
+    @Operation(summary = &quot;创建自定义事件&quot;,
+            description = &quot;为当前用户创建一个自定义日历事件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功创建事件&quot;),
+                    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;请求参数无效&quot;)
+            })
+    public ResponseEntity&lt;CalendarDTO&gt; createCustomEvent(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam Timestamp deadline) {
+<span class="fc" id="L50">        return ResponseEntity.ok(</span>
+<span class="fc" id="L51">                convertToDTO(calendarService.createCustomEvent(</span>
+<span class="fc" id="L52">                        currentUser.getUserId(), title, description, deadline))</span>
+        );
+    }
+
+    @DeleteMapping(&quot;/events/{eventId}&quot;)
+    @Operation(summary = &quot;删除日历事件&quot;,
+            description = &quot;删除指定的日历事件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;204&quot;, description = &quot;成功删除事件&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;事件不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; deleteEvent(@PathVariable Long eventId) {
+<span class="fc" id="L64">        calendarService.deleteEvent(eventId);</span>
+<span class="fc" id="L65">        return ResponseEntity.noContent().build();</span>
+    }
+
+    private CalendarDTO convertToDTO(org.sustech.orion.model.Calendar calendar) {
+<span class="fc" id="L69">        CalendarDTO dto = new CalendarDTO();</span>
+<span class="fc" id="L70">        dto.setId(calendar.getId());</span>
+<span class="fc" id="L71">        dto.setTitle(calendar.getTitle());</span>
+<span class="fc" id="L72">        dto.setDeadline(calendar.getDeadline());</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (calendar.getCourse() != null) {</span>
+<span class="nc" id="L74">            dto.setCourseName(calendar.getCourse().getCourseName());</span>
+<span class="nc" id="L75">            dto.setCourseId(calendar.getCourse().getId());</span>
+        }
+<span class="fc" id="L77">        dto.setAssignmentId(calendar.getAssignmentId());</span>
+<span class="fc" id="L78">        dto.setDescription(calendar.getDescription());</span>
+<span class="fc" id="L79">        dto.setEventType(calendar.getEventType().name());</span>
+<span class="fc" id="L80">        return dto;</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourcesController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.teachers</a> &gt; <span class="el_source">ResourcesController.java</span></div><h1>ResourcesController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.teachers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.dto.ResourceDTO;
+import org.sustech.orion.dto.responseDTO.AttachmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.ResourceResponseDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Attachment;
+import org.sustech.orion.model.Course;
+import org.sustech.orion.model.Resource;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.AttachmentService;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.util.ConvertDTO;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController(&quot;teachersResourcesController&quot;)
+@RequestMapping(&quot;/api/teachers/resources&quot;)
+@Tag(name = &quot;Teacher Resources API&quot;, description = &quot;APIs for Resources management&quot;)
+public class ResourcesController {
+    
+    private final AttachmentService attachmentService;
+    private final CourseService courseService;
+    private final ResourceService resourceService;
+    
+<span class="fc" id="L42">    public ResourcesController(AttachmentService attachmentService, CourseService courseService, ResourceService resourceService) {</span>
+<span class="fc" id="L43">        this.attachmentService = attachmentService;</span>
+<span class="fc" id="L44">        this.courseService = courseService;</span>
+<span class="fc" id="L45">        this.resourceService = resourceService;</span>
+<span class="fc" id="L46">    }</span>
+    
+    /**
+     * 创建新的资源（不包括附件）
+     * @param courseId 课程ID
+     * @param resourceDTO 资源数据传输对象
+     * @param currentUser 当前用户
+     * @return 创建的资源信息
+     */
+    @PostMapping(&quot;/{courseId}/resources&quot;)
+    @Operation(summary = &quot;创建课程资源&quot;,
+              description = &quot;创建一个新的资源，不包括附件&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;200&quot;, description = &quot;创建成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该课程&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+              })
+    public ResponseEntity&lt;ResourceResponseDTO&gt; createResource(
+            @PathVariable Long courseId,
+            @RequestBody ResourceDTO resourceDTO,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 验证课程存在性与权限
+<span class="nc" id="L69">        Course course = courseService.getCourseById(courseId);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L71">            throw new ApiException(&quot;无权限操作该课程资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 创建资源
+<span class="nc" id="L75">        org.sustech.orion.model.Resource resource = new org.sustech.orion.model.Resource();</span>
+<span class="nc" id="L76">        resource.setName(resourceDTO.getTitle());</span>
+<span class="nc" id="L77">        resource.setDescription(resourceDTO.getDescription());</span>
+<span class="nc" id="L78">        resource.setType(resourceDTO.getType());</span>
+<span class="nc" id="L79">        resource.setCourse(course);</span>
+<span class="nc" id="L80">        resource.setUploadedBy(currentUser);</span>
+<span class="nc" id="L81">        resource.setUploadTime(Timestamp.from(Instant.now()));</span>
+<span class="nc" id="L82">        resource.setAttachments(new ArrayList&lt;&gt;());</span>
+        
+        // 保存资源
+<span class="nc" id="L85">        org.sustech.orion.model.Resource savedResource = resourceService.saveResource(resource);</span>
+        
+        // 返回资源信息
+<span class="nc" id="L88">        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTO(savedResource));</span>
+    }
+    
+    /**
+     * 更新资源基本信息
+     * @param resourceId 资源ID
+     * @param resourceDTO 资源数据传输对象
+     * @param currentUser 当前用户
+     * @return 更新后的资源信息
+     */
+    @PutMapping(&quot;/{resourceId}&quot;)
+    @Operation(summary = &quot;更新资源信息&quot;,
+              description = &quot;更新资源的基本信息，不包括附件&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;200&quot;, description = &quot;更新成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该资源&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源不存在&quot;)
+              })
+    public ResponseEntity&lt;ResourceResponseDTO&gt; updateResource(
+            @PathVariable Long resourceId,
+            @RequestBody ResourceDTO resourceDTO,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 获取资源
+<span class="nc" id="L112">        org.sustech.orion.model.Resource resource = resourceService.getResourceById(resourceId);</span>
+        
+        // 验证权限
+<span class="nc" id="L115">        Course course = resource.getCourse();</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L117">            throw new ApiException(&quot;无权限操作该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 更新资源信息
+<span class="nc" id="L121">        resource.setName(resourceDTO.getTitle());</span>
+<span class="nc" id="L122">        resource.setDescription(resourceDTO.getDescription());</span>
+<span class="nc" id="L123">        resource.setType(resourceDTO.getType());</span>
+        
+        // 保存资源
+<span class="nc" id="L126">        org.sustech.orion.model.Resource updatedResource = resourceService.saveResource(resource);</span>
+        
+        // 返回资源信息
+<span class="nc" id="L129">        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTO(updatedResource));</span>
+    }
+    
+    /**
+     * 删除资源
+     * @param resourceId 资源ID
+     * @param currentUser 当前用户
+     * @return 操作状态
+     */
+    @DeleteMapping(&quot;/{resourceId}&quot;)
+    @Operation(summary = &quot;删除资源&quot;,
+              description = &quot;删除资源及其所有附件&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;204&quot;, description = &quot;删除成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该资源&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源不存在&quot;)
+              })
+    public ResponseEntity&lt;Void&gt; deleteResource(
+            @PathVariable Long resourceId,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 获取资源
+<span class="nc" id="L151">        org.sustech.orion.model.Resource resource = resourceService.getResourceById(resourceId);</span>
+        
+        // 验证权限
+<span class="nc" id="L154">        Course course = resource.getCourse();</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L156">            throw new ApiException(&quot;无权限操作该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 删除资源
+<span class="nc" id="L160">        resourceService.deleteResource(resourceId);</span>
+        
+<span class="nc" id="L162">        return ResponseEntity.noContent().build();</span>
+    }
+    
+    /**
+     * 为资源添加附件
+     *
+     * @param resourceId  资源ID
+     * @param files        文件
+     * @param currentUser 当前用户
+     * @return 附件信息
+     */
+    @PostMapping(value = &quot;/{resourceId}/attachments&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = &quot;为资源添加附件&quot;,
+              description = &quot;上传附件并关联到指定资源&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;200&quot;, description = &quot;添加成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该资源&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源不存在&quot;)
+              })
+    public ResponseEntity&lt;List&lt;AttachmentResponseDTO&gt;&gt; addResourceAttachment(
+            @PathVariable Long resourceId,
+            @RequestParam(&quot;files&quot;) MultipartFile[] files,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 获取资源
+<span class="nc" id="L187">        org.sustech.orion.model.Resource resource = resourceService.getResourceById(resourceId);</span>
+        
+        // 验证权限
+<span class="nc" id="L190">        Course course = resource.getCourse();</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L192">            throw new ApiException(&quot;无权限操作该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 上传附件
+<span class="nc" id="L196">        List&lt;Attachment&gt; attachments = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        for (MultipartFile file : files) {</span>
+<span class="nc" id="L198">            Attachment attachment = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);</span>
+<span class="nc" id="L199">            attachments.add(attachment);</span>
+        }
+
+        // Add attachments to resource
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (resource.getAttachments() == null) {</span>
+<span class="nc" id="L204">            resource.setAttachments(new ArrayList&lt;&gt;());</span>
+        }
+<span class="nc" id="L206">        resource.getAttachments().addAll(attachments);</span>
+        
+        // 保存资源
+<span class="nc" id="L209">        resourceService.saveResource(resource);</span>
+        
+        // 返回附件信息
+<span class="nc" id="L212">        return ResponseEntity.ok(ConvertDTO.toAttachmentResponseDTOList(attachments));</span>
+    }
+    
+    /**
+     * 删除资源附件
+     * @param resourceId 资源ID
+     * @param attachmentId 附件ID
+     * @param currentUser 当前用户
+     * @return 操作状态
+     */
+    @DeleteMapping(&quot;/{resourceId}/attachments/{attachmentId}&quot;)
+    @Operation(summary = &quot;删除资源附件&quot;,
+              description = &quot;从资源中删除指定附件&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;204&quot;, description = &quot;删除成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该资源&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源或附件不存在&quot;)
+              })
+    public ResponseEntity&lt;Void&gt; deleteResourceAttachment(
+            @PathVariable Long resourceId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 获取资源
+<span class="nc" id="L236">        org.sustech.orion.model.Resource resource = resourceService.getResourceById(resourceId);</span>
+        
+        // 验证权限
+<span class="nc" id="L239">        Course course = resource.getCourse();</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L241">            throw new ApiException(&quot;无权限操作该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 从资源中移除附件
+<span class="nc" id="L245">        resource.getAttachments().removeIf(att -&gt; att.getId().equals(attachmentId));</span>
+<span class="nc" id="L246">        resourceService.saveResource(resource);</span>
+        
+        // 删除附件
+<span class="nc" id="L249">        attachmentService.deleteAttachment(attachmentId);</span>
+        
+<span class="nc" id="L251">        return ResponseEntity.noContent().build();</span>
+    }
+    
+    /**
+     * 下载资源附件
+     * @param resourceId 资源ID
+     * @param attachmentId 附件ID
+     * @param currentUser 当前用户
+     * @return 附件内容
+     * @throws IOException 文件读取错误
+     */
+    @GetMapping(&quot;/{resourceId}/attachments/{attachmentId}/download&quot;)
+    @Operation(summary = &quot;下载资源附件&quot;,
+              description = &quot;下载指定资源的特定附件文件&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;200&quot;, description = &quot;下载成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限操作该资源&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源或附件不存在&quot;)
+              })
+    public ResponseEntity&lt;org.springframework.core.io.Resource&gt; downloadResourceAttachment(
+            @PathVariable Long resourceId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User currentUser) throws IOException {
+        
+        // 获取资源
+<span class="nc" id="L276">        org.sustech.orion.model.Resource resource = resourceService.getResourceById(resourceId);</span>
+        
+        // 验证权限（如果是教师）
+<span class="nc" id="L279">        Course course = resource.getCourse();</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L281">            throw new ApiException(&quot;无权限操作该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 获取附件信息
+<span class="nc" id="L285">        Attachment attachment = attachmentService.getAttachmentById(attachmentId);</span>
+        
+        // 下载附件内容
+<span class="nc" id="L288">        byte[] data = attachmentService.downloadAttachment(attachmentId);</span>
+<span class="nc" id="L289">        ByteArrayResource byteResource = new ByteArrayResource(data);</span>
+        
+<span class="nc" id="L291">        return ResponseEntity.ok()</span>
+<span class="nc" id="L292">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + attachment.getName() + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L293">                .contentType(MediaType.parseMediaType(attachment.getMimeType()))</span>
+<span class="nc" id="L294">                .contentLength(attachment.getSize())</span>
+<span class="nc" id="L295">                .body(byteResource);</span>
+    }
+
+    /**
+     * 获取课程的所有资源
+     * @param courseId 课程ID
+     * @param currentUser 当前用户
+     * @return 资源列表
+     */
+    @GetMapping(&quot;/course/{courseId}&quot;)
+    @Operation(summary = &quot;获取课程资源列表&quot;,
+              description = &quot;获取指定课程的所有资源&quot;,
+              responses = {
+                  @ApiResponse(responseCode = &quot;200&quot;, description = &quot;获取成功&quot;),
+                  @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无权限查看该课程&quot;),
+                  @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+              })
+    public ResponseEntity&lt;List&lt;ResourceResponseDTO&gt;&gt; getCourseResources(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 验证课程存在性与权限
+<span class="nc" id="L317">        Course course = courseService.getCourseById(courseId);</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L319">            throw new ApiException(&quot;无权限查看该课程资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+        
+        // 获取课程资源
+<span class="nc" id="L323">        List&lt;Resource&gt; resources = resourceService.getCourseResources(courseId);</span>
+        
+<span class="nc" id="L325">        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTOList(resources));</span>
+    }
+
+    /**
+     * 获取资源详情及附件列表
+     * @param resourceId 资源ID
+     * @param currentUser 当前用户
+     * @return 资源及其附件列表
+     */
+    @GetMapping(&quot;/{resourceId}&quot;)
+    @Operation(summary = &quot;获取资源详情&quot;,
+            description = &quot;获取特定资源的详细信息及其所有附件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;获取成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;没有权限查看该资源&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;资源不存在&quot;)
+            })
+    public ResponseEntity&lt;ResourceResponseDTO&gt; getResourceDetails(
+            @PathVariable Long resourceId,
+            @AuthenticationPrincipal User currentUser) {
+
+        // 获取资源
+<span class="nc" id="L347">        Resource resource = resourceService.getResourceById(resourceId);</span>
+
+        // 验证权限
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (!resource.getCourse().getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L351">            throw new ApiException(&quot;没有权限查看该资源&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // 返回资源及附件信息
+<span class="nc" id="L355">        return ResponseEntity.ok(ConvertDTO.toResourceResponseDTO(resource));</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

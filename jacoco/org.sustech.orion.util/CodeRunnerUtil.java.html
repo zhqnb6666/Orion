@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CodeRunnerUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.util</a> &gt; <span class="el_source">CodeRunnerUtil.java</span></div><h1>CodeRunnerUtil.java</h1><pre class="source lang-java linenums">package org.sustech.orion.util;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+
+@Component
+public class CodeRunnerUtil {
+    private static final String EXECUTE_API_URL = &quot;https://api.jdoodle.com/v1/execute&quot;;
+    private static final String CREDIT_CHECK_API_URL = &quot;https://api.jdoodle.com/v1/credit-spent&quot;;
+    private static final int CREDIT_LIMIT = 20;
+<span class="fc" id="L24">    private static final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+<span class="fc" id="L26">    private final List&lt;ApiCredential&gt; credentials = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L27">    private int currentCredentialIndex = 0;</span>
+
+    @Value(&quot;${jdoodle.client-id-1}&quot;)
+    private String clientId1;
+
+    @Value(&quot;${jdoodle.client-secret-1}&quot;)
+    private String clientSecret1;
+
+    @Value(&quot;${jdoodle.client-id-2}&quot;)
+    private String clientId2;
+
+    @Value(&quot;${jdoodle.client-secret-2}&quot;)
+    private String clientSecret2;
+
+    @Value(&quot;${jdoodle.client-id-3}&quot;)
+    private String clientId3;
+
+    @Value(&quot;${jdoodle.client-secret-3}&quot;)
+    private String clientSecret3;
+
+    @Value(&quot;${jdoodle.client-id-4}&quot;)
+    private String clientId4;
+
+    @Value(&quot;${jdoodle.client-secret-4}&quot;)
+    private String clientSecret4;
+
+    @Value(&quot;${jdoodle.client-id-5}&quot;)
+    private String clientId5;
+
+    @Value(&quot;${jdoodle.client-secret-5}&quot;)
+    private String clientSecret5;
+
+<span class="fc" id="L59">    public CodeRunnerUtil() {</span>
+<span class="fc" id="L60">    }</span>
+
+    @PostConstruct
+    public void init() {
+<span class="fc" id="L64">        credentials.add(new ApiCredential(clientId1, clientSecret1));</span>
+<span class="fc" id="L65">        credentials.add(new ApiCredential(clientId2, clientSecret2));</span>
+<span class="fc" id="L66">        credentials.add(new ApiCredential(clientId3, clientSecret3));</span>
+<span class="fc" id="L67">        credentials.add(new ApiCredential(clientId4, clientSecret4));</span>
+<span class="fc" id="L68">        credentials.add(new ApiCredential(clientId5, clientSecret5));</span>
+<span class="fc" id="L69">    }</span>
+
+    public String executeCode(String script, String language, String versionIndex, String stdin) throws IOException {
+        // 检查当前凭证的使用情况并在需要时切换
+<span class="nc" id="L73">        checkAndSwitchCredentialIfNeeded();</span>
+<span class="nc" id="L74">        ApiCredential credential = credentials.get(currentCredentialIndex);</span>
+
+        // 创建连接
+<span class="nc" id="L77">        URL url = new URL(EXECUTE_API_URL);</span>
+<span class="nc" id="L78">        HttpURLConnection connection = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L79">        connection.setRequestMethod(&quot;POST&quot;);</span>
+<span class="nc" id="L80">        connection.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</span>
+<span class="nc" id="L81">        connection.setDoOutput(true);</span>
+
+        // 创建 JSON 请求体
+<span class="nc" id="L84">        String jsonInput = String.format(</span>
+                &quot;{\&quot;clientId\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;clientSecret\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;script\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;language\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;versionIndex\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;stdin\&quot;:\&quot;%s\&quot;,&quot; +
+                        &quot;\&quot;compileOnly\&quot;:false}&quot;,
+                credential.clientId, credential.clientSecret,
+<span class="nc" id="L93">                escapeJson(script), language, versionIndex, escapeJson(stdin)</span>
+        );
+<span class="nc" id="L95">        try (OutputStream os = connection.getOutputStream()) {</span>
+<span class="nc" id="L96">            byte[] input = jsonInput.getBytes(StandardCharsets.UTF_8);</span>
+<span class="nc" id="L97">            os.write(input, 0, input.length);</span>
+        }
+<span class="nc" id="L99">        StringBuilder response = new StringBuilder();</span>
+<span class="nc" id="L100">        try (Scanner scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8.name())) {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            while (scanner.hasNextLine()) {</span>
+<span class="nc" id="L102">                response.append(scanner.nextLine());</span>
+            }
+<span class="nc" id="L104">        } catch (IOException e) {</span>
+            // 如果请求失败，尝试读取错误流
+<span class="nc" id="L106">            try (Scanner scanner = new Scanner(connection.getErrorStream(), StandardCharsets.UTF_8.name())) {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                while (scanner.hasNextLine()) {</span>
+<span class="nc" id="L108">                    response.append(scanner.nextLine());</span>
+                }
+            }
+<span class="nc" id="L111">            throw new IOException(&quot;执行代码失败: &quot; + response, e);</span>
+<span class="nc" id="L112">        }</span>
+
+<span class="nc" id="L114">        connection.disconnect();</span>
+<span class="nc" id="L115">        return response.toString();</span>
+    }
+
+    private void checkAndSwitchCredentialIfNeeded() throws IOException {
+<span class="nc" id="L119">        ApiCredential currentCredential = credentials.get(currentCredentialIndex);</span>
+<span class="nc" id="L120">        int usedCredits = checkCreditUsage(currentCredential);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (usedCredits &gt;= CREDIT_LIMIT) {</span>
+<span class="nc" id="L122">            int nextIndex = currentCredentialIndex + 1;</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (nextIndex &gt;= credentials.size()) {</span>
+<span class="nc" id="L124">                throw new IOException(&quot;警告：所有 API 凭证今日已达使用限制，请明天再试&quot;);</span>
+            }
+<span class="nc" id="L126">            currentCredentialIndex = nextIndex;</span>
+        }
+<span class="nc" id="L128">    }</span>
+
+    private int checkCreditUsage(ApiCredential credential) throws IOException {
+<span class="nc" id="L131">        URL url = new URL(CREDIT_CHECK_API_URL);</span>
+<span class="nc" id="L132">        HttpURLConnection connection = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L133">        connection.setRequestMethod(&quot;POST&quot;);</span>
+<span class="nc" id="L134">        connection.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</span>
+<span class="nc" id="L135">        connection.setDoOutput(true);</span>
+
+<span class="nc" id="L137">        String jsonInput = String.format(</span>
+                &quot;{\&quot;clientId\&quot;:\&quot;%s\&quot;,\&quot;clientSecret\&quot;:\&quot;%s\&quot;}&quot;,
+                credential.clientId, credential.clientSecret
+        );
+
+<span class="nc" id="L142">        try (OutputStream os = connection.getOutputStream()) {</span>
+<span class="nc" id="L143">            byte[] input = jsonInput.getBytes(StandardCharsets.UTF_8);</span>
+<span class="nc" id="L144">            os.write(input, 0, input.length);</span>
+        }
+
+<span class="nc" id="L147">        StringBuilder response = new StringBuilder();</span>
+<span class="nc" id="L148">        try (Scanner scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8.name())) {</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            while (scanner.hasNextLine()) {</span>
+<span class="nc" id="L150">                response.append(scanner.nextLine());</span>
+            }
+        }
+
+<span class="nc" id="L154">        connection.disconnect();</span>
+
+        // 解析响应获取已使用的 credit
+<span class="nc" id="L157">        JsonNode jsonNode = objectMapper.readTree(response.toString());</span>
+<span class="nc" id="L158">        return jsonNode.get(&quot;used&quot;).asInt();</span>
+    }
+
+    private String escapeJson(String input) {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (input == null) {</span>
+<span class="nc" id="L163">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L165">        return input.replace(&quot;\\&quot;, &quot;\\\\&quot;)</span>
+<span class="nc" id="L166">                .replace(&quot;\&quot;&quot;, &quot;\\\&quot;&quot;)</span>
+<span class="nc" id="L167">                .replace(&quot;\n&quot;, &quot;\\n&quot;)</span>
+<span class="nc" id="L168">                .replace(&quot;\r&quot;, &quot;\\r&quot;)</span>
+<span class="nc" id="L169">                .replace(&quot;\t&quot;, &quot;\\t&quot;);</span>
+    }
+
+    // 内部类：API 凭证
+    private static class ApiCredential {
+        private final String clientId;
+        private final String clientSecret;
+
+<span class="fc" id="L177">        public ApiCredential(String clientId, String clientSecret) {</span>
+<span class="fc" id="L178">            this.clientId = clientId;</span>
+<span class="fc" id="L179">            this.clientSecret = clientSecret;</span>
+<span class="fc" id="L180">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

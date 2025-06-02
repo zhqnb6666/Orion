@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlagiarismService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service</a> &gt; <span class="el_source">PlagiarismService.java</span></div><h1>PlagiarismService.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.sustech.orion.AI.FileReader;
+import org.sustech.orion.AI.Model;
+import org.sustech.orion.model.PlagiarismCheck;
+import org.sustech.orion.model.Submission;
+import org.sustech.orion.model.SubmissionContent;
+import org.sustech.orion.repository.PlagiarismCheckRepository;
+import org.sustech.orion.repository.SubmissionRepository;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L22">public class PlagiarismService {</span>
+
+    @Autowired
+    private PlagiarismCheckRepository plagiarismCheckRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    /**
+     * 对两个提交进行查重检查
+     *
+     * @param submissionAId 第一个提交的ID
+     * @param submissionBId 第二个提交的ID
+     * @param modelName     使用的AI模型名称
+     * @return 查重结果
+     */
+    public PlagiarismCheck checkPlagiarism(Long submissionAId, Long submissionBId, String modelName) {
+<span class="nc" id="L39">        Submission submissionA = submissionRepository.findById(submissionAId)</span>
+<span class="nc" id="L40">                .orElseThrow(() -&gt; new RuntimeException(&quot;提交A不存在&quot;));</span>
+<span class="nc" id="L41">        Submission submissionB = submissionRepository.findById(submissionBId)</span>
+<span class="nc" id="L42">                .orElseThrow(() -&gt; new RuntimeException(&quot;提交B不存在&quot;));</span>
+
+        // 确保两个提交属于同一个作业
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (!submissionA.getAssignment().getId().equals(submissionB.getAssignment().getId())) {</span>
+<span class="nc" id="L46">            throw new RuntimeException(&quot;两个提交必须属于同一个作业才能进行查重&quot;);</span>
+        }
+
+        // 获取提交内容
+<span class="nc" id="L50">        String contentA = extractSubmissionContent(submissionA).trim();</span>
+<span class="nc" id="L51">        String contentB = extractSubmissionContent(submissionB).trim();</span>
+
+        // cut off
+<span class="nc" id="L54">        System.out.println(&quot;提交A长度: &quot; + contentA.length());</span>
+<span class="nc" id="L55">        System.out.println(&quot;提交B长度: &quot; + contentB.length());</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (contentA.length() &gt; 2048){</span>
+<span class="nc" id="L57">            contentA = contentA.substring(0, 2048);</span>
+        }
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (contentB.length() &gt; 2048){</span>
+<span class="nc" id="L60">            contentB = contentB.substring(0, 2048);</span>
+        }
+
+        // 调用AI模型进行查重
+<span class="nc" id="L64">        System.out.println(&quot;plagiarism check sent&quot;);</span>
+<span class="nc" id="L65">        String result = Model.llm_plagiarism_check(contentA, contentB, modelName);</span>
+
+        // 解析查重结果，这里假设AI模型返回的结果包含相似度分数
+<span class="nc" id="L68">        double similarityScore = parseSimilarityScore(result);</span>
+
+        // 创建查重记录
+<span class="nc" id="L71">        PlagiarismCheck plagiarismCheck = new PlagiarismCheck();</span>
+<span class="nc" id="L72">        plagiarismCheck.setAssignment(submissionA.getAssignment());</span>
+<span class="nc" id="L73">        plagiarismCheck.setSubmissionA(submissionA);</span>
+<span class="nc" id="L74">        plagiarismCheck.setSubmissionB(submissionB);</span>
+<span class="nc" id="L75">        plagiarismCheck.setSimilarityScore(similarityScore);</span>
+<span class="nc" id="L76">        plagiarismCheck.setCheckTime(Timestamp.from(Instant.now()));</span>
+<span class="nc" id="L77">        plagiarismCheck.setStatus(&quot;COMPLETED&quot;);</span>
+<span class="nc" id="L78">        plagiarismCheck.setDetails(result);</span>
+
+        // 保存查重结果
+<span class="nc" id="L81">        return plagiarismCheckRepository.save(plagiarismCheck);</span>
+    }
+
+    /**
+     * 提取提交内容
+     */
+    private String extractSubmissionContent(Submission submission) {
+<span class="nc" id="L88">        List&lt;SubmissionContent&gt; contents = submission.getContents();</span>
+<span class="nc" id="L89">        StringBuilder contentBuilder = new StringBuilder();</span>
+        
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        for (SubmissionContent content : contents) {</span>
+            try {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                if (content.getType() == SubmissionContent.ContentType.TEXT) {</span>
+<span class="nc" id="L94">                    contentBuilder.append(content.getContent()).append(&quot;\n\n&quot;);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                } else if (content.getType() == SubmissionContent.ContentType.CODE) {</span>
+<span class="nc bnc" id="L96" title="All 4 branches missed.">                    if (content.getCodeSubmission() != null &amp;&amp; content.getCodeSubmission().getScript() != null) {</span>
+<span class="nc" id="L97">                        contentBuilder.append(content.getCodeSubmission().getScript()).append(&quot;\n\n&quot;);</span>
+                    }
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                } else if (content.getType() == SubmissionContent.ContentType.FILE) {</span>
+<span class="nc bnc" id="L100" title="All 4 branches missed.">                    if (content.getFile() != null &amp;&amp; content.getFile().getUrl() != null) {</span>
+<span class="nc" id="L101">                        String filePath = content.getFile().getUrl();</span>
+<span class="nc" id="L102">                        String fileExtension = getFileExtension(filePath).toLowerCase();</span>
+                        
+                        // 判断文件类型并尝试读取
+<span class="nc" id="L105">                        String fileContent = null;</span>
+                        try {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                            if (fileExtension.equals(&quot;pdf&quot;)) {</span>
+<span class="nc" id="L108">                                fileContent = FileReader.readPdf(filePath);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                            } else if (fileExtension.equals(&quot;md&quot;)) {</span>
+<span class="nc" id="L110">                                fileContent = FileReader.readRawMd(filePath);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                            } else if (fileExtension.equals(&quot;docx&quot;)) {</span>
+<span class="nc" id="L112">                                fileContent = FileReader.readDocx(filePath);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                            } else if (fileExtension.equals(&quot;doc&quot;)) {</span>
+<span class="nc" id="L114">                                fileContent = FileReader.readDoc(filePath);</span>
+                            } else {
+                                // 对于其他文本类型，尝试直接读取
+<span class="nc" id="L117">                                Path path = Paths.get(filePath);</span>
+<span class="nc bnc" id="L118" title="All 4 branches missed.">                                if (Files.exists(path) &amp;&amp; Files.isReadable(path)) {</span>
+                                    try {
+<span class="nc" id="L120">                                        fileContent = new String(Files.readAllBytes(path));</span>
+<span class="nc" id="L121">                                    } catch (Exception e) {</span>
+<span class="nc" id="L122">                                        System.err.println(&quot;无法读取文件: &quot; + filePath + &quot;, 错误: &quot; + e.getMessage());</span>
+<span class="nc" id="L123">                                    }</span>
+                                }
+                            }
+                            
+<span class="nc bnc" id="L127" title="All 4 branches missed.">                            if (fileContent != null &amp;&amp; !fileContent.isEmpty()) {</span>
+<span class="nc" id="L128">                                contentBuilder.append(fileContent).append(&quot;\n\n&quot;);</span>
+                            }
+<span class="nc" id="L130">                        } catch (Exception e) {</span>
+<span class="nc" id="L131">                            System.err.println(&quot;读取文件失败: &quot; + filePath + &quot;, 错误: &quot; + e.getMessage());</span>
+<span class="nc" id="L132">                        }</span>
+                    }
+                }
+<span class="nc" id="L135">            } catch (Exception e) {</span>
+<span class="nc" id="L136">                System.err.println(&quot;处理提交内容时出错: &quot; + e.getMessage());</span>
+<span class="nc" id="L137">            }</span>
+<span class="nc" id="L138">        }</span>
+        
+<span class="nc" id="L140">        return contentBuilder.toString().trim();</span>
+    }
+    
+    /**
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String filePath) {
+<span class="nc bnc" id="L147" title="All 4 branches missed.">        if (filePath == null || filePath.isEmpty()) {</span>
+<span class="nc" id="L148">            return &quot;&quot;;</span>
+        }
+        
+<span class="nc" id="L151">        int lastDotPos = filePath.lastIndexOf(&quot;.&quot;);</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (lastDotPos &gt;= 0 &amp;&amp; lastDotPos &lt; filePath.length() - 1) {</span>
+<span class="nc" id="L153">            return filePath.substring(lastDotPos + 1);</span>
+        }
+        
+<span class="nc" id="L156">        return &quot;&quot;;</span>
+    }
+
+    /**
+     * 解析AI返回的相似度分数
+     */
+    private double parseSimilarityScore(String aiResult) {
+        // 这里需要根据AI模型返回的格式进行解析
+        // 假设AI模型返回的结果中包含类似&quot;相似度: 85.5%&quot;这样的文本
+        try {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (aiResult.contains(&quot;\\boxed{&quot;)) {</span>
+<span class="nc" id="L167">                int start = aiResult.indexOf(&quot;\\boxed{&quot;) + &quot;\\boxed{&quot;.length();</span>
+<span class="nc" id="L168">                int end = aiResult.indexOf(&quot;}&quot;, start);</span>
+<span class="nc bnc" id="L169" title="All 4 branches missed.">                if (start &gt;= 0 &amp;&amp; end &gt; start) {</span>
+<span class="nc" id="L170">                    String scoreStr = aiResult.substring(start, end).trim();</span>
+<span class="nc" id="L171">                    return Double.parseDouble(scoreStr);</span>
+                }
+            }
+            // 默认返回一个中间值
+<span class="nc" id="L175">            return 60.0;</span>
+<span class="nc" id="L176">        } catch (Exception e) {</span>
+            // 解析失败时返回默认值
+<span class="nc" id="L178">            return 50.0;</span>
+        }
+    }
+
+    /**
+     * 获取特定作业的所有查重记录
+     */
+    public List&lt;PlagiarismCheck&gt; getChecksByAssignment(Long assignmentId) {
+<span class="nc" id="L186">        return plagiarismCheckRepository.findByAssignmentId(assignmentId);</span>
+    }
+
+    /**
+     * 获取特定查重记录的详情
+     */
+    public PlagiarismCheck getCheckById(Long checkId) {
+<span class="nc" id="L193">        return plagiarismCheckRepository.findById(checkId)</span>
+<span class="nc" id="L194">                .orElseThrow(() -&gt; new RuntimeException(&quot;查重记录不存在&quot;));</span>
+    }
+} 
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

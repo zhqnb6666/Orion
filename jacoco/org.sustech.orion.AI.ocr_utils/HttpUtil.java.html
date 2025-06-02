@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.AI.ocr_utils</a> &gt; <span class="el_source">HttpUtil.java</span></div><h1>HttpUtil.java</h1><pre class="source lang-java linenums">package org.sustech.orion.AI.ocr_utils;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * http 工具类
+ */
+<span class="nc" id="L14">public class HttpUtil {</span>
+
+    public static String post(String requestUrl, String accessToken, String params)
+            throws Exception {
+<span class="nc" id="L18">        String contentType = &quot;application/x-www-form-urlencoded&quot;;</span>
+<span class="nc" id="L19">        return HttpUtil.post(requestUrl, accessToken, contentType, params);</span>
+    }
+
+    public static String post(String requestUrl, String accessToken, String contentType, String params)
+            throws Exception {
+<span class="nc" id="L24">        String encoding = &quot;UTF-8&quot;;</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        if (requestUrl.contains(&quot;nlp&quot;)) {</span>
+<span class="nc" id="L26">            encoding = &quot;GBK&quot;;</span>
+        }
+<span class="nc" id="L28">        return HttpUtil.post(requestUrl, accessToken, contentType, params, encoding);</span>
+    }
+
+    public static String post(String requestUrl, String accessToken, String contentType, String params, String encoding)
+            throws Exception {
+<span class="nc" id="L33">        String url = requestUrl + &quot;?access_token=&quot; + accessToken;</span>
+<span class="nc" id="L34">        return HttpUtil.postGeneralUrl(url, contentType, params, encoding);</span>
+    }
+
+    public static String postGeneralUrl(String generalUrl, String contentType, String params, String encoding)
+            throws Exception {
+<span class="nc" id="L39">        URL url = new URL(generalUrl);</span>
+        // 打开和URL之间的连接
+<span class="nc" id="L41">        HttpURLConnection connection = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L42">        connection.setRequestMethod(&quot;POST&quot;);</span>
+        // 设置通用的请求属性
+<span class="nc" id="L44">        connection.setRequestProperty(&quot;Content-Type&quot;, contentType);</span>
+<span class="nc" id="L45">        connection.setRequestProperty(&quot;Connection&quot;, &quot;Keep-Alive&quot;);</span>
+<span class="nc" id="L46">        connection.setUseCaches(false);</span>
+<span class="nc" id="L47">        connection.setDoOutput(true);</span>
+<span class="nc" id="L48">        connection.setDoInput(true);</span>
+
+        // 得到请求的输出流对象
+<span class="nc" id="L51">        DataOutputStream out = new DataOutputStream(connection.getOutputStream());</span>
+<span class="nc" id="L52">        out.write(params.getBytes(encoding));</span>
+<span class="nc" id="L53">        out.flush();</span>
+<span class="nc" id="L54">        out.close();</span>
+
+        // 建立实际的连接
+<span class="nc" id="L57">        connection.connect();</span>
+        // 获取所有响应头字段
+<span class="nc" id="L59">        Map&lt;String, List&lt;String&gt;&gt; headers = connection.getHeaderFields();</span>
+        // 遍历所有的响应头字段
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        for (String key : headers.keySet()) {</span>
+<span class="nc" id="L62">            System.err.println(key + &quot;---&gt;&quot; + headers.get(key));</span>
+<span class="nc" id="L63">        }</span>
+        // 定义 BufferedReader输入流来读取URL的响应
+<span class="nc" id="L65">        BufferedReader in = null;</span>
+<span class="nc" id="L66">        in = new BufferedReader(</span>
+<span class="nc" id="L67">                new InputStreamReader(connection.getInputStream(), encoding));</span>
+<span class="nc" id="L68">        String result = &quot;&quot;;</span>
+        String getLine;
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        while ((getLine = in.readLine()) != null) {</span>
+<span class="nc" id="L71">            result += getLine;</span>
+        }
+<span class="nc" id="L73">        in.close();</span>
+<span class="nc" id="L74">        System.err.println(&quot;result:&quot; + result);</span>
+<span class="nc" id="L75">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.service.impl</a> &gt; <span class="el_source">UserServiceImpl.java</span></div><h1>UserServiceImpl.java</h1><pre class="source lang-java linenums">package org.sustech.orion.service.impl;
+
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.User;
+import org.sustech.orion.repository.UserRepository;
+import org.sustech.orion.service.UserService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.sustech.orion.dto.ProfileUpdateDTO;
+import org.sustech.orion.model.Attachment;
+import org.sustech.orion.service.AttachmentService;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class UserServiceImpl implements UserDetailsService, UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private final VerificationServiceImpl verificationService;
+    private final EmailServiceImpl emailService;
+    private final AttachmentService attachmentService;
+
+<span class="fc" id="L36">    public UserServiceImpl(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, VerificationServiceImpl verificationService, EmailServiceImpl emailService, AttachmentService attachmentService) {</span>
+<span class="fc" id="L37">        this.userRepository = userRepository;</span>
+<span class="fc" id="L38">        this.passwordEncoder = passwordEncoder;</span>
+<span class="fc" id="L39">        this.verificationService = verificationService;</span>
+<span class="fc" id="L40">        this.emailService = emailService;</span>
+<span class="fc" id="L41">        this.attachmentService = attachmentService;</span>
+<span class="fc" id="L42">    }</span>
+
+    @Override
+    public User loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+<span class="fc" id="L46">        User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L48">            throw new UsernameNotFoundException(&quot;User not found with username or email: &quot; + usernameOrEmail);</span>
+        }
+        //return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPasswordHash(), new ArrayList&lt;&gt;());
+<span class="fc" id="L51">        return user;</span>
+    }
+
+    @Override
+    public void sendVerificationCode(String email) throws ApiException {
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (verificationService.canResendCode(email)) {</span>
+<span class="nc" id="L57">            String code = verificationService.generateVerificationCode(email);</span>
+            try {
+<span class="nc" id="L59">                emailService.sendVerificationEmail(email, code);</span>
+<span class="nc" id="L60">            } catch (ApiException e) {</span>
+<span class="nc" id="L61">                throw new RuntimeException(e);</span>
+<span class="nc" id="L62">            }</span>
+<span class="nc" id="L63">        } else {</span>
+<span class="nc" id="L64">            throw new ApiException(&quot;Please wait before requesting a new code&quot;,</span>
+                    HttpStatus.BAD_REQUEST);
+        }
+<span class="nc" id="L67">    }</span>
+
+    @Override
+    public void resetPassword(String email, String verificationCode, String newPassword) {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (verificationService.verifyCode(email, verificationCode)) {</span>
+<span class="nc" id="L72">            User user = userRepository.findByEmail(email);</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            if (user == null) {</span>
+<span class="nc" id="L74">                throw new IllegalArgumentException(&quot;User not found&quot;);</span>
+            }
+<span class="nc" id="L76">            user.setPasswordHash(passwordEncoder.encode(newPassword));</span>
+<span class="nc" id="L77">            user.setUpdatedAt(Timestamp.from(Instant.now()));</span>
+<span class="nc" id="L78">            userRepository.save(user);</span>
+<span class="nc" id="L79">            verificationService.clearCode(email);</span>
+<span class="nc" id="L80">        } else {</span>
+<span class="nc" id="L81">            throw new IllegalArgumentException(&quot;Invalid verification code&quot;);</span>
+        }
+<span class="nc" id="L83">    }</span>
+
+    @Override
+    public void registerNewUser(User user, String verificationCode) {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (userRepository.findByUsername(user.getUsername()) != null) {</span>
+<span class="nc" id="L88">            throw new IllegalArgumentException(&quot;Username already exists&quot;);</span>
+        }
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (userRepository.findByEmail(user.getEmail()) != null) {</span>
+<span class="nc" id="L91">            throw new IllegalArgumentException(&quot;Email already exists&quot;);</span>
+        }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (!verificationService.verifyCode(user.getEmail(), verificationCode)) {</span>
+<span class="nc" id="L94">            throw new IllegalArgumentException(&quot;Invalid verification code&quot;);</span>
+        }
+<span class="nc" id="L96">        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));</span>
+<span class="nc" id="L97">        Timestamp currentTimestamp = Timestamp.from(Instant.now());</span>
+<span class="nc" id="L98">        user.setCreatedAt(currentTimestamp);</span>
+<span class="nc" id="L99">        user.setUpdatedAt(currentTimestamp);</span>
+<span class="nc" id="L100">        userRepository.save(user);</span>
+<span class="nc" id="L101">        verificationService.clearCode(user.getEmail());</span>
+<span class="nc" id="L102">    }</span>
+
+    @Override
+    public User getUserById(Long userId) {
+<span class="fc" id="L106">        return userRepository.findById(userId)</span>
+<span class="pc" id="L107">                .orElseThrow(() -&gt; new ApiException(&quot;User not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+
+    @Override
+    public User getUserByName(String username) {
+<span class="nc" id="L112">        User user = userRepository.findByUsername(username);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L114">            throw new ApiException(&quot;User NOT Found&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+<span class="nc" id="L116">        return user;</span>
+    }
+
+    @Override
+    public List&lt;User&gt; search(String keyword) {
+<span class="nc" id="L121">        return userRepository.findUsersByUsernameIsContainingIgnoreCase(keyword);</span>
+    }
+
+    @Override
+    public User updateUser(User user) {
+<span class="nc" id="L126">        return userRepository.save(user);</span>
+    }
+
+    @Override
+    public User getReferenceById(Long userId) {
+<span class="fc" id="L131">        return userRepository.getReferenceById(userId);</span>
+    }
+
+    @Override
+    @Transactional
+    public User updateProfile(Long userId, ProfileUpdateDTO profileUpdateDTO) {
+<span class="fc" id="L137">        User user = getUserById(userId);</span>
+
+        // 更新邮箱
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (StringUtils.hasText(profileUpdateDTO.getEmail())) {</span>
+            // 检查邮箱是否已被使用
+<span class="fc bfc" id="L142" title="All 2 branches covered.">            if (userRepository.existsByEmailAndUserIdNot(profileUpdateDTO.getEmail(), userId)) {</span>
+<span class="fc" id="L143">                throw new ApiException(&quot;Email already in use&quot;, HttpStatus.CONFLICT);</span>
+            }
+<span class="fc" id="L145">            user.setEmail(profileUpdateDTO.getEmail());</span>
+        }
+
+        // 更新个人简介
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (profileUpdateDTO.getBio() != null) {</span>
+<span class="fc" id="L150">            user.setBio(profileUpdateDTO.getBio());</span>
+        }
+
+        // 更新密码
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if (StringUtils.hasText(profileUpdateDTO.getNewPassword())) {</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">            if (!StringUtils.hasText(profileUpdateDTO.getOldPassword())) {</span>
+<span class="nc" id="L156">                throw new ApiException(&quot;Old password is required&quot;, HttpStatus.BAD_REQUEST);</span>
+            }
+
+            // 验证旧密码
+<span class="fc bfc" id="L160" title="All 2 branches covered.">            if (!passwordEncoder.matches(profileUpdateDTO.getOldPassword(), user.getPassword())) {</span>
+<span class="fc" id="L161">                throw new ApiException(&quot;Invalid old password&quot;, HttpStatus.BAD_REQUEST);</span>
+            }
+
+            // 设置新密码
+<span class="fc" id="L165">            user.setPasswordHash(passwordEncoder.encode(profileUpdateDTO.getNewPassword()));</span>
+        }
+
+<span class="fc" id="L168">        return userRepository.save(user);</span>
+    }
+
+    @Override
+    @Transactional
+    public User updateAvatar(Long userId, MultipartFile file) {
+<span class="nc" id="L174">        User user = getUserById(userId);</span>
+
+        // 上传新头像
+<span class="nc" id="L177">        Attachment avatar = attachmentService.uploadAttachment(file, Attachment.AttachmentType.Resource);</span>
+
+<span class="nc" id="L179">        String[] parts = avatar.getUrl().split(&quot;/&quot;);</span>
+
+        // 更新用户头像URL
+<span class="nc" id="L182">        user.setAvatarUrl(&quot;localhost:8080/&quot; + parts[parts.length - 1]);</span>
+        
+<span class="nc" id="L184">        return userRepository.save(user);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

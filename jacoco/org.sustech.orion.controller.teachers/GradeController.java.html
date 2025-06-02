@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GradeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.teachers</a> &gt; <span class="el_source">GradeController.java</span></div><h1>GradeController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.teachers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.GradeDTO;
+import org.sustech.orion.dto.responseDTO.GradeResponseDTO;
+import org.sustech.orion.model.Grade;
+import org.sustech.orion.model.User;
+import org.sustech.orion.repository.UserRepository;
+import org.sustech.orion.service.GradeService;
+import org.sustech.orion.service.UserService;
+import org.sustech.orion.util.ConvertDTO;
+
+import java.util.List;
+
+@RestController(&quot;teachersGradeController&quot;)
+@RequestMapping(&quot;/api/teachers/grades&quot;)
+@Tag(name = &quot;Grade API&quot;, description = &quot;APIs for grading management&quot;)
+public class GradeController {
+
+    private final GradeService gradeService;
+    private final UserService userService;
+
+<span class="fc" id="L27">    public GradeController(GradeService gradeService, UserService userService) {</span>
+<span class="fc" id="L28">        this.gradeService = gradeService;</span>
+<span class="fc" id="L29">        this.userService= userService;</span>
+<span class="fc" id="L30">    }</span>
+    /* useful */
+
+    @PostMapping(&quot;/{gradeId}/finalize&quot;) //
+    @Operation(summary = &quot;Finalize grade&quot;)
+    public ResponseEntity&lt;Void&gt; finalizeGrade(@PathVariable Long gradeId) {
+<span class="fc" id="L36">        gradeService.finalizeGrade(gradeId);</span>
+<span class="fc" id="L37">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PostMapping(&quot;/{submissionId}&quot;)
+    @Operation(summary = &quot;Grade submission&quot;, description = &quot;为提交评分，如果已存在评分则会更新原有评分&quot;)
+    public ResponseEntity&lt;GradeResponseDTO&gt; gradeSubmission(
+            @PathVariable Long submissionId,
+            @RequestBody GradeDTO request,
+            @AuthenticationPrincipal User grader) {
+        // 先删除旧的评分（如果存在）
+<span class="fc" id="L47">        gradeService.deleteGradeBySubmissionId(submissionId);</span>
+        
+        // 创建新的评分
+<span class="fc" id="L50">        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTO(</span>
+<span class="fc" id="L51">                gradeService.gradeSubmission(</span>
+                        submissionId,
+<span class="fc" id="L53">                        request.getScore(),</span>
+<span class="fc" id="L54">                        request.getFeedback(),</span>
+<span class="fc" id="L55">                        userService.getReferenceById(grader.getUserId())</span>
+                )
+        ));
+    }
+
+    @GetMapping(&quot;/grader/{graderId}&quot;)
+    @Operation(summary = &quot;List grades by grader&quot;)
+    public ResponseEntity&lt;List&lt;GradeResponseDTO&gt;&gt; getGradesByGrader(@PathVariable Long graderId) {
+<span class="nc" id="L63">        return ResponseEntity.ok(ConvertDTO.toGradeResponseDTOList(gradeService.getGradesByGrader(graderId)));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

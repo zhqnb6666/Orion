@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.students</a> &gt; <span class="el_source">AssignmentController.java</span></div><h1>AssignmentController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.students;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.core.io.Resource;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentAttachmentResponseDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.*;
+import org.sustech.orion.service.AssignmentService;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.ResourceService;
+import org.sustech.orion.service.SubmissionService;
+import org.sustech.orion.service.AttachmentService;
+import org.sustech.orion.util.ConvertDTO;
+
+import java.util.List;
+import java.io.IOException;
+
+@RestController(&quot;studentsAssignmentController&quot;)
+@RequestMapping(&quot;/api/students/assignments&quot;)
+@Tag(name = &quot;Student Assignment API&quot;, description = &quot;APIs for assignment management&quot;)
+public class AssignmentController {
+
+    private final AssignmentService assignmentService;
+    private final SubmissionService submissionService;
+    private final CourseService courseService;
+    private final ResourceService resourceService;
+    private final AttachmentService attachmentService;
+
+<span class="fc" id="L39">    public AssignmentController(AssignmentService assignmentService, SubmissionService submissionService, CourseService courseService, ResourceService resourceService, AttachmentService attachmentService) {</span>
+<span class="fc" id="L40">        this.assignmentService = assignmentService;</span>
+<span class="fc" id="L41">        this.submissionService = submissionService;</span>
+<span class="fc" id="L42">        this.courseService = courseService;</span>
+<span class="fc" id="L43">        this.resourceService = resourceService;</span>
+<span class="fc" id="L44">        this.attachmentService = attachmentService;</span>
+<span class="fc" id="L45">    }</span>
+    /* useful */
+
+
+    /* useless */
+    @GetMapping(&quot;/course/{courseId}/active&quot;)
+    @Operation(summary = &quot;Get active assignments&quot;)
+    public ResponseEntity&lt;List&lt;AssignmentResponseDTO&gt;&gt; getActiveAssignments(@PathVariable Long courseId) {
+<span class="nc" id="L53">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getActiveAssignments(courseId)));</span>
+    }
+
+    @GetMapping(&quot;/course/{courseId}&quot;)
+    @Operation(summary = &quot;获取课程所有作业&quot;, 
+            description = &quot;获取指定课程的所有作业列表&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取作业列表&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;未参加该课程&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;List&lt;AssignmentResponseDTO&gt;&gt; getAllAssignments(@PathVariable Long courseId) {
+<span class="nc" id="L65">        List&lt;Assignment&gt; assignments = assignmentService.getAssignmentsByCourseId(courseId);</span>
+<span class="nc" id="L66">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignments));</span>
+    }
+
+
+    
+
+    @GetMapping(&quot;/{assignmentId}/submissions&quot;)
+    @Operation(summary = &quot;获取提交历史&quot;)
+    public ResponseEntity&lt;List&lt;Submission&gt;&gt; getSubmissions(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student) {
+
+<span class="nc" id="L78">        return ResponseEntity.ok(</span>
+<span class="nc" id="L79">                assignmentService.getSubmissionsByAssignmentAndStudent(assignmentId, student.getUserId())</span>
+        );
+    }
+
+    @GetMapping(&quot;/{assignmentId}/submissions/remaining&quot;)
+    @Operation(summary = &quot;Get remaining submission attempts&quot;)
+    public ResponseEntity&lt;Integer&gt; getRemainingAttempts(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student) {
+
+        // 获取提交配置
+<span class="fc" id="L90">        SubmissionConfig config = assignmentService.getSubmissionConfigByAssignmentId(assignmentId);</span>
+
+
+<span class="fc" id="L93">        Integer maxAttempts = config.getMaxSubmissionAttempts();</span>
+
+
+<span class="fc" id="L96">        Integer usedAttempts = submissionService.getSubmissionAttempts(</span>
+<span class="fc" id="L97">                student.getUserId(),</span>
+                assignmentId
+        );
+
+<span class="fc" id="L101">        int remaining = maxAttempts - usedAttempts;</span>
+<span class="fc" id="L102">        return ResponseEntity.ok(Math.max(remaining, 0));</span>
+    }
+
+    @GetMapping(&quot;/{assignmentId}/details&quot;)
+    @Operation(summary = &quot;获取作业详细信息&quot;,
+            description = &quot;获取与指定作业相关的详细信息&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取作业详细信息&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;未参加该课程作业&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;作业不存在&quot;)
+            })
+    public ResponseEntity&lt;AssignmentResponseDTO&gt; getAssignmentDetails(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student) {
+
+<span class="fc" id="L117">        Assignment assignment = assignmentService.getAssignmentById(assignmentId);</span>
+
+        // 验证学生课程权限
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (!courseService.isStudentInCourse(</span>
+<span class="fc" id="L121">                assignment.getCourse().getId(),</span>
+<span class="fc" id="L122">                student.getUserId())) {</span>
+<span class="nc" id="L123">            throw new ApiException(&quot;未参加该课程作业&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L126">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTO(assignment));</span>
+    }
+
+    /**
+     * 获取作业的所有附件
+     * @param assignmentId 作业ID
+     * @param student 当前学生
+     * @return 附件列表
+     */
+    @GetMapping(&quot;/{assignmentId}/attachments&quot;)
+    @Operation(summary = &quot;获取作业附件列表&quot;,
+            description = &quot;获取指定作业的所有附件文件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;获取成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;未参加该课程&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;作业不存在&quot;)
+            })
+    public ResponseEntity&lt;AssignmentAttachmentResponseDTO&gt; getAssignmentAttachments(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal User student) {
+
+<span class="nc" id="L147">        Assignment assignment = assignmentService.getAssignmentById(assignmentId);</span>
+
+        // 验证学生课程权限
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (!courseService.isStudentInCourse(assignment.getCourse().getId(), student.getUserId())) {</span>
+<span class="nc" id="L151">            throw new ApiException(&quot;未参加该课程&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // 返回作业及附件信息
+<span class="nc" id="L155">        return ResponseEntity.ok(AssignmentAttachmentResponseDTO.fromAssignment(assignment));</span>
+    }
+
+    /**
+     * 下载作业附件
+     * @param assignmentId 作业ID
+     * @param attachmentId 附件ID
+     * @param student 当前学生
+     * @return 附件内容
+     * @throws IOException 文件读取错误
+     */
+    @GetMapping(&quot;/{assignmentId}/attachments/{attachmentId}/download&quot;)
+    @Operation(summary = &quot;下载作业附件&quot;,
+            description = &quot;下载指定作业的附件文件&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;下载成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;未参加该课程&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;作业或附件不存在&quot;)
+            })
+    public ResponseEntity&lt;Resource&gt; downloadAssignmentAttachment(
+            @PathVariable Long assignmentId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User student) throws IOException {
+
+<span class="nc" id="L179">        Assignment assignment = assignmentService.getAssignmentById(assignmentId);</span>
+
+        // 验证学生课程权限
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (!courseService.isStudentInCourse(assignment.getCourse().getId(), student.getUserId())) {</span>
+<span class="nc" id="L183">            throw new ApiException(&quot;未参加该课程&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // 获取附件信息
+<span class="nc" id="L187">        Attachment attachment = attachmentService.getAttachmentById(attachmentId);</span>
+        
+        // 下载附件内容
+<span class="nc" id="L190">        byte[] data = attachmentService.downloadAttachment(attachmentId);</span>
+<span class="nc" id="L191">        ByteArrayResource resource = new ByteArrayResource(data);</span>
+
+<span class="nc" id="L193">        return ResponseEntity.ok()</span>
+<span class="nc" id="L194">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + attachment.getName() + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L195">                .contentType(MediaType.parseMediaType(attachment.getMimeType()))</span>
+<span class="nc" id="L196">                .contentLength(attachment.getSize())</span>
+<span class="nc" id="L197">                .body(resource);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

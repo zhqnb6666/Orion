@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CourseController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.controller.teachers</a> &gt; <span class="el_source">CourseController.java</span></div><h1>CourseController.java</h1><pre class="source lang-java linenums">package org.sustech.orion.controller.teachers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.sustech.orion.dto.CourseDTO;
+import org.sustech.orion.dto.responseDTO.AssignmentResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseBasicInfoResponseDTO;
+import org.sustech.orion.dto.responseDTO.CourseItemResponseDTO;
+import org.sustech.orion.exception.ApiException;
+import org.sustech.orion.model.Course;
+import org.sustech.orion.model.User;
+import org.sustech.orion.service.AssignmentService;
+import org.sustech.orion.service.CourseService;
+import org.sustech.orion.service.UserService;
+import org.sustech.orion.util.ConvertDTO;
+import org.sustech.orion.util.SemesterUtil;
+
+import java.util.List;
+
+@RestController(&quot;teachersCourseController&quot;)
+@RequestMapping(&quot;/api/teachers/courses&quot;)
+@Tag(name = &quot;Teacher Course API&quot;, description = &quot;APIs for course management&quot;)
+public class CourseController {
+
+    private final CourseService courseService;
+    private final UserService userService;
+    private final AssignmentService assignmentService;
+
+<span class="fc" id="L34">    public CourseController(CourseService courseService, UserService userService, AssignmentService assignmentService) {</span>
+<span class="fc" id="L35">        this.courseService = courseService;</span>
+<span class="fc" id="L36">        this.userService = userService;</span>
+<span class="fc" id="L37">        this.assignmentService = assignmentService;</span>
+<span class="fc" id="L38">    }</span>
+
+    /* useful */
+    @PostMapping//ok
+    @Operation(summary = &quot;Create course&quot;, description = &quot;Create a new course&quot;)//tested
+    public ResponseEntity&lt;CourseItemResponseDTO&gt; createCourse(@RequestBody CourseDTO request, @AuthenticationPrincipal User currentUser) {
+        //system.out.println(currentUser.getUsername());
+<span class="fc" id="L45">        Course course = new Course();</span>
+<span class="fc" id="L46">        course.setCourseName(request.getCourseName());</span>
+<span class="fc" id="L47">        course.setCourseCode(request.getCourseCode());</span>
+<span class="fc" id="L48">        course.setDescription(request.getDescription());</span>
+<span class="fc" id="L49">        course.setIsActive(request.getIsActive());</span>
+<span class="fc" id="L50">        course.setCreatedTime(new java.sql.Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L51">        course.setSemester(SemesterUtil.transformSemester(course.getCreatedTime()));</span>
+<span class="fc" id="L52">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.createCourse(course, currentUser)));</span>
+    }
+
+    @GetMapping(&quot;/{courseId}&quot;)//ok
+    @Operation(summary = &quot;Get course basic info&quot;, description = &quot;Get course by ID&quot;)
+    public ResponseEntity&lt;CourseBasicInfoResponseDTO&gt; getCourse(@PathVariable Long courseId) {
+<span class="nc" id="L58">        return ResponseEntity.ok(ConvertDTO.toCourseBasicInfoResponseDTO(courseService.getCourseById(courseId)));</span>
+    }
+
+    /* useless */
+
+    @GetMapping(&quot;/semester/{semester}&quot;)//ok
+    @Operation(summary = &quot;List courses by semester&quot;)
+    public ResponseEntity&lt;List&lt;CourseItemResponseDTO&gt;&gt; getCoursesBySemester(@PathVariable String semester) {
+<span class="nc" id="L66">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courseService.getCoursesBySemester(semester)));</span>
+    }
+
+    @GetMapping
+    @Operation(summary = &quot;获取教师所有课程&quot;, description = &quot;获取当前教师负责的所有课程&quot;)
+    public ResponseEntity&lt;List&lt;CourseItemResponseDTO&gt;&gt; getTeacherCourses(
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L74">        List&lt;Course&gt; courses = courseService.getCoursesByInstructor(currentUser.getUserId());</span>
+<span class="nc" id="L75">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTOList(courses));</span>
+    }
+
+    @PutMapping(&quot;/{courseId}&quot;)
+    @Operation(summary = &quot;更新课程信息&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;课程更新成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无修改权限&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;CourseItemResponseDTO&gt; updateCourse(
+            @PathVariable Long courseId,
+            @RequestBody CourseDTO request,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L90">        Course existingCourse = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (!existingCourse.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L94">            throw new ApiException(&quot;No permission to modify&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+        // 更新可修改字段
+<span class="nc" id="L98">        existingCourse.setCourseName(request.getCourseName());</span>
+<span class="nc" id="L99">        existingCourse.setDescription(request.getDescription());</span>
+<span class="nc" id="L100">        existingCourse.setIsActive(request.getIsActive());</span>
+
+<span class="nc" id="L102">        return ResponseEntity.ok(ConvertDTO.toCourseItemResponseDTO(courseService.updateCourse(existingCourse)));</span>
+    }
+
+    @DeleteMapping(&quot;/{courseId}&quot;)
+    @Operation(summary = &quot;删除课程&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;204&quot;, description = &quot;删除成功&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无操作权限&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; deleteCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L116">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L120">            throw new ApiException(&quot;No permission to delete the course&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L123">        courseService.deleteCourseWithDependencies(courseId);</span>
+<span class="nc" id="L124">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/{courseId}/students&quot;)
+    @Operation(summary = &quot;获取课程学生列表&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取学生列表&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无查看权限&quot;)
+            })
+    public ResponseEntity&lt;List&lt;User&gt;&gt; getCourseStudents(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L137">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="nc bnc" id="L140" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L141">            throw new ApiException(&quot;No permission to view the course for students&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L144">        return ResponseEntity.ok(course.getStudents());</span>
+    }
+
+    @PostMapping(&quot;/{courseId}/students&quot;)
+    @Operation(summary = &quot;添加学生到课程&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;204&quot;, description = &quot;添加成功&quot;),
+                    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;学生已存在&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无操作权限&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程或学生不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; addStudentToCourse(
+            @PathVariable Long courseId,
+            @RequestParam Long studentId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="fc" id="L160">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L164">            throw new ApiException(&quot;No permission to operate this course&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L167">        User student = userService.getUserById(studentId);</span>
+
+
+<span class="fc" id="L170">        courseService.addStudentToCourse(courseId, student);</span>
+<span class="fc" id="L171">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/{courseId}/students/{studentId}&quot;)
+    @Operation(summary = &quot;从课程移除学生&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;204&quot;, description = &quot;移除成功&quot;),
+                    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;学生不在课程中&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无操作权限&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程或学生不存在&quot;)
+            })
+    public ResponseEntity&lt;Void&gt; removeStudentFromCourse(
+            @PathVariable Long courseId,
+            @PathVariable Long studentId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L187">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L191">            throw new ApiException(&quot;No permission to operate this course&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L194">        courseService.removeStudentFromCourse(courseId, studentId);</span>
+<span class="nc" id="L195">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/{courseId}/assignments&quot;)
+    @Operation(summary = &quot;获取课程作业列表&quot;,
+            description = &quot;获取指定课程下的所有作业&quot;,
+            responses = {
+                    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;成功获取作业列表&quot;),
+                    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;无查看权限&quot;),
+                    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;课程不存在&quot;)
+            })
+    public ResponseEntity&lt;List&lt;AssignmentResponseDTO&gt;&gt; getCourseAssignments(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal User currentUser) {
+
+<span class="nc" id="L210">        Course course = courseService.getCourseById(courseId);</span>
+
+        // 验证教师权限
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (!course.getInstructor().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="nc" id="L214">            throw new ApiException(&quot;Do not have permission to view the course work&quot;, HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L217">        return ResponseEntity.ok(ConvertDTO.toAssignmentResponseDTOList(assignmentService.getAssignmentsByCourseId(courseId)));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

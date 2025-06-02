@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CourseworkGradingSystem</a> &gt; <a href="index.source.html" class="el_package">org.sustech.orion.AI</a> &gt; <span class="el_source">Model.java</span></div><h1>Model.java</h1><pre class="source lang-java linenums">package org.sustech.orion.AI;
+
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.output.Response;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.sustech.orion.AI.PromptBuilder.build_grading_prompt;
+import static org.sustech.orion.AI.PromptBuilder.build_plagiarism_prompt;
+
+<span class="nc" id="L16">public class Model {</span>
+    private static final String API_KEY = &quot;sk-Jl53h2087p93OXhlD97c7qQZal36QGxQTGMGOOZgUCx8un0z&quot;;
+    private static final String BASE_URL = &quot;https://xiaoai.plus/v1&quot;;
+
+<span class="fc" id="L20">    private static final List&lt;String&gt; availableModels = List.of(&quot;gpt-4o&quot;, &quot;gpt-4o-mini&quot;);</span>
+    private static final String defaultModel = &quot;gpt-4o&quot;;
+
+    private static ChatLanguageModel createChatModel(String modelName) {
+<span class="fc" id="L24">        return OpenAiChatModel.builder()</span>
+<span class="fc" id="L25">                .apiKey(API_KEY)</span>
+<span class="fc" id="L26">                .baseUrl(BASE_URL)</span>
+<span class="fc" id="L27">                .modelName(modelName)</span>
+<span class="fc" id="L28">                .temperature(0.6)</span>
+<span class="fc" id="L29">                .build();</span>
+    }
+
+    public static String chat(String input, String model) {
+<span class="nc" id="L33">        String systemPrompt = &quot;你是一个智能的AI助手，你可以回答任何问题&quot;;</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (!availableModels.contains(model)) {</span>
+<span class="nc" id="L36">            model = defaultModel;</span>
+        }
+
+<span class="nc" id="L39">        ChatLanguageModel chatModel = createChatModel(model);</span>
+
+<span class="nc" id="L41">        Response&lt;AiMessage&gt; response = chatModel.generate(</span>
+<span class="nc" id="L42">                SystemMessage.from(systemPrompt),</span>
+<span class="nc" id="L43">                UserMessage.from(input)</span>
+        );
+
+<span class="nc" id="L46">        return response.content().text();</span>
+    }
+
+    public static String llm_plagiarism_check(String submissionA, String submissionB, String model) {
+<span class="nc" id="L50">        String systemPrompt = &quot;你是一个智能的AI助手，你可以回答任何问题&quot;;</span>
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (!availableModels.contains(model)) {</span>
+<span class="nc" id="L53">            model = defaultModel;</span>
+        }
+
+<span class="nc" id="L56">        String input = build_plagiarism_prompt(submissionA, submissionB);</span>
+<span class="nc" id="L57">        ChatLanguageModel chatModel = createChatModel(model);</span>
+
+<span class="nc" id="L59">        Response&lt;AiMessage&gt; response = chatModel.generate(</span>
+<span class="nc" id="L60">                SystemMessage.from(systemPrompt),</span>
+<span class="nc" id="L61">                UserMessage.from(input)</span>
+        );
+
+<span class="nc" id="L64">        return response.content().text();</span>
+    }
+
+    public static String llm_grading(String Question, String Answer, String model) {
+<span class="fc" id="L68">        String systemPrompt = &quot;你是一个智能的AI助手，你可以回答任何问题&quot;;</span>
+
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (!availableModels.contains(model)) {</span>
+<span class="fc" id="L71">            model = defaultModel;</span>
+        }
+
+<span class="fc" id="L74">        String input = build_grading_prompt(Question, Answer);</span>
+<span class="fc" id="L75">        ChatLanguageModel chatModel = createChatModel(model);</span>
+
+<span class="fc" id="L77">        Response&lt;AiMessage&gt; response = chatModel.generate(</span>
+<span class="fc" id="L78">                SystemMessage.from(systemPrompt),</span>
+<span class="fc" id="L79">                UserMessage.from(input)</span>
+        );
+
+<span class="fc" id="L82">        return response.content().text();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
