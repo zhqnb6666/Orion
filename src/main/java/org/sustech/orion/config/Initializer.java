@@ -57,7 +57,7 @@ public class Initializer {
                 initDatabase();
                 generateAndPrintJwt();
             } else {
-                generateAndPrintJwt();
+//                generateAndPrintJwt();
                 System.out.println("DDL-Auto is not set to 'create', skipping database initialization.");
             }
         };

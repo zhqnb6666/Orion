@@ -4,9 +4,10 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/orion?currentSchema=public
-    username: user_1
-    password: abc@1234
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/orion?currentSchema=public}
+    username: ${SPRING_DATASOURCE_USERNAME:user_1}
+    password: ${SPRING_DATASOURCE_PASSWORD:abc@1234}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,11 +17,13 @@ spring:
       hibernate:
         temp:
           use_jdbc_metadata_defaults: true
+
   mvc:
     static-path-pattern: /**
   web:
     resources:
       static-locations: classpath:/static/,file:${file.upload.dir}
+
 file:
   upload:
     dir: ./uploads
