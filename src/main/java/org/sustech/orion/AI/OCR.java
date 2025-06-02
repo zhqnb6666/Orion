@@ -26,7 +26,7 @@ public class OCR {
             String param = "image=" + imgParam;
 
             // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
-            String accessToken = "24.b6240fadae7ba26a3b355da75d0237e4.2592000.1744786944.282335-115858441";
+            String accessToken = "24.3b7ddc8ca2ea1c251a9b1c2e790d60cf.2592000.1751461118.282335-115858441";
 
             String result = HttpUtil.post(url, accessToken, param);
             return extractText(result);
