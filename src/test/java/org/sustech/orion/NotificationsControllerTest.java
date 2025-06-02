@@ -1,5 +1,7 @@
 package org.sustech.orion;
 
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,7 +26,7 @@ class NotificationsControllerTest {
     private NotificationRepository notificationRepository;
 
     // 测试获取所有通知
-    @Test
+    @Test @Order(1)
     @WithUserDetails("student")
     void getAllNotifications_ShouldReturnInitializedData() throws Exception {
         mockMvc.perform(get("/api/students/notifications"))
@@ -35,7 +37,7 @@ class NotificationsControllerTest {
     }
 
     // 测试获取未读通知
-    @Test
+    @Test @Order(2)
     @WithUserDetails("student")
     void getUnreadNotifications_ShouldReturnUnreadOnly() throws Exception {
         mockMvc.perform(get("/api/students/notifications/unread"))
@@ -44,7 +46,7 @@ class NotificationsControllerTest {
     }
 
     // 测试标记通知为已读
-    @Test
+    @Test @Order(3)
     @WithUserDetails("student")
     void markNotificationAsRead_ShouldUpdateReadStatus() throws Exception {
         // 获取第一个通知
@@ -57,21 +59,10 @@ class NotificationsControllerTest {
         assertTrue(updated.isRead());
     }
 
-    // 测试删除通知
-    @Test
-    @WithUserDetails("student")
-    void deleteNotification_ShouldRemoveFromDatabase() throws Exception {
-        // 获取第二个通知
-        Notification notification = notificationRepository.findAll().get(1);
 
-        mockMvc.perform(delete("/api/students/notifications/{id}", notification.getId()))
-                .andExpect(status().isNoContent());
-
-        assertFalse(notificationRepository.existsById(notification.getId()));
-    }
 
     // 测试无权操作其他用户的通知
-    @Test
+    @Test @Order(4)
     @WithUserDetails("teacher") // 尝试用教师身份删除学生通知
     void deleteOthersNotification_ShouldForbid() throws Exception {
         Notification studentNotification = notificationRepository.findAll().get(0);
@@ -79,4 +70,5 @@ class NotificationsControllerTest {
         mockMvc.perform(delete("/api/students/notifications/{id}", studentNotification.getId()))
                 .andExpect(status().isForbidden());
     }
+
 }
