@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.sustech.orion.exception.ApiException;
@@ -37,7 +38,7 @@ public class Initializer {
     private final UserServiceImpl userService;
     private final CourseService courseService;
     private final NotificationService notificationService;
-    private final CalendarService  calendarService;
+    private final CalendarService calendarService;
 
     private final JwtUtil jwtUtil;
 
@@ -54,6 +55,9 @@ public class Initializer {
         return args -> {
             // 只在 ddl-auto = "create" 时执行初始化
             if ("create".equalsIgnoreCase(ddlAuto)) {
+                initDatabase();
+                generateAndPrintJwt();
+            } else if ("create-drop".equalsIgnoreCase(ddlAuto)) {
                 initDatabase();
                 generateAndPrintJwt();
             } else {
@@ -279,7 +283,7 @@ public class Initializer {
             attachment.setName(fileUrl.substring(fileUrl.lastIndexOf('/') + 1));
             attachment.setAttachmentType(Attachment.AttachmentType.Submission);
             attachment.setUploadedAt(Timestamp.from(Instant.now()));
-            
+
             // 先保存attachment以确保它是托管状态
             Attachment managedAttachment = attachmentRepository.save(attachment);
 

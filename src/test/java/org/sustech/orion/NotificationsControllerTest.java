@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.sustech.orion.model.Notification;
 import org.sustech.orion.repository.NotificationRepository;
@@ -15,8 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
+@SpringBootTest
 class NotificationsControllerTest {
 
     @Autowired
@@ -69,6 +72,19 @@ class NotificationsControllerTest {
 
         mockMvc.perform(delete("/api/students/notifications/{id}", studentNotification.getId()))
                 .andExpect(status().isForbidden());
+    }
+
+    // 测试删除通知
+    @Test @Order(5)
+    @WithUserDetails("student")
+    void deleteNotification_ShouldRemoveFromDatabase() throws Exception {
+        // 获取第二个通知
+        Notification notification = notificationRepository.findAll().get(1);
+
+        mockMvc.perform(delete("/api/students/notifications/{id}", notification.getId()))
+                .andExpect(status().isNoContent());
+
+        assertFalse(notificationRepository.existsById(notification.getId()));
     }
 
 }
