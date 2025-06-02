@@ -58,7 +58,7 @@ public class Initializer {
                 initDatabase();
                 generateAndPrintJwt();
             } else if ("create-drop".equalsIgnoreCase(ddlAuto)) {
-                initDatabase();
+                initTestDatabase();
                 generateAndPrintJwt();
             } else {
 //                generateAndPrintJwt();
@@ -69,6 +69,91 @@ public class Initializer {
 
 
     public void initDatabase() {
+        Map<String, User> users = createUsers();
+        Course course = createCourse(users.get("teacher"), users.get("student"));
+
+        createTestNotification(users.get("system"), users.get("student"),
+                "Test system Notification", "This is a test notification with high priority",
+                Notification.Priority.HIGH);
+        createTestNotification(users.get("teacher"), users.get("student"),
+                "Test teacher Notification", "This is a test notification with medium priority",
+                Notification.Priority.MEDIUM);
+
+        Attachment pic_1 = createAttachment("test picture",
+                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a");
+        Attachment pdf_1 = createAttachment("test pdf",
+                "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
+        Attachment codeFile_1 = createAttachment("test code file",
+                "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
+        Attachment pic_2 = createAttachment("test picture",
+                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a");
+        Attachment pdf_2 = createAttachment("test pdf",
+                "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
+        Attachment codeFile_2 = createAttachment("test code file",
+                "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
+
+        createResource(course, List.of(pic_1, pdf_1, codeFile_1));
+
+        /*
+        Assignment closedAssignment = createAssignment("test closed assignment", course, List.of(pic),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        Assignment openAssignment = createAssignment("test open assignment", course, List.of(pdf),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)));
+        Assignment upcomingAssignment = createAssignment("test upcoming assignment", course, List.of(codeFile),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)));
+
+         */
+        Assignment closedAssignment = createAssignmentWithConfig(
+                "test closed assignment", course, List.of(pic_2),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)),
+                10 * 1024 * 1024L, "pdf,docx,txt", 3
+        );
+
+        Assignment openAssignment = createAssignmentWithConfig(
+                "test open assignment", course, List.of(pdf_2),
+                Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
+                20 * 1024 * 1024L, "java,txt", 5
+        );
+
+        Assignment upcomingAssignment = createAssignmentWithConfig(
+                "test upcoming assignment", course, List.of(codeFile_2),
+                Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
+                Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)),
+                40 * 1024 * 1024L, "zip,txt", 1
+        );
+
+
+        createCalendar(course, closedAssignment, users.get("student"));
+        createCalendar(course, openAssignment, users.get("student"));
+        createCalendar(course, upcomingAssignment, users.get("student"));
+
+        SubmissionContent pdfContent = createSubmissionContent(SubmissionContent.ContentType.FILE, null,
+                "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf", "application/pdf");
+        SubmissionContent codeContent = createSubmissionContent(SubmissionContent.ContentType.FILE, null,
+                "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java", "text/x-java-source");
+        SubmissionContent textContent = createSubmissionContent(SubmissionContent.ContentType.TEXT,
+                "text submission content", null, null);
+
+        Submission submission1 = createSubmission(closedAssignment, users.get("student"),
+                Timestamp.from(Instant.now().minus(5, ChronoUnit.DAYS)),
+                List.of(pdfContent));
+        Submission submission2 = createSubmission(openAssignment, users.get("student"),
+                Timestamp.from(Instant.now().minus(3, ChronoUnit.DAYS)),
+                List.of(textContent));
+        Submission submission3 = createSubmission(upcomingAssignment, users.get("student"),
+                Timestamp.from(Instant.now()),
+                List.of(codeContent));
+
+        createGrade(submission1, users.get("teacher"), 90.0, "good job"
+        );
+    }
+
+    public void initTestDatabase() {
         Map<String, User> users = createUsers();
         Course course = createCourse(users.get("teacher"), users.get("student"));
 
