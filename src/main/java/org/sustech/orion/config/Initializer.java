@@ -59,7 +59,7 @@ public class Initializer {
                 generateAndPrintJwt();
             } else if ("create-drop".equalsIgnoreCase(ddlAuto)) {
                 initTestDatabase();
-                generateAndPrintJwt();
+                TESTgenerateAndPrintJwt();
             } else {
 //                generateAndPrintJwt();
                 System.out.println("DDL-Auto is not set to 'create', skipping database initialization.");
@@ -73,10 +73,10 @@ public class Initializer {
         Course course = createCourse(users.get("teacher"), users.get("student"));
 
         createTestNotification(users.get("system"), users.get("student"),
-                "Test system Notification", "This is a test notification with high priority",
+                "Please rename your password", "Rename your password for safety reason",
                 Notification.Priority.HIGH);
         createTestNotification(users.get("teacher"), users.get("student"),
-                "Test teacher Notification", "This is a test notification with medium priority",
+                "welcome to our class", "welcome to our class",
                 Notification.Priority.MEDIUM);
 
         Attachment pic_1 = createAttachment("test picture",
@@ -85,12 +85,12 @@ public class Initializer {
                 "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
         Attachment codeFile_1 = createAttachment("test code file",
                 "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
-        Attachment pic_2 = createAttachment("test picture",
-                "https://bkimg.cdn.bcebos.com/pic/0b46f21fbe096b63f624d0f97e6a9044ebf81a4c065a");
-        Attachment pdf_2 = createAttachment("test pdf",
-                "https://www.sustech.edu.cn/uploads/files/2024/12/24093901_29176.pdf");
-        Attachment codeFile_2 = createAttachment("test code file",
-                "https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java");
+        Attachment pic_2 = createAttachment("Q1",
+                "./uploads/Q1.png");
+        Attachment pdf_2 = createAttachment("cs305_assignment1",
+                "./uploads/cs305_assignment1.pdf");
+        Attachment codeFile_2 = createAttachment("SimpleThreads",
+                "./uploads/SimpleThreads.java");
 
         createResource(course, List.of(pic_1, pdf_1, codeFile_1));
 
@@ -107,21 +107,21 @@ public class Initializer {
 
          */
         Assignment closedAssignment = createAssignmentWithConfig(
-                "test closed assignment", course, List.of(pic_2),
+                "Q1", course, List.of(pic_2),
                 Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)),
                 10 * 1024 * 1024L, "pdf,docx,txt", 3
         );
 
         Assignment openAssignment = createAssignmentWithConfig(
-                "test open assignment", course, List.of(pdf_2),
+                "cs305_assignment1", course, List.of(pdf_2),
                 Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
                 20 * 1024 * 1024L, "java,txt", 5
         );
 
         Assignment upcomingAssignment = createAssignmentWithConfig(
-                "test upcoming assignment", course, List.of(codeFile_2),
+                "SimpleThreads", course, List.of(codeFile_2),
                 Timestamp.from(Instant.now().plus(30, ChronoUnit.DAYS)),
                 Timestamp.from(Instant.now().plus(60, ChronoUnit.DAYS)),
                 40 * 1024 * 1024L, "zip,txt", 1
@@ -152,7 +152,7 @@ public class Initializer {
         createGrade(submission1, users.get("teacher"), 90.0, "good job"
         );
     }
-
+    //！！！测试使用，不要修改该方法
     public void initTestDatabase() {
         Map<String, User> users = createUsers();
         Course course = createCourse(users.get("teacher"), users.get("student"));
@@ -250,21 +250,24 @@ public class Initializer {
     }
 
     public Map<String, User> createUsers() {
-        User admin = createUser("admin", "admin@example.com", User.Role.ADMIN);
-        User teacher = createUser("teacher", "teacher@example.com", User.Role.TEACHER);
-        User student = createUser("student", "student@example.com", User.Role.STUDENT);
+        //TODO: 填充avatarUrl
+        User admin = createUser("admin", "admin@example.com", User.Role.ADMIN,"");
+        User teacher = createUser("teacher", "teacher@example.com", User.Role.TEACHER,"");
+        User student1 = createUser("student1", "student@example.com", User.Role.STUDENT,"");
+        User student2 = createUser("student2", "3308780957@qq.com", User.Role.STUDENT,"");
         // 系统用户，用于发送系统通知
-        User system = createUser("SYSTEM", "system@example.com", User.Role.ADMIN);
+        User system = createUser("SYSTEM", "system@example.com", User.Role.ADMIN,"");
         Map<String, User> userMap = new HashMap<>();
         userMap.put("admin", admin);
         userMap.put("teacher", teacher);
-        userMap.put("student", student);
+        userMap.put("student1", student1);
+        userMap.put("student2", student2);
         userMap.put("system", system);
         System.out.println("Created users: admin, teacher, student");
         return userMap;
     }
 
-    private User createUser(String username, String mail, User.Role role) {
+    private User createUser(String username, String mail, User.Role role, String avatarUrl) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(mail);
@@ -272,6 +275,10 @@ public class Initializer {
         user.setRole(role);
         user.setCreatedAt(Timestamp.from(Instant.now()));
         user.setUpdatedAt(Timestamp.from(Instant.now()));
+        if(avatarUrl == null || avatarUrl.isEmpty()) {
+            avatarUrl = "default_avatar.png";
+        }
+        user.setAvatarUrl(avatarUrl);
         return userRepository.save(user);
     }
 
@@ -399,6 +406,21 @@ public class Initializer {
     }
 
     private void generateAndPrintJwt() {
+        String[] usernames = {"admin", "teacher", "student1","student2"};
+        Map<String, String> jwtMap = new HashMap<>();
+        for (String username : usernames) {
+            UserDetails userDetails = userService.loadUserByUsername(username);
+            String jwt = jwtUtil.generateToken(userDetails);
+            jwtMap.put(username, jwt);
+        }
+        for (Map.Entry<String, String> entry : jwtMap.entrySet()) {
+            System.out.println("Generated JWT for " + entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+
+
+    private void TESTgenerateAndPrintJwt() {
         String[] usernames = {"admin", "teacher", "student"};
         Map<String, String> jwtMap = new HashMap<>();
         for (String username : usernames) {
